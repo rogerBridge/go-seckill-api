@@ -6,14 +6,6 @@ import (
 	"log"
 )
 
-// Declare a pool variable to hold the pool of Redis connections.
-//var pool *redis.Pool
-var pool = &redis.Pool{
-	Dial: func() (conn redis.Conn, err error) {
-		return redis.Dial("tcp", "localhost:6379", redis.DialPassword("hello"))
-	},
-}
-
 var ErrNoAlbum = errors.New("no album found")
 
 // Define a custom struct to hold Album data.

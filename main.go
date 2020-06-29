@@ -87,8 +87,15 @@ import (
 //	return album, nil
 //}
 func init() {
+	// 初始化album
 	err := InitAlbumData()
 	if err != nil {
+		log.Println(err)
+		return
+	}
+	//初始化productStore
+	err = InitStore()
+	if err!=nil {
 		log.Println(err)
 		return
 	}
@@ -96,10 +103,11 @@ func init() {
 
 func main() {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/album", showAlbum)
-	mux.HandleFunc("/like", addLike)
-	mux.HandleFunc("/createAlbum", createAlbum)
-	log.Println("Listening on port 4000")
+	//mux.HandleFunc("/album", showAlbum)
+	//mux.HandleFunc("/like", addLike)
+	//mux.HandleFunc("/createAlbum", createAlbum)
+	mux.HandleFunc("/buy", buy)
+	log.Println("Listening on 127.0.0.1:4000")
 	err := http.ListenAndServe("127.0.0.1:4000", mux)
 	if err != nil {
 		log.Println(err)
