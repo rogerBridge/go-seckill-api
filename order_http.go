@@ -40,7 +40,8 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	}
 	if ok {
 		// 生成订单信息
-		orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
+		//orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
+		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {
 			c := CommonResponse{
 				Code: 8002,
@@ -55,22 +56,22 @@ func buy(w http.ResponseWriter, r *http.Request) {
 			w.Write(content)
 			return
 		}
-		// 给用户的orderList里面添加商品表单
-		err = u.orderListAdd(orderNum)
-		if err!=nil {
-			c := CommonResponse{
-				Code: 8003,
-				Msg:  "向用户的orderList里面添加订单时发生了错误",
-				Data: nil,
-			}
-			content, err := commonResp(c)
-			if err!=nil {
-				errorHandle(w, errors.New(err.Error()), 500)
-			}
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(content)
-			return
-		}
+		//// 给用户的orderList里面添加商品表单
+		//err = u.orderListAdd(orderNum)
+		//if err!=nil {
+		//	c := CommonResponse{
+		//		Code: 8003,
+		//		Msg:  "向用户的orderList里面添加订单时发生了错误",
+		//		Data: nil,
+		//	}
+		//	content, err := commonResp(c)
+		//	if err!=nil {
+		//		errorHandle(w, errors.New(err.Error()), 500)
+		//	}
+		//	w.Header().Set("Content-Type", "application/json")
+		//	w.Write(content)
+		//	return
+		//}
 		// 给用户的已经购买的商品hash表里面的值添加数量
 		err = u.Bought(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {

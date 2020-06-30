@@ -63,11 +63,8 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	// 首先看商品数量是否合法?
-	if purchaseNum < 1 {
-		return false, errors.New("商品数量不合法!")
-	}
-	if purchaseNum > 2 {
-		return false, errors.New("购买商品数量超出限制!")
+	if purchaseNum < 1 || purchaseNum > 2 {
+		return false, errors.New("商品数量不合法或者购买商品数量超出限制!")
 	}
 	v, err := redis.Int(conn.Do("hexists", "user:"+u.UserId+":bought", productId))
 	if err != nil {
