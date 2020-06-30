@@ -87,14 +87,14 @@ import (
 //	return album, nil
 //}
 func init() {
-	// 初始化album
-	err := InitAlbumData()
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	//// 初始化album
+	//err := InitAlbumData()
+	//if err != nil {
+	//	log.Println(err)
+	//	return
+	//}
 	//初始化productStore
-	err = InitStore()
+	err := InitStore()
 	if err!=nil {
 		log.Println(err)
 		return
@@ -113,6 +113,10 @@ func main() {
 		log.Println(err)
 		return
 	}
+
+	//u := new(User)
+	//u.UserId = "leo2n"
+	//u.orderGenerator("123456", 1)
 }
 
 // 通过http post方法对redis进行操作
@@ -233,7 +237,7 @@ func createAlbum(w http.ResponseWriter, r *http.Request) {
 // 错误信息的处理
 func errorHandle(w http.ResponseWriter, err error, statusCode int) {
 	log.Println(err)
-	http.Error(w, http.StatusText(statusCode), statusCode)
+	http.Error(w, err.Error(), statusCode)
 }
 
 func showAlbum(w http.ResponseWriter, r *http.Request) {
