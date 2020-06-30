@@ -3,7 +3,10 @@ package main
 import (
 	"errors"
 	"net/http"
+	"sync"
 )
+
+var orderGeneratorLock sync.Mutex
 
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
 // 使用application/json的方式
@@ -17,7 +20,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 
 	buyReqPointer, err := decodeBuyReq(r.Body)
 	if err!=nil {
-		errorHandle(w, errors.New("req 解析为json时出错!"), 500)
+		errorHandle(w, errors.New("reqBody 解析为json时出错!"), 500)
 		return
 	}
 	// 一些数据校验部分, 校验用户id, productId, productNum
@@ -41,7 +44,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		// 生成订单信息
 		//orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
+		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum, &orderGeneratorLock)
 		if err!=nil {
 			c := CommonResponse{
 				Code: 8002,

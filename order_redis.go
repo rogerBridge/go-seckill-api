@@ -6,6 +6,7 @@ import (
 	"log"
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
 )
 
@@ -21,7 +22,7 @@ func InitStore() error {
 		return err
 	}
 	// 创造store:productId相关数据, 假设: wahaha的商品id是10000
-	err = conn.Send("hmset", "store:10000", "productName", "wahaha", "productId", "10000", "storeNum", "200")
+	err = conn.Send("hmset", "store:10000", "productName", "wahaha", "productId", "10000", "storeNum", "2000")
 	if err != nil {
 		log.Println(err, " 创建hash `store:10000`失败")
 		return err
@@ -41,20 +42,24 @@ type User struct {
 
 // 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productId string, purchaseNum int) (bool, error) {
-	conn := pool.Get()
-	defer conn.Close()
-	// 看指定商品的库存是否还充足?
-	leftNum, err := redis.Int(conn.Do("hget", "store:"+productId, "storeNum"))
-	//log.Printf("%T, %v", leftNum, leftNum)
-	if err != nil {
-		log.Println(err)
-		return false, err
-	}
-	if ok, err := u.UserFilter(productId, purchaseNum); leftNum-purchaseNum >= 0 && ok && err == nil {
-		log.Println("could buy it")
+	//conn := pool.Get()
+	//defer conn.Close()
+	//// 看指定商品的库存是否还充足?
+	//leftNum, err := redis.Int(conn.Do("hget", "store:"+productId, "storeNum"))
+	////log.Printf("%T, %v", leftNum, leftNum)
+	//if err != nil {
+	//	log.Println(err)
+	//	return false, err
+	//}
+	//if ok, _ := u.UserFilter(productId, purchaseNum); leftNum-purchaseNum >= 0 && ok {
+	//	log.Printf("%+v could buy it", u)
+	//	return true, nil
+	//}
+	//return false, errors.New("商品数量不足, 或者您不满足UserFilter函数要求!")
+	if ok, _ := u.UserFilter(productId, purchaseNum); ok {
 		return true, nil
 	}
-	return false, errors.New("商品数量不足, 或者您不满足UserFilter函数要求!")
+	return false, errors.New("不满足userFilter条件!")
 }
 
 // 检查用户是否满足购买某种商品的权限
@@ -66,6 +71,7 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	if purchaseNum < 1 || purchaseNum > 2 {
 		return false, errors.New("商品数量不合法或者购买商品数量超出限制!")
 	}
+	// 开始执行事务
 	v, err := redis.Int(conn.Do("hexists", "user:"+u.UserId+":bought", productId))
 	if err != nil {
 		log.Println(err)
@@ -80,7 +86,7 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 			log.Println(err)
 			return false, errors.New("hget user:userId:bought 时出现错误!")
 		}
-		if v > 0 && v < 2 { // 用户只能购买2件, 就是用户在v=1的时候, 还可以购买一次, 就是只可以购买2件
+		if v > 0 && v < limitNum { // 用户只能购买2件, 就是用户在v=1的时候, 还可以购买一次, 就是只可以购买2件
 			return true, nil
 		}
 	}
@@ -100,19 +106,38 @@ func orderNumberGenerator(length int) string {
 }
 
 // 生成订单
-func (u *User) orderGenerator(productId string, purchaseNum int) (string, error) {
+func (u *User) orderGenerator(productId string, purchaseNum int, m *sync.Mutex) (string, error) {
 	conn := pool.Get()
 	defer conn.Close()
-	// 注意啦, 把库存先搞掉
+	// 首先, 查一下库存
+	m.Lock()
+	leftNum, err := redis.Int(conn.Do("hget", "store:"+productId, "storeNum"))
+	m.Unlock()
+	if err!=nil {
+		log.Println(err)
+		return "", errors.New("查询库存时返回语句出现错误!")
+	}
+	if leftNum <= 0 {
+		log.Println("查询到的库存数量不足啊!")
+		return "", errors.New("查询到的库存数量不足啊!")
+	}
+	// 注意啦, 把库存先搞掉 :)
 	incrString := "-" + strconv.Itoa(purchaseNum)
-	err := conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
+	value, err := redis.Int(conn.Do("hincrby", "store:"+productId, "storeNum", incrString))
+	if err!=nil {
+		log.Println(err)
+		return "", errors.New("减少库存时出现错误!")
+	}
+	if value <0 {
+		return "", errors.New("库存告急!")
+	}
 	// 生成订单信息 key为: `order:[orderId]`, value为:
 	//    UserId      string
 	//    ProductId   string
 	//    OrderNum       int
 	//    OrderTime   string
 	orderNum := orderNumberGenerator(orderNumLength)
-	ok, err := redis.String(conn.Do("hmset", "order:"+orderNum, "userId", u.UserId, "productId", productId, "orderNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
+	ok, err := redis.String(conn.Do("hmset", "order:"+orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
 	if ok == "OK" {
 		log.Printf("%+v 购买 %s %d件成功", u, productId, purchaseNum)
 		return orderNum, nil
