@@ -112,18 +112,20 @@ func (u *User) orderGenerator(productId string, purchaseNum int, m *sync.Mutex) 
 	// 首先, 查一下库存
 	m.Lock()
 	leftNum, err := redis.Int(conn.Do("hget", "store:"+productId, "storeNum"))
-	m.Unlock()
 	if err!=nil {
 		log.Println(err)
+		m.Unlock()
 		return "", errors.New("查询库存时返回语句出现错误!")
 	}
 	if leftNum <= 0 {
 		log.Println("查询到的库存数量不足啊!")
+		m.Unlock()
 		return "", errors.New("查询到的库存数量不足啊!")
 	}
 	// 注意啦, 把库存先搞掉 :)
 	incrString := "-" + strconv.Itoa(purchaseNum)
 	value, err := redis.Int(conn.Do("hincrby", "store:"+productId, "storeNum", incrString))
+	m.Unlock()
 	if err!=nil {
 		log.Println(err)
 		return "", errors.New("减少库存时出现错误!")
