@@ -139,7 +139,7 @@ func (u *User) orderGenerator(productId string, purchaseNum int, m *sync.Mutex) 
 	//    OrderNum       int
 	//    OrderTime   string
 	orderNum := orderNumberGenerator(orderNumLength)
-	ok, err := redis.String(conn.Do("hmset", "order:"+orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
+	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
 	if ok == "OK" {
 		log.Printf("%+v 购买 %s %d件成功", u, productId, purchaseNum)
 		return orderNum, nil

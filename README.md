@@ -13,7 +13,7 @@
 
 - 流程
 
-    用户发送过来的请求, 首先会判断是否可以购买, 细节有: (不能超过限购数量, 不能超过库存数量), 如果满足购买条件, 就会生成订单, key为: `order:[orderId]`, value type为`hash`, value为: `userId int, productId string, orderNum int orderTime string`, 然后给用户相关的订单里面添加list, key为: `user:[userId]:orderNumList`, value type为: `list`, value为: `[orderNum]`, (orderNum的规则自定义, 这里定义的是单个字符的范围是: a-z, A-Z, 0-9, 长度为10的随机字符串), 最后是用户已经购买的商品id:商品数量, key为: `[user:userId:bought]`, value type为: `hash`, value为: `productId: purchaseNum`, 用这个可以快速的知道用户想要购买的某种商品是否已经超出了购买数量;
+    用户发送过来的请求, 首先会判断是否可以购买, 细节有: (不能超过限购数量, 不能超过库存数量), 如果满足购买条件, 就会生成订单, key为: `user:[userId]:order:[orderId]`, value type为`hash`, value为: `userId int, productId string, orderNum int orderTime string`, 然后给用户相关的订单里面添加list, key为: `user:[userId]:orderNumList`, value type为: `list`, value为: `[orderNum]`, (orderNum的规则自定义, 这里定义的是单个字符的范围是: a-z, A-Z, 0-9, 长度为10的随机字符串), 最后是用户已经购买的商品id:商品数量, key为: `[user:userId:bought]`, value type为: `hash`, value为: `productId: purchaseNum`, 用这个可以快速的知道用户想要购买的某种商品是否已经超出了购买数量;
 
 - 部署方法
 
@@ -22,7 +22,7 @@
 - 部署流程(后续还是搞一个docker吧~)
 
     1. 部署redis, 端口号: 6379, AUTH: "hello"
-    2. cd redis_play && go build -o redis_play *.go
+    2. cd redis_play && go build -o redis_play *.go && ./redis_play
     3. 运行redis_play, 如果使用的是VPS, 注意打开公网端口号: 6379
     4. 可以使用Postman测试, 或者用我的压测脚本, 位于pressure_test目录下,
        目前只覆盖了两种场景
