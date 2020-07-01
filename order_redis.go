@@ -22,13 +22,13 @@ func InitStore() error {
 		return err
 	}
 	// 创造store:productId相关数据, 假设: wahaha的商品id是10000
-	err = conn.Send("hmset", "store:10000", "productName", "wahaha", "productId", "10000", "storeNum", "2000")
+	err = conn.Send("hmset", "store:"+productId, "productName", productName, "productId", productId, "storeNum", storeNum)
 	if err != nil {
 		log.Println(err, " 创建hash `store:10000`失败")
 		return err
 	}
 	// 创造store:10001 相关的数据
-	err = conn.Send("hmset", "store:10001", "productName", "cola", "productId", "10001", "storeNum", "1000")
+	err = conn.Send("hmset", "store:10001", "productName", "cola", "productId", "10001", "storeNum", storeNum)
 	if err!=nil {
 		log.Println(err, " 创建hash `store:10001`失败")
 		return err
@@ -118,7 +118,7 @@ func (u *User) orderGenerator(productId string, purchaseNum int, m *sync.Mutex) 
 		return "", errors.New("查询库存时返回语句出现错误!")
 	}
 	if leftNum <= 0 {
-		log.Println("查询到的库存数量不足啊!")
+		log.Printf("用户 %+v 查询到的库存数量不足啊!", u)
 		m.Unlock()
 		return "", errors.New("查询到的库存数量不足啊!")
 	}

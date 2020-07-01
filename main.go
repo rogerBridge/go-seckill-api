@@ -113,7 +113,6 @@ func main() {
 		log.Println(err)
 		return
 	}
-
 	//u := new(User)
 	//u.UserId = "leo2n"
 	//u.orderGenerator("123456", 1)

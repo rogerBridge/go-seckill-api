@@ -48,7 +48,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 		if err!=nil {
 			c := CommonResponse{
 				Code: 8002,
-				Msg:  "生成订单时发生了错误",
+				Msg:  "库存数量不足呀~",
 				Data: nil,
 			}
 			content, err := commonResp(c)
