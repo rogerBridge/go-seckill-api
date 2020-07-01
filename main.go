@@ -104,6 +104,8 @@ func main() {
 	//mux.HandleFunc("/like", addLike)
 	//mux.HandleFunc("/createAlbum", createAlbum)
 	mux.HandleFunc("/buy", buy)
+	// "/cancelBuy" 这个接口只能由后台来调用
+	mux.HandleFunc("/cancelBuy", cancelBuy)
 	log.Println("Listening on 127.0.0.1:4000")
 	err := http.ListenAndServe("127.0.0.1:4000", mux)
 	if err != nil {

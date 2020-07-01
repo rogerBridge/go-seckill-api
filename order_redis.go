@@ -184,3 +184,27 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 	}
 	return nil
 }
+
+// redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userId]:bought 中特定key对应的value
+// 订单中心传给我们的数据可以保证: 1. 用户已经下单过了 2. 购买数量是合法的
+func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error {
+	conn := pool.Get()
+	defer conn.Close()
+
+	// 恢复库存数和改变 user:[userId]:bought 中特定key对应的value
+	m.Lock()
+	incrString := strconv.Itoa(purchaseNum)
+	err := conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
+	if err!=nil {
+		log.Printf("%+v 取消订单时出错 @store:productId", u)
+		return errors.New(u.UserId+"取消订单时出错 @store:productId")
+	}
+	// 然后, 改变: user:[userId]:bought 这个hash表里面key对应的value
+	err = conn.Send("hincrby", "user:"+u.UserId+":bought", productId, "-"+incrString)
+	if err!=nil {
+		log.Printf("%+v 取消订单时出错 @user:[userId]:bought")
+		return errors.New(u.UserId+"取消订单时出错 @store:productId")
+	}
+	m.Unlock()
+	return nil
+}

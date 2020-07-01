@@ -18,16 +18,17 @@ func main() {
 
 	start := 10000
 	end := start + concurrentNum
-	//for i := start; i < end; i++ {
-	//	w.Add(1)
-	//	go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
-	//}
-	for i:=start; i<20000; i++ {
-		w.Add(2)
-		// userId 范围10000~19999的抢购"10000", userId 范围20000~29999的抢购"10001"
+	//  20000人同时抢购"10000"这件商品
+	for i := start; i < end; i++ {
+		w.Add(1)
 		go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
-		go singleRequest(strconv.Itoa(i+10000), "10001", &w, timeStatistics)
 	}
+	//for i:=start; i<20000; i++ {
+	//	w.Add(2)
+	//	// userId 范围10000~19999的抢购"10000", userId 范围20000~29999的抢购"10001"
+	//	go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
+	//	go singleRequest(strconv.Itoa(i+10000), "10001", &w, timeStatistics)
+	//}
 	w.Wait()
 	// 关闭时间统计队列, 开始我们的计算!
 	close(timeStatistics)
