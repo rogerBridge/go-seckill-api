@@ -27,6 +27,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	// 一些数据校验部分, 校验用户id, productId, productNum
 	u:= new(User)
 	u.UserId = buyReqPointer.UserId
+	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 	if err!=nil {
 		c := CommonResponse{
@@ -123,7 +124,6 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 		errorHandle(w, errors.New("reqBody解析到struct时出错!"), 500)
 		return
 	}
-	//
 	u := new(User)
 	u.UserId = cancelBuyReqPointer.UserId
 	err = u.CancelBuy(cancelBuyReqPointer.ProductId, cancelBuyReqPointer.PurchaseNum, &cancelBuyLock)
