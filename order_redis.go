@@ -193,18 +193,47 @@ func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error
 
 	// 恢复库存数和改变 user:[userId]:bought 中特定key对应的value
 	m.Lock()
-	incrString := strconv.Itoa(purchaseNum)
-	err := conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
+	// 首先看用户是否购买过特定商品
+	isExist, err := redis.Int(conn.Do("hexists", "user:"+u.UserId+":bought", productId))
 	if err!=nil {
-		log.Printf("%+v 取消订单时出错 @store:productId", u)
-		return errors.New(u.UserId+"取消订单时出错 @store:productId")
+		log.Printf("%+v 查询user:userId:bought时出错!", u)
+		m.Unlock()
+		return err
 	}
-	// 然后, 改变: user:[userId]:bought 这个hash表里面key对应的value
-	err = conn.Send("hincrby", "user:"+u.UserId+":bought", productId, "-"+incrString)
-	if err!=nil {
-		log.Printf("%+v 取消订单时出错 @user:[userId]:bought")
-		return errors.New(u.UserId+"取消订单时出错 @store:productId")
+	if isExist == 0 {
+		log.Printf("%+v 没有购买过%s", u, productId)
+		m.Unlock()
+		return errors.New("没有购买过的东东, 不可以取消哦~")
+	} else {
+		// 人家用户真的购买过...
+		existPurchaseNum, err := redis.Int(conn.Do("hget", "user:"+u.UserId+":bought", productId))
+		if err!=nil {
+			log.Printf("%+v 获取已购买商品%s时出现错误! %+v", u, productId, err)
+			m.Unlock()
+			return err
+		}
+		if !(existPurchaseNum>=purchaseNum) {
+			log.Printf("%+v 已购买数量减去登记的购买数量时出现了错误!", u)
+			m.Unlock()
+			return errors.New("取消购买的数量不能大于购买的数量!")
+		}
+		// 返回库存
+		incrString := strconv.Itoa(purchaseNum)
+		err = conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
+		if err!=nil {
+			log.Printf("%+v 取消订单时出错 @store:productId", u)
+			m.Unlock()
+			return errors.New(u.UserId+"取消订单时出错 @store:productId")
+		}
+		// 然后, 改变: user:[userId]:bought 这个hash表里面key对应的value
+		err = conn.Send("hincrby", "user:"+u.UserId+":bought", productId, "-"+incrString)
+		if err!=nil {
+			log.Printf("%+v 取消订单时出错 @user:[userId]:bought", u)
+			m.Unlock()
+			return errors.New(u.UserId+"取消订单时出错 @store:productId")
+		}
+		m.Unlock()
+		return nil
 	}
-	m.Unlock()
-	return nil
+	return errors.New("unkonwn bug")
 }
