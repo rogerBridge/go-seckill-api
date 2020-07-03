@@ -74,17 +74,9 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	return false, errors.New("购买数量过大或者其他错误!")
 }
 
-// 开始购买, 创建订单, hash的key名称格式是: order:[randomlen10], 并且将key作为用户orderList 这个list里面的值
+// ksuid
 func orderNumberGenerator() string {
 	return ksuid.New().String()
-	//// 生成随机数必备
-	//rand.Seed(time.Now().UnixNano())
-	//letters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	//b := make([]byte, length)
-	//for i := range b {
-	//	b[i] = letters[rand.Intn(len(letters))]
-	//}
-	//return string(b)
 }
 
 // 生成订单
