@@ -41,7 +41,7 @@ func main() {
 	for t := range timeStatistics {
 		timeStatisticsList = append(timeStatisticsList, t)
 	}
-	playTimeStatisticsList(timeStatisticsList)
+	playTimeStatisticsList(timeStatisticsList, t1)
 
 	//// 服务器直接拒绝的情况, 会出现吗阿哈
 	//badNum := 0
@@ -51,7 +51,7 @@ func main() {
 	//log.Printf("服务器没有响应的请求数量:", badNum)
 }
 
-func playTimeStatisticsList(timeStatisticsList []float64) {
+func playTimeStatisticsList(timeStatisticsList []float64, allTime float64) {
 	// 请求未完成, 中途夭折的请求的数量
 	errorNum := concurrentNum - len(timeStatisticsList)
 	log.Println("无效请求数量:", errorNum)
@@ -84,5 +84,5 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 	log.Println("在2~3秒内服务器就有返回的请求数量是:", durationB2And3)
 	log.Println("在3~4秒内服务器就有返回的请求数量是:", durationB3And4)
 	log.Println("在4~5秒内服务器就有返回的请求数量是:", durationB4And5)
-	log.Println("在大于5秒内服务器就有返回的请求数量是:", durationBiggerThan5)
+	log.Printf("在5~%.4f秒内服务器就有返回的请求数量是:%d", allTime, errorNum)
 }
