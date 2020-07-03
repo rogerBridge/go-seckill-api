@@ -15,6 +15,7 @@ type CancelBuyReq struct {
 	UserId      string `json:"userId"`
 	ProductId   string `json:"productId"`
 	PurchaseNum int    `json:"purchaseNum"`
+	OrderNum    string `json:"orderNum"`
 }
 
 func decodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
@@ -29,7 +30,7 @@ func decodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
 func decodeCancelBuyReq(cancelBuyReq io.ReadCloser) (*CancelBuyReq, error) {
 	b := new(CancelBuyReq)
 	err := json.NewDecoder(cancelBuyReq).Decode(b)
-	if err!=nil {
+	if err != nil {
 		return new(CancelBuyReq), err
 	}
 	return b, nil

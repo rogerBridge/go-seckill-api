@@ -118,7 +118,7 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 解析: /cancelBuy接口传过来的三个参数
+	// 解析: /cancelBuy接口传过来的四个参数, userId, productId, purchaseNum, orderId
 	cancelBuyReqPointer, err := decodeCancelBuyReq(r.Body)
 	if err!=nil {
 		errorHandle(w, errors.New("reqBody解析到struct时出错!"), 500)
@@ -126,7 +126,7 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 	}
 	u := new(User)
 	u.UserId = cancelBuyReqPointer.UserId
-	err = u.CancelBuy(cancelBuyReqPointer.ProductId, cancelBuyReqPointer.PurchaseNum, &cancelBuyLock)
+	err = u.CancelBuy(cancelBuyReqPointer.ProductId, cancelBuyReqPointer.PurchaseNum, cancelBuyReqPointer.OrderNum, &cancelBuyLock)
 	if err!=nil {
 		c := CommonResponse{
 			Code: 8006,

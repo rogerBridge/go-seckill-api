@@ -139,7 +139,7 @@ func (u *User) orderGenerator(productId string, purchaseNum int, m *sync.Mutex) 
 	//    OrderNum       int
 	//    OrderTime   string
 	orderNum := orderNumberGenerator(orderNumLength)
-	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
+	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "orderNum", orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
 	if ok == "OK" {
 		log.Printf("%+v 购买 %s %d件成功", u, productId, purchaseNum)
 		return orderNum, nil
@@ -187,7 +187,7 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 
 // redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userId]:bought 中特定key对应的value
 // 订单中心传给我们的数据可以保证: 1. 用户已经下单过了 2. 购买数量是合法的
-func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error {
+func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *sync.Mutex) error {
 	conn := pool.Get()
 	defer conn.Close()
 
@@ -195,9 +195,24 @@ func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error
 	if purchaseNum <= 0 {
 		return errors.New("数量有误")
 	}
+	if len(orderNum) != 10 {
+		return errors.New("orderNum参数有误")
+	}
 	// 恢复库存数和改变 user:[userId]:bought 中特定key对应的value
+	// 查看订单号是否存在?
 	m.Lock()
-	// 首先看用户是否购买过特定商品
+	isOrderExist, err := redis.Int(conn.Do("exists", "user:"+u.UserId+":order:"+orderNum))
+	if err!=nil {
+		log.Printf("%+v 查询user:%s:order:%s 时出错!", u, u.UserId, orderNum)
+		m.Unlock()
+		return err
+	}
+	if isOrderExist == 0 {
+		log.Printf("%+v 查询user:%s:order:%s 时不存在!", u, u.UserId, orderNum)
+		m.Unlock()
+		return errors.New("系统中没有找到该订单!")
+	}
+	// 看用户购买记录hash里是否有这件商品
 	isExist, err := redis.Int(conn.Do("hexists", "user:"+u.UserId+":bought", productId))
 	if err != nil {
 		log.Printf("%+v 查询user:userId:bought时出错!", u)
@@ -221,6 +236,19 @@ func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error
 			m.Unlock()
 			return errors.New("取消购买的数量不能大于购买的数量!")
 		}
+		// 删除这个订单
+		isDelSuccessful, err := redis.Int(conn.Do("del", "user:"+u.UserId+":order:"+orderNum))
+		if err!=nil {
+			log.Printf("%+v 尝试删除订单: %s 时出现错误!", u, orderNum)
+			return err
+		}
+		// 存在订单的情况下, 流程才能走到这里呀~
+		if isDelSuccessful != 1 {
+			log.Printf("系统中已经不存在这个订单: %s", orderNum)
+			return errors.New("系统中不存在这个订单!")
+		} else {
+			log.Printf("%+v 删除订单: user:%s:order:%s 成功!", u, u.UserId, orderNum)
+		}
 		// 返回库存
 		incrString := strconv.Itoa(purchaseNum)
 		err = conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
@@ -239,5 +267,4 @@ func (u *User) CancelBuy(productId string, purchaseNum int, m *sync.Mutex) error
 		m.Unlock()
 		return nil
 	}
-	return errors.New("unkonwn bug")
 }
