@@ -254,8 +254,8 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 		}
 		// 存在订单的情况下, 流程才能走到这里呀~
 		if isDelSuccessful != 1 {
-			log.Printf("系统中已经不存在这个订单: %s", orderNum)
-			return errors.New("系统中不存在这个订单!")
+			log.Printf("删除订单不成功: %s", orderNum)
+			return errors.New("删除订单不成功")
 		} else {
 			log.Printf("%+v 删除订单: user:%s:order:%s 成功!", u, u.UserId, orderNum)
 		}
