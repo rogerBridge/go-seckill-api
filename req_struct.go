@@ -13,8 +13,6 @@ type BuyReq struct {
 
 type CancelBuyReq struct {
 	UserId      string `json:"userId"`
-	ProductId   string `json:"productId"`
-	PurchaseNum int    `json:"purchaseNum"`
 	OrderNum    string `json:"orderNum"`
 }
 

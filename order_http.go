@@ -126,7 +126,7 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 	}
 	u := new(User)
 	u.UserId = cancelBuyReqPointer.UserId
-	err = u.CancelBuy(cancelBuyReqPointer.ProductId, cancelBuyReqPointer.PurchaseNum, cancelBuyReqPointer.OrderNum, &cancelBuyLock)
+	err = u.CancelBuy(cancelBuyReqPointer.OrderNum, &cancelBuyLock)
 	if err!=nil {
 		c := CommonResponse{
 			Code: 8006,

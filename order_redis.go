@@ -192,16 +192,11 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 }
 
 // redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userId]:bought 中特定key对应的value
+// 讲道理, 取消订单的话, 就不需要传入productId和purchaseNum了
 // 订单中心传给我们的数据可以保证: 1. 用户已经下单过了 2. 购买数量是合法的
-func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *sync.Mutex) error {
+func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 	conn := pool.Get()
 	defer conn.Close()
-
-	// 首先, 判断参数是否合法, 用户合法性网关替我们做判断, 商品合法性, 暂时不做了
-	if purchaseNum <= 0 {
-		return errors.New("数量有误")
-	}
-	// 恢复库存数和改变 user:[userId]:bought 中特定key对应的value
 	// 查看订单号是否存在?
 	m.Lock()
 	isOrderExist, err := redis.Int(conn.Do("exists", "user:"+u.UserId+":order:"+orderNum))
@@ -216,6 +211,18 @@ func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *
 		return errors.New("系统中没有找到该订单!")
 	}
 	// 看用户购买记录hash里是否有这件商品
+	// 根据订单号找出来商品的productId, purchaseNum
+	productId, err := redis.String(conn.Do("hget", "user:"+u.UserId+":order:"+orderNum, "productId"))
+	if err!=nil {
+		log.Printf("hget user:%s:order:%s productId error", u.UserId, orderNum)
+		return err
+	}
+	purchaseNum, err := redis.Int(conn.Do("hget", "user:"+u.UserId+":order:"+orderNum, "purchaseNum"))
+	if err!=nil {
+		log.Printf("hget user:%s:order:%s purchaseNum error", u.UserId, orderNum)
+		return err
+	}
+
 	isExist, err := redis.Int(conn.Do("hexists", "user:"+u.UserId+":bought", productId))
 	if err != nil {
 		log.Printf("%+v 查询user:userId:bought时出错!", u)
@@ -252,7 +259,7 @@ func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *
 		} else {
 			log.Printf("%+v 删除订单: user:%s:order:%s 成功!", u, u.UserId, orderNum)
 		}
-		// 返回库存
+		// 返还库存
 		incrString := strconv.Itoa(purchaseNum)
 		err = conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
 		if err != nil {
