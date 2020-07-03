@@ -25,9 +25,12 @@
     1. 部署redis, 端口号: 6379, AUTH: "hello"
     2. cd redis_play && go build -o redis_play *.go && ./redis_play
     3. 运行redis_play, 如果使用的是VPS, 注意打开公网端口号: 6379
-    4. 可以使用Postman测试, 或者用我的压测脚本, 位于pressure_test目录下,
-       目前只覆盖了两种场景
-    
+    4. 可以使用Postman测试功能, 用位于pressure_test目录下的压测脚本测试并发性能, 
+       目前只覆盖了两种场景(1. 20000名用户同时抢购productId: 10000的商品(库存:200), 2. 20000名用户同时抢购2种商品, productId:10000, productId:10001, per 200件库存)
+
+- 注意:
+
+    redis.conf里面的maxclients默认是10000, 我发现用20000clients去测试的时候, 会报错, 所以最好修改的大一点吧(😉我就改了10w)
 - 性能测试
 
     - 测试场景

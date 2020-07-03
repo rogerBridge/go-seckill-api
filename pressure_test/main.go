@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// 同时请求的client数量
 var concurrentNum = 20000
 
 // 这个包对已经写成的功能模块进行压力测试
