@@ -46,7 +46,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		// 生成订单信息
 		//orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum, &orderGeneratorLock)
+		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {
 			c := CommonResponse{
 				Code: 8002,
