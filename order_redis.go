@@ -4,7 +4,8 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"log"
-	"math/rand"
+	//"math/rand"
+	"github.com/segmentio/ksuid"
 	"strconv"
 	"sync"
 	"time"
@@ -15,6 +16,10 @@ func InitStore() error {
 	conn := pool.Get()
 	defer conn.Close()
 
+	// 单个用户允许购买的最大数必须小于等于库存数
+	if !(limitNum<=storeNum) {
+		return errors.New("单个用户允许购买的最大值>库存数, 这是不允许的!")
+	}
 	// 首先, flush redis
 	err := conn.Send("flushdb")
 	if err != nil {
@@ -95,14 +100,15 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 
 // 开始购买, 创建订单, hash的key名称格式是: order:[randomlen10], 并且将key作为用户orderList 这个list里面的值
 func orderNumberGenerator(length int) string {
-	// 生成随机数必备
-	rand.Seed(time.Now().UnixNano())
-	letters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = letters[rand.Intn(len(letters))]
-	}
-	return string(b)
+	return ksuid.New().String()
+	//// 生成随机数必备
+	//rand.Seed(time.Now().UnixNano())
+	//letters := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+	//b := make([]byte, length)
+	//for i := range b {
+	//	b[i] = letters[rand.Intn(len(letters))]
+	//}
+	//return string(b)
 }
 
 // 生成订单
@@ -195,14 +201,11 @@ func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *
 	if purchaseNum <= 0 {
 		return errors.New("数量有误")
 	}
-	if len(orderNum) != 10 {
-		return errors.New("orderNum参数有误")
-	}
 	// 恢复库存数和改变 user:[userId]:bought 中特定key对应的value
 	// 查看订单号是否存在?
 	m.Lock()
 	isOrderExist, err := redis.Int(conn.Do("exists", "user:"+u.UserId+":order:"+orderNum))
-	if err!=nil {
+	if err != nil {
 		log.Printf("%+v 查询user:%s:order:%s 时出错!", u, u.UserId, orderNum)
 		m.Unlock()
 		return err
@@ -238,7 +241,7 @@ func (u *User) CancelBuy(productId string, purchaseNum int, orderNum string, m *
 		}
 		// 删除这个订单
 		isDelSuccessful, err := redis.Int(conn.Do("del", "user:"+u.UserId+":order:"+orderNum))
-		if err!=nil {
+		if err != nil {
 			log.Printf("%+v 尝试删除订单: %s 时出现错误!", u, orderNum)
 			return err
 		}
