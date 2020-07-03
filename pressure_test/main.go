@@ -84,5 +84,5 @@ func playTimeStatisticsList(timeStatisticsList []float64, allTime float64) {
 	log.Println("在2~3秒内服务器就有返回的请求数量是:", durationB2And3)
 	log.Println("在3~4秒内服务器就有返回的请求数量是:", durationB3And4)
 	log.Println("在4~5秒内服务器就有返回的请求数量是:", durationB4And5)
-	log.Printf("在5~%.4f秒内服务器就有返回的请求数量是:%d", allTime, errorNum)
+	log.Printf("在5~%.4f秒内服务器就有返回的请求数量是:%d", allTime, durationBiggerThan5)
 }
