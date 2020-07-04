@@ -32,7 +32,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	if err!=nil {
 		c := CommonResponse{
 			Code: 8005,
-			Msg:  "商品数量不足或者您购买的商品数量已达到上限!",
+			Msg:  "您购买的商品数量已达到上限!",
 			Data: nil,
 		}
 		content, err := commonResp(c)
