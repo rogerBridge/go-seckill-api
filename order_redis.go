@@ -99,7 +99,7 @@ func (u *User) orderGenerator(productId string, purchaseNum int) (string, error)
 		return "", errors.New("库存数量不够客户想要的")
 	}
 	orderNum := orderNumberGenerator()
-	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "orderNum", orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05")))
+	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "orderNum", orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
 	if err != nil {
 		log.Printf("%+v", err)
 		return "", err
@@ -149,7 +149,7 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 	conn := pool.Get()
 	defer conn.Close()
-	// 查看订单号是否存在?
+	// 查看订单号是否存在? && 状态是否是process
 	m.Lock()
 	isOrderExist, err := redis.Int(conn.Do("exists", "user:"+u.UserId+":order:"+orderNum))
 	if err != nil {
@@ -161,6 +161,17 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 		log.Printf("%+v 查询user:%s:order:%s 时不存在!", u, u.UserId, orderNum)
 		m.Unlock()
 		return errors.New("系统中没有找到该订单!")
+	}
+	status, err := redis.String(conn.Do("hget", "user:"+u.UserId+":order:"+orderNum, "status"))
+	if err!=nil {
+		log.Printf("%+v 获取用户:%s订单:%s合法性的时候出现了错误!", u, u.UserId, orderNum)
+		m.Unlock()
+		return err
+	}
+	if status != "process" {
+		log.Printf("%+v 订单%s状态不对", u, orderNum)
+		m.Unlock()
+		return errors.New("订单状态不对")
 	}
 	// 看用户购买记录hash里是否有这件商品
 	// 根据订单号找出来商品的productId, purchaseNum
@@ -198,18 +209,10 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 			m.Unlock()
 			return errors.New("取消购买的数量不能大于购买的数量!")
 		}
-		// 删除这个订单
-		isDelSuccessful, err := redis.Int(conn.Do("del", "user:"+u.UserId+":order:"+orderNum))
-		if err != nil {
-			log.Printf("%+v 尝试删除订单: %s 时出现错误!", u, orderNum)
-			return err
-		}
-		// 存在订单的情况下, 流程才能走到这里呀~
-		if isDelSuccessful != 1 {
-			log.Printf("删除订单不成功: %s", orderNum)
-			return errors.New("删除订单不成功")
-		} else {
-			log.Printf("%+v 删除订单: user:%s:order:%s 成功!", u, u.UserId, orderNum)
+		// 给这个订单打个tag status:cancel
+		_, err = redis.Int(conn.Do("hset", "user:"+u.UserId+":order:"+orderNum, "status", "cancel"))
+		if err!=nil {
+			log.Printf("%+v 尝试更改订单: %s 状态时出现错误!", u, orderNum)
 		}
 		// 返还库存
 		incrString := strconv.Itoa(purchaseNum)
