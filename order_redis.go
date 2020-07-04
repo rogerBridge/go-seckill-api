@@ -171,7 +171,7 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 	if status != "process" {
 		log.Printf("%+v 订单%s状态不对", u, orderNum)
 		m.Unlock()
-		return errors.New("订单状态不对")
+		return errors.New("订单状态错误!应该是process")
 	}
 	// 看用户购买记录hash里是否有这件商品
 	// 根据订单号找出来商品的productId, purchaseNum
