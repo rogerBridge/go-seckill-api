@@ -16,28 +16,20 @@ func InitStore() error {
 	conn := pool.Get()
 	defer conn.Close()
 
-	// 单个用户允许购买的最大数必须小于等于库存数
-	if !(limitNumMap["default"] <= storeNum) {
-		return errors.New("单个用户允许购买的最大值>库存数, 这是不允许的!")
-	}
 	// 首先, flush redis
 	err := conn.Send("flushdb")
 	if err != nil {
 		log.Println("flushdb err", err)
 		return err
 	}
-	// 创造store:productId相关数据, 假设: wahaha的商品id是10000
-	err = conn.Send("hmset", "store:"+productId, "productName", productName, "productId", productId, "storeNum", storeNum)
-	if err != nil {
-		log.Println(err, " 创建hash `store:10000`失败")
-		return err
+	for i:=0; i<len(pList); i++ {
+		err = conn.Send("hmset", "store:"+pList[i].ProductId, "productName", pList[i].ProductName, "productId", pList[i].ProductId, "storeNum", pList[i].StoreNum)
+		if err != nil {
+			log.Printf("%+v创建hash `store:%s`失败", err, pList[i].ProductId)
+			return err
+		}
 	}
-	// 创造store:10001 相关的数据
-	err = conn.Send("hmset", "store:10001", "productName", "cola", "productId", "10001", "storeNum", storeNum)
-	if err != nil {
-		log.Println(err, " 创建hash `store:10001`失败")
-		return err
-	}
+	log.Printf("store hash 初始化完成!")
 	return nil
 }
 
@@ -47,6 +39,11 @@ type User struct {
 
 // 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productId string, purchaseNum int) (bool, error) {
+	_, ok := limitNumMap[productId]
+	if !ok {
+		log.Printf("请求的商品不在限购名单中, 不合法")
+		return false, errors.New("请求的商品不在限购名单中, 不合法")
+	}
 	if purchaseNum < 1 || purchaseNum > limitNumMap[productId] {
 		return false, errors.New("商品数量不合法或者购买商品数量超出限制!")
 	}
@@ -58,7 +55,6 @@ func (u *User) CanBuyIt(productId string, purchaseNum int) (bool, error) {
 }
 
 // 检查用户是否满足购买某种商品的权限
-// 比如说一个用户最多可以购买2个
 func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
