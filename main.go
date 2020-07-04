@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"runtime"
 )
 
 //
@@ -90,6 +91,7 @@ func init() {
 	//	log.Println(err)
 	//	return
 	//}
+	runtime.GOMAXPROCS(1)
 	//初始化productStore
 	err := InitStore()
 	if err!=nil {

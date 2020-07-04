@@ -17,7 +17,7 @@ func InitStore() error {
 	defer conn.Close()
 
 	// 单个用户允许购买的最大数必须小于等于库存数
-	if !(limitNum <= storeNum) {
+	if !(limitNumMap["default"] <= storeNum) {
 		return errors.New("单个用户允许购买的最大值>库存数, 这是不允许的!")
 	}
 	// 首先, flush redis
@@ -47,7 +47,7 @@ type User struct {
 
 // 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productId string, purchaseNum int) (bool, error) {
-	if purchaseNum < 1 || purchaseNum > limitNum {
+	if purchaseNum < 1 || purchaseNum > limitNumMap[productId] {
 		return false, errors.New("商品数量不合法或者购买商品数量超出限制!")
 	}
 
@@ -68,7 +68,7 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	if err != nil {
 		return true, nil
 	}
-	if r>=0 && (r+purchaseNum) <= limitNum {
+	if r>=0 && (r+purchaseNum) <= limitNumMap[productId] {
 		return true, nil
 	}
 	return false, errors.New("购买数量过大或者其他错误!")
@@ -146,8 +146,6 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 }
 
 // redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userId]:bought 中特定key对应的value
-// 讲道理, 取消订单的话, 就不需要传入productId和purchaseNum了
-// 订单中心传给我们的数据可以保证: 1. 用户已经下单过了 2. 购买数量是合法的
 func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 	conn := pool.Get()
 	defer conn.Close()
