@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
-	"runtime"
+	"sync"
 )
 
 //
@@ -91,13 +91,27 @@ func init() {
 	//	log.Println(err)
 	//	return
 	//}
-	runtime.GOMAXPROCS(1)
-	//初始化productStore
+	// 初始化productStore
+	var wg sync.WaitGroup
+	// 给连接池多搞点conn
+	for i := 0; i < 20000; i++ {
+		wg.Add(1)
+		pushConnToPool(&wg)
+	}
+	wg.Wait()
+	log.Printf("conn 预热完成!\n")
+
 	err := InitStore()
-	if err!=nil {
+	if err != nil {
 		log.Println(err)
 		return
 	}
+}
+
+func pushConnToPool(wg *sync.WaitGroup) {
+	conn := pool.Get()
+	defer conn.Close()
+	wg.Done()
 }
 
 func main() {
