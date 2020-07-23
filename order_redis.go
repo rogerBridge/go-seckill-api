@@ -87,7 +87,7 @@ func (u *User) orderGenerator(productId string, purchaseNum int) (string, error)
 		return "", errors.New("减少库存时出现错误!")
 	}
 	if value < 0 {
-		// 比如说客户想要2件, 这里只有一件, 那就在拒绝客户之后, 把之前减掉的库存再加回来
+		// 比如说客户想要2件, 这里只有一件, 那这波操作之后, 库存就成了-1了, 这是不可接受的, 在拒绝客户之后, 把之前减掉的库存再加回来
 		err := conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
 		if err != nil {
 			log.Fatalf("%+v 加库存的时候出现了错误!", u)
