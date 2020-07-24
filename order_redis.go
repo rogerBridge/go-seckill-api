@@ -4,11 +4,12 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"log"
+	"time"
+
 	//"math/rand"
 	"github.com/segmentio/ksuid"
 	"strconv"
 	"sync"
-	"time"
 )
 
 // 首先, 初始化redis中待抢购的商品信息
@@ -59,11 +60,13 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
 
-	// hget 如果数据库中没有这个hash, 那返回一个空值
+	// hget 用户是否已经购买过了?
 	r, err := redis.Int(conn.Do("hget", "user:"+u.UserId+":bought", productId))
-	if err != nil {
+	// 如果用户没有购买过
+	if err == redis.ErrNil {
 		return true, nil
 	}
+	// 如果用户已经购买过, 那么这次购买+之前购买的数量不可以超过总体的限制
 	if r>=0 && (r+purchaseNum) <= limitNumMap[productId] {
 		return true, nil
 	}

@@ -2,11 +2,17 @@ package main
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"sync"
 )
 
 var orderGeneratorLock sync.Mutex
+
+func errorHandle(w http.ResponseWriter, err error, code int) {
+	log.Println(err)
+	http.Error(w, err.Error(), code)
+}
 
 var cancelBuyLock sync.Mutex
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
@@ -61,22 +67,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 			w.Write(content)
 			return
 		}
-		//// 给用户的orderList里面添加商品表单
-		//err = u.orderListAdd(orderNum)
-		//if err!=nil {
-		//	c := CommonResponse{
-		//		Code: 8003,
-		//		Msg:  "向用户的orderList里面添加订单时发生了错误",
-		//		Data: nil,
-		//	}
-		//	content, err := commonResp(c)
-		//	if err!=nil {
-		//		errorHandle(w, errors.New(err.Error()), 500)
-		//	}
-		//	w.Header().Set("Content-Type", "application/json")
-		//	w.Write(content)
-		//	return
-		//}
+
 		// 给用户的已经购买的商品hash表里面的值添加数量
 		err = u.Bought(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {
@@ -93,6 +84,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 			w.Write(content)
 			return
 		}
+
 		//w.Header().Set("application/json", "json")
 		c := CommonResponse{
 			Code: 8001,

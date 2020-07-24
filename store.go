@@ -20,7 +20,7 @@ var p2 = Product{
 
 var p3 = Product{
 	ProductId:   "10002",
-	StoreNum:    100,
+	StoreNum:    500,
 	ProductName: "挖掘机",
 }
 

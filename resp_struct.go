@@ -12,10 +12,6 @@ type CommonResponse struct {
 	Data interface{} `json:"data"`
 }
 
-type BuyResp struct {
-
-}
-
 func commonResp(c CommonResponse) ([]byte, error){
 	v, err := json.Marshal(c)
 	if err!=nil {
