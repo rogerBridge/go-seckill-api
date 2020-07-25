@@ -50,7 +50,6 @@ func singleRequest(userId string, productId string, w *sync.WaitGroup, timeStati
 	}
 	// 服务器无效响应
 	if resp.StatusCode != 200 {
-		//badStatus <- 1
 		return false, err // 在把时间段返回给服务器的时候就已经return了, timestatistics channel里面收不到数值
 	}
 

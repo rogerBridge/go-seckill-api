@@ -52,7 +52,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	if ok {
 		// 生成订单信息
 		//orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
+		orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {
 			c := CommonResponse{
 				Code: 8002,
@@ -88,7 +88,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 		//w.Header().Set("application/json", "json")
 		c := CommonResponse{
 			Code: 8001,
-			Msg:  "操作成功!",
+			Msg:  "操作成功, 生成的订单号是:" + orderNum,
 			Data: nil,
 		}
 		content, err := commonResp(c)

@@ -4,8 +4,6 @@ import (
 	"errors"
 	"github.com/gomodule/redigo/redis"
 	"log"
-	"time"
-
 	//"math/rand"
 	"github.com/segmentio/ksuid"
 	"strconv"
@@ -23,7 +21,7 @@ func InitStore() error {
 		log.Println("flushdb err", err)
 		return err
 	}
-	for i:=0; i<len(pList); i++ {
+	for i := 0; i < len(pList); i++ {
 		err = conn.Send("hmset", "store:"+pList[i].ProductId, "productName", pList[i].ProductName, "productId", pList[i].ProductId, "storeNum", pList[i].StoreNum)
 		if err != nil {
 			log.Printf("%+v创建hash `store:%s`失败", err, pList[i].ProductId)
@@ -67,7 +65,7 @@ func (u *User) UserFilter(productId string, purchaseNum int) (bool, error) {
 		return true, nil
 	}
 	// 如果用户已经购买过, 那么这次购买+之前购买的数量不可以超过总体的限制
-	if r>=0 && (r+purchaseNum) <= limitNumMap[productId] {
+	if r >= 0 && (r+purchaseNum) <= limitNumMap[productId] {
 		return true, nil
 	}
 	return false, errors.New("购买数量过大或者其他错误!")
@@ -82,6 +80,7 @@ func orderNumberGenerator() string {
 func (u *User) orderGenerator(productId string, purchaseNum int) (string, error) {
 	conn := pool.Get()
 	defer conn.Close()
+	orderNum := orderNumberGenerator()
 	// 我只需要知道当前库存减去purchaseNum是否大于等于0就可
 	incrString := strconv.Itoa(purchaseNum)
 	value, err := redis.Int(conn.Do("hincrby", "store:"+productId, "storeNum", "-"+incrString))
@@ -89,7 +88,9 @@ func (u *User) orderGenerator(productId string, purchaseNum int) (string, error)
 		log.Println(err)
 		return "", errors.New("减少库存时出现错误!")
 	}
-	if value < 0 {
+	if value >= 0 {
+		return orderNum, nil
+	} else {
 		// 比如说客户想要2件, 这里只有一件, 那这波操作之后, 库存就成了-1了, 这是不可接受的, 在拒绝客户之后, 把之前减掉的库存再加回来
 		err := conn.Send("hincrby", "store:"+productId, "storeNum", incrString)
 		if err != nil {
@@ -97,31 +98,33 @@ func (u *User) orderGenerator(productId string, purchaseNum int) (string, error)
 		}
 		return "", errors.New("库存数量不够客户想要的")
 	}
-	orderNum := orderNumberGenerator()
-	ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "orderNum", orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
-	if err != nil {
-		log.Printf("%+v", err)
-		return "", err
-	}
-	if ok == "OK" {
-		log.Printf("%+v 购买 %s %d件成功", u, productId, purchaseNum)
-		return orderNum, nil
-	}
+	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到别的redis上面
+	//// 生成订单信息
+	//orderNum := orderNumberGenerator()
+	//ok, err := redis.String(conn.Do("hmset", "user:"+u.UserId+":order:"+orderNum, "orderNum", orderNum, "userId", u.UserId, "productId", productId, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
+	//if err != nil {
+	//	log.Printf("%+v", err)
+	//	return "", err
+	//}
+	//if ok == "OK" {
+	//	log.Printf("%+v 购买 %s %d件成功", u, productId, purchaseNum)
+	//	return orderNum, nil
+	//}
 	return "", errors.New("other error")
 }
 
-// 把用户产生的订单集合起来, 生成key为: `user:userId:orderNumber` value type: list, value: "order:orderNumber[10]" 类型的数据
-func (u *User) orderListAdd(orderNum string) error {
-	conn := pool.Get()
-	defer conn.Close()
-	//
-	err := conn.Send("rpush", "user:"+u.UserId+":orderNumList", "order:"+orderNum)
-	if err != nil {
-		log.Println(err)
-		return err
-	}
-	return nil
-}
+//// 把用户产生的订单集合起来, 生成key为: `user:userId:orderNumber` value type: list, value: "order:orderNumber[10]" 类型的数据
+//func (u *User) orderListAdd(orderNum string) error {
+//	conn := pool.Get()
+//	defer conn.Close()
+//	//
+//	err := conn.Send("rpush", "user:"+u.UserId+":orderNumList", "order:"+orderNum)
+//	if err != nil {
+//		log.Println(err)
+//		return err
+//	}
+//	return nil
+//}
 
 // 为了提高效率, 还是使用key为:`user:userId:bought` value type: hash, value: "productId:productNum" 类型的数据吧
 func (u *User) Bought(productId string, purchaseNum int) error {
@@ -133,7 +136,7 @@ func (u *User) Bought(productId string, purchaseNum int) error {
 		log.Println(err)
 		return err
 	}
-	// 如果想要购买的物品已经存在, 那就增加购物车里面的商品的数量
+	// 如果想要购买的物品已经存在(之前购买过), 那就增加购物车里面的商品的数量
 	if flag == 0 {
 		err = conn.Send("hincrby", "user:"+u.UserId+":bought", productId, purchaseNum)
 		if err != nil {
@@ -162,7 +165,7 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 		return errors.New("系统中没有找到该订单!")
 	}
 	status, err := redis.String(conn.Do("hget", "user:"+u.UserId+":order:"+orderNum, "status"))
-	if err!=nil {
+	if err != nil {
 		log.Printf("%+v 获取用户:%s订单:%s合法性的时候出现了错误!", u, u.UserId, orderNum)
 		m.Unlock()
 		return err
@@ -210,7 +213,7 @@ func (u *User) CancelBuy(orderNum string, m *sync.Mutex) error {
 		}
 		// 给这个订单打个tag status:cancel
 		_, err = redis.Int(conn.Do("hset", "user:"+u.UserId+":order:"+orderNum, "status", "cancel"))
-		if err!=nil {
+		if err != nil {
 			log.Printf("%+v 尝试更改订单: %s 状态时出现错误!", u, orderNum)
 		}
 		// 返还库存
