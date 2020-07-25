@@ -25,6 +25,7 @@ func decodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
 	return b, nil
 }
 
+// 取消掉这个订单
 func decodeCancelBuyReq(cancelBuyReq io.ReadCloser) (*CancelBuyReq, error) {
 	b := new(CancelBuyReq)
 	err := json.NewDecoder(cancelBuyReq).Decode(b)

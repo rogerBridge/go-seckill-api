@@ -49,7 +49,6 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	}
 	if ok {
 		// 生成订单信息
-		//orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		orderNum, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err!=nil {
 			c := CommonResponse{
@@ -99,7 +98,7 @@ func buy(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// redis收到后台的请求, 用户取消了订单, 发给redis用户的: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 值重置为0
+// redis收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
 // 这个接口必须由后台调用, 因为我没有做数据校验
 func cancelBuy(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -116,7 +115,7 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 	}
 	u := new(User)
 	u.UserId = cancelBuyReqPointer.UserId
-	err = u.CancelBuy(cancelBuyReqPointer.OrderNum, &cancelBuyLock)
+	err = u.CancelBuy(cancelBuyReqPointer.OrderNum)
 	if err!=nil {
 		c := CommonResponse{
 			Code: 8006,
