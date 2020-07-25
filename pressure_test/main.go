@@ -8,7 +8,7 @@ import (
 )
 
 // 同时请求的client数量
-var concurrentNum = 20000
+var concurrentNum = 10000
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {

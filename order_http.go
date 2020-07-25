@@ -7,8 +7,6 @@ import (
 	"sync"
 )
 
-var orderGeneratorLock sync.Mutex
-
 func errorHandle(w http.ResponseWriter, err error, code int) {
 	log.Println(err)
 	http.Error(w, err.Error(), code)
