@@ -50,12 +50,11 @@ func singleRequest(userId string, productId string, w *sync.WaitGroup, timeStati
 	}
 	// 服务器无效响应
 	if resp.StatusCode != 200 {
-		return false, err // 在把时间段返回给服务器的时候就已经return了, timestatistics channel里面收不到数值
+		w.Done() // 如果不使用的话, 万一程序在此处退出, wait函数将阻塞测试程序的运行
+		return false, err
 	}
-
 	t1 := time.Since(t0) // 客户端结束发起请求的时间
 	timeStatistics <- t1.Seconds() // 将客户端发起请求的时间发送给timeStatistics
-
 
 	defer resp.Body.Close()
 	respByte, err := ioutil.ReadAll(resp.Body)

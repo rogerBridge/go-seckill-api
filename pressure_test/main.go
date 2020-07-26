@@ -24,38 +24,34 @@ func main() {
 		w.Add(1)
 		go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
 	}
-	//for i:=start; i<20000; i++ {
+
+	//for i:=start; i<15000; i++ {
 	//	w.Add(2)
-	//	// userId 范围10000~19999的抢购"10000", userId 范围20000~29999的抢购"10001"
+	//	// userId 范围10000~19999的抢购"10000", userId 范围10000~19999的抢购"10001"
 	//	go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
-	//	go singleRequest(strconv.Itoa(i+10000), "10001", &w, timeStatistics)
+	//	go singleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
 	//}
+
 	w.Wait()
 	// 关闭时间统计队列, 开始我们的计算!
 	close(timeStatistics)
 
 	t1 := time.Since(t0).Seconds()
-	log.Printf("每秒事务处理量: %.2f, %d个客户端请求总时间段: %.4fs", float64(end-start)/t1, concurrentNum, t1)
+	log.Printf("每秒事务处理量: %.2f, %d个客户端请求总时间段: %.4fs\n", float64(end-start)/t1, concurrentNum, t1)
 
 	// 把统计到的时间节点放置到一个slice中, 写需要计算的函数方法
-	timeStatisticsList := make([]float64, 0, 20000)
+	timeStatisticsList := make([]float64, 0, concurrentNum)
 	for t := range timeStatistics {
 		timeStatisticsList = append(timeStatisticsList, t)
 	}
 	playTimeStatisticsList(timeStatisticsList, t1)
-
-	//// 服务器直接拒绝的情况, 会出现吗阿哈
-	//badNum := 0
-	//for v := range badStatus {
-	//	badNum += v
-	//}
-	//log.Printf("服务器没有响应的请求数量:", badNum)
 }
 
 func playTimeStatisticsList(timeStatisticsList []float64, allTime float64) {
 	// 请求未完成, 中途夭折的请求的数量
 	errorNum := concurrentNum - len(timeStatisticsList)
 	log.Println("无效请求数量:", errorNum)
+
 	durationB0And1 := 0 // 时间间隔在[0,1)
 	durationB1And2 := 0 // 时间间隔在[1,2)
 	durationB2And3 := 0 // 时间间隔在[2,3)
