@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 )
+
 type reqBuy struct {
 	UserId string `json:"userId"`
 	ProductId string `json:"productId"`

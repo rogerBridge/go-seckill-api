@@ -1,7 +1,8 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
+	"github.com/valyala/fasthttp"
 	"log"
 	"net/http"
 	"sync"
@@ -15,19 +16,27 @@ func errorHandle(w http.ResponseWriter, err error, code int) {
 var cancelBuyLock sync.Mutex
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
 // 使用application/json的方式
-func buy(w http.ResponseWriter, r *http.Request) {
+func buy(ctx *fasthttp.RequestCtx) {
 	// 请求方法限定为post
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		errorHandle(w, errors.New("请求方法不合法!"), 405)
+	if ctx.Request.Header.IsPost() == false {
+		ctx.Response.Header.Set("Allow", fasthttp.MethodPost)
+		ctx.Error("request method must be post", 405)
 		return
 	}
 
-	buyReqPointer, err := decodeBuyReq(r.Body)
+	//if r.Method != http.MethodPost {
+	//	w.Header().Set("Allow", http.MethodPost)
+	//	errorHandle(w, errors.New("请求方法不合法!"), 405)
+	//	return
+	//}
+	buyReqPointer := new(BuyReq)
+	err := json.Unmarshal(ctx.PostBody(), buyReqPointer)
 	if err!=nil {
-		errorHandle(w, errors.New("reqBody 解析为struct时出错!"), 500)
+		log.Printf("%v", err)
+		ctx.Error("decode json body error", 500)
 		return
 	}
+
 	// 一些数据校验部分, 校验用户id, productId, productNum
 	u:= new(User)
 	u.UserId = buyReqPointer.UserId
@@ -41,10 +50,11 @@ func buy(w http.ResponseWriter, r *http.Request) {
 		}
 		content, err := commonResp(c)
 		if err!=nil {
-			errorHandle(w, errors.New(err.Error()), 500)
+			ctx.Error("response info error", 500)
+			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(content)
+		ctx.SetContentType("application/json")
+		ctx.Response.SetBody(content)
 		return
 	}
 	if ok {
@@ -58,10 +68,14 @@ func buy(w http.ResponseWriter, r *http.Request) {
 			}
 			content, err := commonResp(c)
 			if err!=nil {
-				errorHandle(w, errors.New(err.Error()), 500)
+				ctx.Error("store num is not enough", 500)
+				return
+				//errorHandle(w, errors.New(err.Error()), 500)
 			}
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(content)
+			ctx.SetContentType("application/json")
+			ctx.SetBody(content)
+			//w.Header().Set("Content-Type", "application/json")
+			//w.Write(content)
 			return
 		}
 
@@ -75,10 +89,14 @@ func buy(w http.ResponseWriter, r *http.Request) {
 			}
 			content, err := commonResp(c)
 			if err!=nil {
-				errorHandle(w, errors.New(err.Error()), 500)
+				//errorHandle(w, errors.New(err.Error()), 500)
+				ctx.Error("add bought list error", 500)
+				return
 			}
-			w.Header().Set("Content-Type", "application/json")
-			w.Write(content)
+			ctx.SetContentType("application/json")
+			ctx.SetBody(content)
+			//w.Header().Set("Content-Type", "application/json")
+			//w.Write(content)
 			return
 		}
 
@@ -90,29 +108,44 @@ func buy(w http.ResponseWriter, r *http.Request) {
 		}
 		content, err := commonResp(c)
 		if err!=nil {
-			errorHandle(w, errors.New(err.Error()), 500)
+			ctx.Error("json marshal error", 500)
+			//errorHandle(w, errors.New(err.Error()), 500)
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(content)
+		ctx.SetContentType("application/json")
+		//w.Header().Set("Content-Type", "application/json")
+		//w.Write(content)
+		ctx.SetBody(content)
 		return
 	}
 }
 
 // redis收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
 // 这个接口必须由后台调用, 因为我没有做数据校验
-func cancelBuy(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		errorHandle(w, errors.New("请求方式不合法!"), 405)
+func cancelBuy(ctx *fasthttp.RequestCtx) {
+	if ctx.Request.Header.IsPost() == false {
+		ctx.Request.Header.Set("Allow", http.MethodPost)
+		ctx.Error("request method is not supported", 405)
 		return
 	}
+	//if r.Method != http.MethodPost {
+	//	w.Header().Set("Allow", http.MethodPost)
+	//	errorHandle(w, errors.New("请求方式不合法!"), 405)
+	//	return
+	//}
 
 	// 解析: /cancelBuy接口传过来的四个参数, userId, productId, purchaseNum, orderId
-	cancelBuyReqPointer, err := decodeCancelBuyReq(r.Body)
+	cancelBuyReqPointer := new(CancelBuyReq)
+	err := json.Unmarshal(ctx.Request.Body(), cancelBuyReqPointer)
 	if err!=nil {
-		errorHandle(w, errors.New("reqBody解析到struct时出错!"), 500)
+		log.Println(err)
+		ctx.Error("decode request body error", 500)
 		return
 	}
+	//cancelBuyReqPointer, err := decodeCancelBuyReq(r.Body)
+	//if err!=nil {
+	//	errorHandle(w, errors.New("reqBody解析到struct时出错!"), 500)
+	//	return
+	//}
 	u := new(User)
 	u.UserId = cancelBuyReqPointer.UserId
 	err = u.CancelBuy(cancelBuyReqPointer.OrderNum)
@@ -124,10 +157,13 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 		}
 		content, err := commonResp(c)
 		if err!=nil {
-			errorHandle(w, errors.New(err.Error()), 500)
+			ctx.Error("encode resp body to []byte error", 500)
+			return
 		}
-		w.Header().Set("Content-Type", "application/json")
-		w.Write(content)
+		ctx.SetContentType("application/json")
+		ctx.SetBody(content)
+		//w.Header().Set("Content-Type", "application/json")
+		//w.Write(content)
 		return
 	}
 	c := CommonResponse{
@@ -137,9 +173,13 @@ func cancelBuy(w http.ResponseWriter, r *http.Request) {
 	}
 	content, err := commonResp(c)
 	if err!=nil {
-		errorHandle(w, errors.New(err.Error()), 500)
+		ctx.Error("encode resp body to []byte error", 500)
+		return
+		//errorHandle(w, errors.New(err.Error()), 500)
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Write(content)
+	ctx.SetContentType("application/json")
+	ctx.SetBody(content)
+	//w.Header().Set("Content-Type", "application/json")
+	//w.Write(content)
 	return
 }
