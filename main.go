@@ -12,6 +12,14 @@ func init() {
 		log.Println(err)
 		return
 	}
+	//// 搞一些闲置的redis连接
+	//var wg sync.WaitGroup
+	//for i:=0; i<10000; i++ {
+	//	wg.Add(1)
+	//	go newConn(&wg, i)
+	//}
+	//defer wg.Wait()
+	//log.Println("预热redis链接成功")
 }
 
 func main() {
@@ -37,7 +45,7 @@ func main() {
 		}
 	}
 	err := fasthttp.ListenAndServe("0.0.0.0:4000", mux)
-	if err!=nil {
+	if err != nil {
 		log.Fatalln(err)
 	}
 }
