@@ -58,13 +58,13 @@ func singleRequest(userId string, productId string, w *sync.WaitGroup, timeStati
 	timeStatistics <- t1.Seconds() // 将客户端发起请求的时间发送给timeStatistics
 
 	defer resp.Body.Close()
-	respByte, err := ioutil.ReadAll(resp.Body)
+	_, err = ioutil.ReadAll(resp.Body)
 	if err!=nil {
 		log.Println(err)
 		w.Done()
 		return false, err
 	}
 	w.Done()
-	log.Println(string(respByte))
+	//log.Println(string(respByte))
 	return true, nil
 }

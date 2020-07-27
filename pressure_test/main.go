@@ -1,10 +1,13 @@
 package main
 
 import (
+	"github.com/valyala/fasthttp"
 	"log"
+	"net"
 	"sort"
 	"strconv"
 	"sync"
+	"time"
 )
 
 // 同时请求的client数量
@@ -12,6 +15,13 @@ var concurrentNum = 10000
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
+	client := fasthttp.Client{
+		Dial: func(addr string) (conn net.Conn, err error) {
+			return fasthttp.DialTimeout(addr, 10*time.Second) // tcp 层
+		},
+		ReadTimeout:                   30*time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应, 难道你要一直耗着吗?
+		// 当然是关闭http链接啊
+	}
 	var w sync.WaitGroup
 	// 时间统计队列
 	timeStatistics := make(chan float64, concurrentNum)
@@ -22,7 +32,8 @@ func main() {
 	//  10000人同时抢购"10000"这件商品
 	for i := start; i < end; i++ {
 		w.Add(1)
-		go fastSingleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
+		go fastSingleRequest(client, strconv.Itoa(i), "10000", &w, timeStatistics)
+		//go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
 	}
 
 	//for i:=start; i<15000; i++ {
