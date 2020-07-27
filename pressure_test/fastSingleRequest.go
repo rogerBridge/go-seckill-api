@@ -13,6 +13,7 @@ func fastSingleRequest(userId string, productId string, w *sync.WaitGroup, timeS
 	// 首先, 构造client
 	client := fasthttp.Client{
 		ReadTimeout:                   30*time.Second,
+		// 如果不加readtimeout的话, 万一服务器没有正确响应客户端请求, 客户端就会一直保持一个长链接, 直到占用完毕你的tcp连接
 	}
 	// 构造request body里面的值
 	r := reqBuy{

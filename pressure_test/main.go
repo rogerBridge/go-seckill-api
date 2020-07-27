@@ -18,7 +18,8 @@ func main() {
 
 	start := 10000
 	end := start + concurrentNum
-	//  20000人同时抢购"10000"这件商品
+
+	//  10000人同时抢购"10000"这件商品
 	for i := start; i < end; i++ {
 		w.Add(1)
 		go fastSingleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
@@ -26,9 +27,9 @@ func main() {
 
 	//for i:=start; i<15000; i++ {
 	//	w.Add(2)
-	//	// userId 范围10000~19999的抢购"10000", userId 范围10000~19999的抢购"10001"
-	//	go singleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
-	//	go singleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
+	//	// userId 范围10000~14999的同时抢购"10000"和"10001"
+	//	go fastSingleRequest(strconv.Itoa(i), "10000", &w, timeStatistics)
+	//	go fastSingleRequest(strconv.Itoa(i+5000), "10001", &w, timeStatistics)
 	//}
 
 	w.Wait()
