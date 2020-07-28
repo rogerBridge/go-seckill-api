@@ -10,14 +10,6 @@ import (
 	"time"
 )
 
-type reqBuy struct {
-	UserId string `json:"userId"`
-	ProductId string `json:"productId"`
-	PurchaseNum int `json:"purchaseNum"`
-}
-
-var URL = "http://127.0.0.1:4000/buy"
-
 func singleRequest(userId string, productId string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error){
 	// 首先, 构造client
 	client := http.Client{

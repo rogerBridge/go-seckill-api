@@ -45,10 +45,9 @@ func fastSingleRequest(client fasthttp.Client, userId string, productId string, 
 		w.Done()
 		return false, err
 	}
-
 	t1 := time.Since(t0) // 客户端结束发起请求的时间
 	timeStatistics <- t1.Seconds() // 将客户端发起请求的时间发送给timeStatistics
-	defer
+
 	w.Done()
 	return true, nil
 }

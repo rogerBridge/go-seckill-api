@@ -11,7 +11,15 @@ import (
 )
 
 // 同时请求的client数量
-var concurrentNum = 10000
+var concurrentNum = 12000
+
+type reqBuy struct {
+	UserId string `json:"userId"`
+	ProductId string `json:"productId"`
+	PurchaseNum int `json:"purchaseNum"`
+}
+
+var URL = "http://127.0.0.1:4000/buy"
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
