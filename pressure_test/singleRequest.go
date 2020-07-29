@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"go_redis/pressure_test/jsonStruct"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -16,7 +17,7 @@ func singleRequest(userId string, productId string, w *sync.WaitGroup, timeStati
 		Timeout:       30 * time.Second,
 	}
 	// 构造request body里面的值
-	r := reqBuy{
+	r := jsonStruct.ReqBuy{
 		UserId:      userId,
 		ProductId:   productId,
 		PurchaseNum: 1,

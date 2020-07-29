@@ -1,12 +1,15 @@
 package main
 
 import (
+	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
 	"log"
+	"sync"
 	//"net/http"
 )
 
 func init() {
+	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := InitStore()
 	if err != nil {
 		log.Println(err)
@@ -14,12 +17,23 @@ func init() {
 	}
 	//// 搞一些闲置的redis连接
 	//var wg sync.WaitGroup
-	//for i:=0; i<10000; i++ {
+	//for i:=0; i<10000/3; i++ {
 	//	wg.Add(1)
-	//	go newConn(&wg, i)
+	//	go newConn(&wg)
 	//}
 	//defer wg.Wait()
 	//log.Println("预热redis链接成功")
+}
+
+// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的性能消耗
+func newConn(w *sync.WaitGroup) {
+	conn := pool.Get()
+	defer conn.Close()
+	_, err := conn.Do("ping")
+	if err!=nil {
+		log.Fatalln(err)
+	}
+	w.Done()
 }
 
 func main() {
@@ -33,18 +47,22 @@ func main() {
 	//	log.Println(err)
 	//	return
 	//}
-
-	mux := func(ctx *fasthttp.RequestCtx) {
-		switch string(ctx.Path()) {
-		case "/buy":
-			buy(ctx)
-		case "/cancelBuy":
-			cancelBuy(ctx)
-		default:
-			ctx.Error("not found", fasthttp.StatusNotFound)
-		}
-	}
-	err := fasthttp.ListenAndServe("0.0.0.0:4000", mux)
+	r := router.New()
+	r.Handle(fasthttp.MethodPost, "/buy", buy)
+	//r.POST("/buy", buy)
+	r.POST("/cancelBuy", cancelBuy)
+	//mux := func(ctx *fasthttp.RequestCtx) {
+	//	switch string(ctx.Path()) {
+	//	case "/buy":
+	//		buy(ctx)
+	//	case "/cancelBuy":
+	//		cancelBuy(ctx)
+	//	default:
+	//		ctx.Error("not found", fasthttp.StatusNotFound)
+	//	}
+	//}
+	log.Println("Listen on :4000")
+	err := fasthttp.ListenAndServe("0.0.0.0:4000", r.Handler)
 	if err != nil {
 		log.Fatalln(err)
 	}

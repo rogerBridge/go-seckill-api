@@ -1,8 +1,9 @@
 package main
 
 import (
-	"encoding/json"
+	//"encoding/json"
 	"github.com/valyala/fasthttp"
+	"go_redis/pressure_test/jsonStruct"
 	"log"
 	"net/http"
 	"sync"
@@ -13,18 +14,19 @@ func fastSingleRequest(client fasthttp.Client, userId string, productId string, 
 	// 首先, 构造client
 
 	// 构造request body里面的值
-	r := reqBuy{
+	r := jsonStruct.ReqBuy{
 		UserId:      userId,
 		ProductId:   productId,
 		PurchaseNum: 1,
 	}
-	reqBody, err := json.Marshal(r)
+	reqBody, err := r.MarshalJSON()
 	if err!=nil {
 		w.Done()
 		log.Println(err)
 		return false, err
 	}
 	req := &fasthttp.Request{}
+	//req := fasthttp.AcquireRequest()
 	req.Header.SetContentType("application/json")
 	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURI(URL)
@@ -32,6 +34,7 @@ func fastSingleRequest(client fasthttp.Client, userId string, productId string, 
 	//req.Header.Set("connection", "close")
 
 	resp := &fasthttp.Response{}
+	//resp := fasthttp.AcquireResponse()
 	// 开始发送请求
 	t0 := time.Now() // 客户端开始发起请求的时间
 
@@ -47,7 +50,6 @@ func fastSingleRequest(client fasthttp.Client, userId string, productId string, 
 	}
 	t1 := time.Since(t0) // 客户端结束发起请求的时间
 	timeStatistics <- t1.Seconds() // 将客户端发起请求的时间发送给timeStatistics
-
 	w.Done()
 	return true, nil
 }

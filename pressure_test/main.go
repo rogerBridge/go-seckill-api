@@ -11,25 +11,20 @@ import (
 )
 
 // 同时请求的client数量
-var concurrentNum = 12000
-
-type reqBuy struct {
-	UserId string `json:"userId"`
-	ProductId string `json:"productId"`
-	PurchaseNum int `json:"purchaseNum"`
-}
+var concurrentNum = 10000
 
 var URL = "http://127.0.0.1:4000/buy"
 
+var client = fasthttp.Client{
+	Dial: func(addr string) (conn net.Conn, err error) {
+		return fasthttp.DialTimeout(addr, 10*time.Second) // tcp 层
+	},
+	ReadTimeout: 30 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应, 难道你要一直耗着吗?
+	// 当然是关闭http链接啊
+}
+
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
-	client := fasthttp.Client{
-		Dial: func(addr string) (conn net.Conn, err error) {
-			return fasthttp.DialTimeout(addr, 10*time.Second) // tcp 层
-		},
-		ReadTimeout:                   30*time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应, 难道你要一直耗着吗?
-		// 当然是关闭http链接啊
-	}
 	var w sync.WaitGroup
 	// 时间统计队列
 	timeStatistics := make(chan float64, concurrentNum)
@@ -71,27 +66,27 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 	errorNum := concurrentNum - len(timeStatisticsList)
 	log.Printf("客户端总共发送请求: %d个, 客户端角度的没有被服务器处理的请求数量:%d", len(timeStatisticsList), errorNum)
 
-	durationB0And1 := 0 // 时间间隔在[0,1)
-	durationB1And2 := 0 // 时间间隔在[1,2)
-	durationB2And3 := 0 // 时间间隔在[2,3)
-	durationB3And4 := 0 // 时间间隔在[3,4)
-	durationB4And5 := 0 // 时间间隔在[4,5)
+	durationB0And1 := 0      // 时间间隔在[0,1)
+	durationB1And2 := 0      // 时间间隔在[1,2)
+	durationB2And3 := 0      // 时间间隔在[2,3)
+	durationB3And4 := 0      // 时间间隔在[3,4)
+	durationB4And5 := 0      // 时间间隔在[4,5)
 	durationBiggerThan5 := 0 // 时间间隔在[5, +++++)
-	
+
 	for i := 0; i < len(timeStatisticsList); i++ {
 		x := timeStatisticsList[i]
 		switch {
-		case x>=0 && x<1:
+		case x >= 0 && x < 1:
 			durationB0And1 += 1
-		case x>=1 && x<2:
+		case x >= 1 && x < 2:
 			durationB1And2 += 1
-		case x>=2 && x<3:
+		case x >= 2 && x < 3:
 			durationB2And3 += 1
-		case x>=3 && x<4:
+		case x >= 3 && x < 4:
 			durationB3And4 += 1
-		case x>=4 && x<5:
+		case x >= 4 && x < 5:
 			durationB4And5 += 1
-		case x>=5:
+		case x >= 5:
 			durationBiggerThan5 += 1
 		}
 	}
@@ -105,5 +100,5 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 	for _, v := range timeStatisticsList {
 		allTime += v
 	}
-	log.Printf("最大响应时间: %.4f秒, 最小响应时间: %.4f秒, 平均响应时间: %.4f秒, TPS: %.0f\n", timeStatisticsList[len(timeStatisticsList)-1], timeStatisticsList[0], allTime/float64(len(timeStatisticsList)), float64(len(timeStatisticsList))/timeStatisticsList[len(timeStatisticsList)-1])
+	log.Printf("最大响应时间: %.4fms, 最小响应时间: %.4fms, 平均响应时间: %.4fms, TPS: %.0f\n", 1000*timeStatisticsList[len(timeStatisticsList)-1], 1000*timeStatisticsList[0], 1000*allTime/float64(len(timeStatisticsList)), float64(len(timeStatisticsList))/timeStatisticsList[len(timeStatisticsList)-1])
 }

@@ -1,4 +1,4 @@
-package main
+package jsonStruct
 
 import (
 	"encoding/json"
@@ -12,7 +12,7 @@ type CommonResponse struct {
 	Data interface{} `json:"data"`
 }
 
-func commonResp(c CommonResponse) ([]byte, error){
+func CommonResp(c CommonResponse) ([]byte, error){
 	v, err := json.Marshal(c)
 	if err!=nil {
 		log.Println(err)

@@ -1,4 +1,4 @@
-package main
+package jsonStruct
 
 import (
 	"encoding/json"
@@ -16,7 +16,7 @@ type CancelBuyReq struct {
 	OrderNum    string `json:"orderNum"`
 }
 
-func decodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
+func DecodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
 	b := new(BuyReq)
 	err := json.NewDecoder(buyReq).Decode(b)
 	if err != nil {
@@ -25,8 +25,7 @@ func decodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {
 	return b, nil
 }
 
-// 取消掉这个订单
-func decodeCancelBuyReq(cancelBuyReq io.ReadCloser) (*CancelBuyReq, error) {
+func DecodeCancelBuyReq(cancelBuyReq io.ReadCloser) (*CancelBuyReq, error) {
 	b := new(CancelBuyReq)
 	err := json.NewDecoder(cancelBuyReq).Decode(b)
 	if err != nil {
