@@ -1,25 +1,26 @@
 package main
 
+// Product exported
 type Product struct {
-	ProductId   string
+	productID   string
 	StoreNum    int
 	ProductName string
 }
 
 var p1 = Product{
-	ProductId:   "10000",
+	productID:   "10000",
 	StoreNum:    200,
 	ProductName: "wahaha",
 }
 
 var p2 = Product{
-	ProductId:   "10001",
+	productID:   "10001",
 	StoreNum:    200,
 	ProductName: "coca cola",
 }
 
 var p3 = Product{
-	ProductId:   "10002",
+	productID:   "10002",
 	StoreNum:    500,
 	ProductName: "挖掘机",
 }

@@ -2,11 +2,12 @@ package main
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
 	"go_redis/jsonStruct"
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/valyala/fasthttp"
 )
 
 func errorHandle(w http.ResponseWriter, err error, code int) {
@@ -15,6 +16,7 @@ func errorHandle(w http.ResponseWriter, err error, code int) {
 }
 
 var cancelBuyLock sync.Mutex
+
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
 // 使用application/json的方式
 func test(w http.ResponseWriter, r *http.Request) {
@@ -36,18 +38,18 @@ func buy(ctx *fasthttp.RequestCtx) {
 	buyReqPointer := new(jsonStruct.BuyReq)
 	err := buyReqPointer.UnmarshalJSON(ctx.PostBody())
 	//err := json.Unmarshal(ctx.PostBody(), buyReqPointer)
-	if err!=nil {
+	if err != nil {
 		log.Printf("%v", err)
 		ctx.Error("decode json body error", 500)
 		return
 	}
 
 	// 一些数据校验部分, 校验用户id, productId, productNum
-	u:= new(User)
-	u.UserId = buyReqPointer.UserId
+	u := new(User)
+	u.userID = buyReqPointer.UserId
 	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-	if err!=nil {
+	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8005,
 			Msg:  "您购买的商品数量已达到上限!",
@@ -55,7 +57,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 		}
 		content, err := c.MarshalJSON()
 		//content, err := jsonStruct.CommonResp(c)
-		if err!=nil {
+		if err != nil {
 			ctx.Error("response info error", 500)
 			return
 		}
@@ -66,7 +68,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 	if ok {
 		// 生成订单信息
 		_, err := u.orderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-		if err!=nil {
+		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8002,
 				Msg:  "库存数量不足呀~",
@@ -74,7 +76,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 			}
 			content, err := c.MarshalJSON()
 			//content, err := jsonStruct.CommonResp(c)
-			if err!=nil {
+			if err != nil {
 				ctx.Error("store num is not enough", 500)
 				return
 				//errorHandle(w, errors.New(err.Error()), 500)
@@ -88,7 +90,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 
 		// 给用户的已经购买的商品hash表里面的值添加数量
 		err = u.Bought(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
-		if err!=nil {
+		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8004,
 				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误!",
@@ -96,7 +98,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 			}
 			content, err := c.MarshalJSON()
 			//content, err := jsonStruct.CommonResp(c)
-			if err!=nil {
+			if err != nil {
 				//errorHandle(w, errors.New(err.Error()), 500)
 				ctx.Error("add bought list error", 500)
 				return
@@ -116,7 +118,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 		}
 		content, err := c.MarshalJSON()
 		//content, err := jsonStruct.CommonResp(c)
-		if err!=nil {
+		if err != nil {
 			ctx.Error("json marshal error", 500)
 			//errorHandle(w, errors.New(err.Error()), 500)
 		}
@@ -145,7 +147,7 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	// 解析: /cancelBuy接口传过来的四个参数, userId, productId, purchaseNum, orderId
 	cancelBuyReqPointer := new(jsonStruct.CancelBuyReq)
 	err := json.Unmarshal(ctx.Request.Body(), cancelBuyReqPointer)
-	if err!=nil {
+	if err != nil {
 		log.Println(err)
 		ctx.Error("decode request body error", 500)
 		return
@@ -156,16 +158,16 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	//	return
 	//}
 	u := new(User)
-	u.UserId = cancelBuyReqPointer.UserId
+	u.userID = cancelBuyReqPointer.UserId
 	err = u.CancelBuy(cancelBuyReqPointer.OrderNum)
-	if err!=nil {
+	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8006,
 			Msg:  "取消订单时失败!",
 			Data: nil,
 		}
 		content, err := jsonStruct.CommonResp(c)
-		if err!=nil {
+		if err != nil {
 			ctx.Error("encode resp body to []byte error", 500)
 			return
 		}
@@ -181,7 +183,7 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 		Data: nil,
 	}
 	content, err := jsonStruct.CommonResp(c)
-	if err!=nil {
+	if err != nil {
 		ctx.Error("encode resp body to []byte error", 500)
 		return
 		//errorHandle(w, errors.New(err.Error()), 500)

@@ -1,11 +1,11 @@
 package main
 
 import (
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
 	"log"
 	"sync"
-	//"net/http"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
 )
 
 func init() {
@@ -15,14 +15,14 @@ func init() {
 		log.Println(err)
 		return
 	}
-	//// 搞一些闲置的redis连接
-	//var wg sync.WaitGroup
-	//for i:=0; i<10000/3; i++ {
-	//	wg.Add(1)
-	//	go newConn(&wg)
-	//}
-	//defer wg.Wait()
-	//log.Println("预热redis链接成功")
+	// // 搞一些闲置的redis连接
+	// var wg sync.WaitGroup
+	// for i := 0; i < 10000/2; i++ {
+	// 	wg.Add(1)
+	// 	go newConn(&wg)
+	// }
+	// defer wg.Wait()
+	// log.Println("预热redis链接成功")
 }
 
 // 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的性能消耗
@@ -30,7 +30,7 @@ func newConn(w *sync.WaitGroup) {
 	conn := pool.Get()
 	defer conn.Close()
 	_, err := conn.Do("ping")
-	if err!=nil {
+	if err != nil {
 		log.Fatalln(err)
 	}
 	w.Done()
