@@ -3,4 +3,4 @@ play
 .idea/
 redisBuy
 mysql/
-redisDocker/dump.rdb
+redisDocker/data/dump.rdb
