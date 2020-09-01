@@ -52,7 +52,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8005,
-			Msg:  "您购买的商品数量已达到上限!",
+			Msg:  "您购买的商品数量已达到上限或者不满足购买条件",
 			Data: nil,
 		}
 		content, err := c.MarshalJSON()

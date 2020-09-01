@@ -61,8 +61,8 @@ func main() {
 	//		ctx.Error("not found", fasthttp.StatusNotFound)
 	//	}
 	//}
-	log.Println("Listen on :4000")
-	err := fasthttp.ListenAndServe("0.0.0.0:4000", r.Handler)
+	log.Println("Listen on 127.0.0.1:4000")
+	err := fasthttp.ListenAndServe("127.0.0.1:4000", r.Handler)
 	if err != nil {
 		log.Fatalln(err)
 	}

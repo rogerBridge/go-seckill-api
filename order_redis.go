@@ -100,7 +100,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	value, err := redis.Int(conn.Do("hincrby", "store:"+productID, "storeNum", "-"+incrString))
 	if err != nil {
 		log.Println(err)
-		return "", errors.New("减少库存时出现错误")
+		return "", errors.New("库存数量不得小于0")
 	}
 	if value < 0 {
 		// 比如说客户想要2件, 这里只有一件, 那这波操作之后, 库存就成了-1了, 这是不可接受的, 在拒绝客户之后, 把之前减掉的库存再加回来

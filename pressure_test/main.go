@@ -33,19 +33,19 @@ func main() {
 	//	panic(err)
 	//}
 
-	////  10000人同时抢购"10000"这件商品
-	//for i := start; i < end; i++ {
-	//	w.Add(1)
-	//	go fastSingleRequest(client2, strconv.Itoa(i), "10000", &w, timeStatistics)
-	//	//go singleRequest(client1, strconv.Itoa(i), "10000", &w, timeStatistics)
-	//}
-
-	for i:=start; i<end-10000; i++ {
-		w.Add(2)
-		// userId 范围10000~14999的同时抢购"10000"和"10001"
+	//  x 人同时抢购"10000"这件商品
+	for i := start; i < end; i++ {
+		w.Add(1)
 		go fastSingleRequest(client2, strconv.Itoa(i), "10000", &w, timeStatistics)
-		go fastSingleRequest(client2, strconv.Itoa(i+5000), "10001", &w, timeStatistics)
+		//go singleRequest(client1, strconv.Itoa(i), "10000", &w, timeStatistics)
 	}
+
+	//for i:=start; i<end-10000; i++ {
+	//	w.Add(2)
+	//	// userId 范围10000~14999的同时抢购"10000"和"10001"
+	//	go fastSingleRequest(client2, strconv.Itoa(i), "10000", &w, timeStatistics)
+	//	go fastSingleRequest(client2, strconv.Itoa(i+5000), "10001", &w, timeStatistics)
+	//}
 
 	w.Wait()
 	// 关闭时间统计队列, 开始我们的计算!
