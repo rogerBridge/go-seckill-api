@@ -66,7 +66,15 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
-
+	// 判断商品库存是否还充足?
+	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
+	if err!=nil {
+		log.Printf("获取商品:%s时出现错误\n")
+		return false, err
+	}
+	if inventory < 1 {
+		return false, nil
+	}
 	// hget 用户是否已经购买过了?
 	r, err := redis.Int(conn.Do("hget", "user:"+u.userID+":bought", productID))
 	// 如果用户没有购买过
