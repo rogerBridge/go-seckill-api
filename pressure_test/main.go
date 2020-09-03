@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
@@ -9,8 +10,8 @@ import (
 
 // 同时请求的client数量
 var concurrentNum = 20000
-
-var URL = "http://127.0.0.1:4000/buy"
+var socket = "127.0.0.1:4000"
+var URL = fmt.Sprintf("http://%s/buy", socket)
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
