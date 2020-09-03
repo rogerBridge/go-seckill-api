@@ -80,7 +80,7 @@ func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
 	return false, errors.New("购买数量过大或者其他错误")
 }
 
-// ksuid
+// ksuid generate string
 func orderNumberGenerator() string {
 	return ksuid.New().String()
 }
@@ -100,13 +100,14 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	value, err := redis.Int(conn.Do("hincrby", "store:"+productID, "storeNum", "-"+incrString))
 	if err != nil {
 		log.Println(err)
-		return "", errors.New("库存数量不得小于0")
+		return "", errors.New("减库存过程中出现了错误")
 	}
 	if value < 0 {
 		// 比如说客户想要2件, 这里只有一件, 那这波操作之后, 库存就成了-1了, 这是不可接受的, 在拒绝客户之后, 把之前减掉的库存再加回来
+		//log.Printf("%s用户在购买过程中, 超卖了, 注意哈", u.userID)
 		err := conn.Send("hincrby", "store:"+productID, "storeNum", incrString)
 		if err != nil {
-			log.Fatalf("%+v 加库存的时候出现了错误!", u)
+			log.Fatalf("%+v 加库存的时候出现了错误", u)
 		}
 		return "", errors.New("库存数量不够客户想要的")
 	}
@@ -115,7 +116,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	orderNum := orderNumberGenerator()
 	ok, err := redis.String(conn.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
 	if err != nil {
-		log.Printf("%+v", err)
+		log.Printf("用户%s生成订单过程中出现了错误: %+v\n", u.userID, err)
 		return "", err
 	}
 	if ok == "OK" {
@@ -125,17 +126,17 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	return "", errors.New("other error")
 }
 
-// Bought 为了提高效率, 还是使用key为:`user:userID:bought` value type: hash, value: "productId:productNum" 类型的数据吧
+// Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会face限制购买数量的规则哦
 func (u *User) Bought(productID string, purchaseNum int) error {
 	conn := pool.Get()
 	defer conn.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
 	flag, err := redis.Int(conn.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
 	if err != nil {
-		log.Println(err)
+		log.Println("给user:bought这个hash添加用户已购买这个信息的时候, 遇到了错误", err)
 		return err
 	}
-	// 如果想要购买的物品已经存在(之前购买过), 那就增加购物车里面的商品的数量
+	// 如果想要购买的物品已经存在(之前购买过), setnx没办法添加, 那就再添加一遍吧~
 	if flag == 0 {
 		err = conn.Send("hincrby", "user:"+u.userID+":bought", productID, purchaseNum)
 		if err != nil {
