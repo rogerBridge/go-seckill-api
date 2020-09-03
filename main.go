@@ -15,6 +15,12 @@ func init() {
 		log.Println(err)
 		return
 	}
+	conn := pool.Get()
+	defer conn.Close()
+	_, err = conn.Do("ping")
+	if err != nil {
+		log.Fatalln(err)
+	}
 	// // 搞一些闲置的redis连接
 	// var wg sync.WaitGroup
 	// for i := 0; i < 10000/2; i++ {
