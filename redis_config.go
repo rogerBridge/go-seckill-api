@@ -10,6 +10,13 @@ var pool = &redis.Pool{
 	MaxIdle: 20000,
 	IdleTimeout: 300 * time.Second,
 	Dial: func() (conn redis.Conn, err error) {
-		return redis.Dial(networkType, address)
+		con, err := redis.Dial(networkType, address,
+			//redis.DialReadTimeout(5*time.Second),
+			//redis.DialWriteTimeout(5*time.Second),
+			)
+		if err!=nil {
+			return nil, err
+		}
+		return con,nil
 	},
 }
