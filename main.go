@@ -19,7 +19,7 @@ func init() {
 	defer conn.Close()
 	_, err = conn.Do("ping")
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatalln("redis数据库连接失败", err)
 	}
 	// // 搞一些闲置的redis连接
 	// var wg sync.WaitGroup

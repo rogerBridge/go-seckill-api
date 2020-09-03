@@ -2,12 +2,10 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/valyala/fasthttp"
 	"go_redis/jsonStruct"
 	"log"
 	"net/http"
-	"sync"
-
-	"github.com/valyala/fasthttp"
 )
 
 func errorHandle(w http.ResponseWriter, err error, code int) {
@@ -15,7 +13,7 @@ func errorHandle(w http.ResponseWriter, err error, code int) {
 	http.Error(w, err.Error(), code)
 }
 
-var cancelBuyLock sync.Mutex
+//var cancelBuyLock sync.Mutex
 
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
 // 使用application/json的方式
