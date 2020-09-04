@@ -15,12 +15,6 @@ func init() {
 		log.Println(err)
 		return
 	}
-	conn := pool.Get()
-	defer conn.Close()
-	_, err = conn.Do("ping")
-	if err != nil {
-		log.Fatalln("redis数据库连接失败", err)
-	}
 	// // 搞一些闲置的redis连接
 	// var wg sync.WaitGroup
 	// for i := 0; i < 10000/2; i++ {
@@ -54,8 +48,8 @@ func main() {
 	//	return
 	//}
 	r := router.New()
-	r.Handle(fasthttp.MethodPost, "/buy", buy)
-	//r.POST("/buy", buy)
+	//r.Handle(fasthttp.MethodPost, "/buy", buy)
+	r.POST("/buy", buy)
 	r.POST("/cancelBuy", cancelBuy)
 	//mux := func(ctx *fasthttp.RequestCtx) {
 	//	switch string(ctx.Path()) {
@@ -67,8 +61,8 @@ func main() {
 	//		ctx.Error("not found", fasthttp.StatusNotFound)
 	//	}
 	//}
-	log.Println("Listen on 127.0.0.1:4000")
-	err := fasthttp.ListenAndServe("127.0.0.1:4000", r.Handler)
+	log.Println("Listen on :4000")
+	err := fasthttp.ListenAndServe(":4000", r.Handler)
 	if err != nil {
 		log.Fatalln(err)
 	}

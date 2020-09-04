@@ -15,8 +15,13 @@ func InitStore() error {
 	conn := pool.Get()
 	defer conn.Close()
 
+	// PING PONG
+	err := conn.Send("ping")
+	if err!=nil {
+		panic("初始化连接失败: conn fail")
+	}
 	// 首先, flush redis
-	err := conn.Send("flushdb")
+	err = conn.Send("flushdb")
 	if err != nil {
 		log.Println("flushdb err", err)
 		return err
@@ -64,12 +69,13 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 
 // UserFilter 检查用户是否满足购买某种商品的权限
 func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
+
 	conn := pool.Get()
 	defer conn.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
 	if err!=nil {
-		log.Printf("获取商品:%s时出现错误\n")
+		log.Printf("获取商品:%s时出现错误\n", productID)
 		return false, err
 	}
 	if inventory < 1 {
@@ -212,20 +218,21 @@ func (u *User) CancelBuy(orderNum string) error {
 	// 给这个订单打个tag status:cancel
 	_, err = redis.Int(conn.Do("hset", "user:"+u.userID+":order:"+orderNum, "status", "cancel"))
 	if err != nil {
-		log.Printf("%+v 尝试更改订单: %s 状态时出现错误!", u, orderNum)
+		log.Printf("%+v 尝试更改订单: %s 状态时出现错误, 错误原因是: %v\n", u, orderNum, err) // 这里应该将订单状态还原, 并且将错误日志记录在案
+		return errors.New(err.Error())
 	}
 	// 返还库存
 	incrString := strconv.Itoa(purchaseNum)
 	err = conn.Send("hincrby", "store:"+productID, "storeNum", incrString)
 	if err != nil {
-		log.Printf("%+v 取消订单时出错 @store:productId", u)
-		return errors.New(u.userID + "取消订单时出错 @store:productId")
+		log.Printf("%+v 取消订单时出错, product id is: %s, cancel store num is: %s\n", productID, u, incrString)
+		return errors.New(u.userID + "取消订单时出错")
 	}
 	// 然后, 改变: user:[userID]:bought 这个hash表里面key对应的value
 	err = conn.Send("hincrby", "user:"+u.userID+":bought", productID, "-"+incrString)
 	if err != nil {
-		log.Printf("%+v 取消订单时出错 @user:[userID]:bought", u)
-		return errors.New(u.userID + "取消订单时出错 @store:productId")
+		log.Printf("%+v 变更bought表时出错\n", u)
+		return errors.New(u.userID + "变更bought表时出错")
 	}
 	return nil
 }
