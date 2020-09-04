@@ -3,6 +3,7 @@ module go_redis
 go 1.14
 
 require (
+	github.com/FZambia/sentinel v1.1.0
 	github.com/fasthttp/router v1.2.4
 	github.com/gomodule/redigo v1.8.2
 	github.com/mailru/easyjson v0.7.2
