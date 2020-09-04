@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-docker stop redis && docker rm redis
-docker network create redisStore
+#docker stop redis && docker rm redis
+#docker network create redisStore
 #  -v $PWD/redis.conf:/usr/local/etc/redis/redis.conf  \
 docker run -d \
   -v $PWD/data:/data  \
