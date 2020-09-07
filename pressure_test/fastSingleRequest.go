@@ -11,18 +11,19 @@ import (
 	"time"
 )
 
+//
 var client2 = &fasthttp.Client{
-	MaxConnsPerHost: 65535, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就会报错
+	MaxConnsPerHost: 60000, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就不会报错
 	Dial: func(addr string) (conn net.Conn, err error) {
 		//return connLocal, err
-		return fasthttp.DialTimeout(addr, 10*time.Second) // tcp 层
+		return fasthttp.DialTimeout(addr, 30*time.Second) // tcp 层
 	},
-	ReadTimeout: 30 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
+	ReadTimeout: 60 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
 }
 
 func fastSingleRequest(client *fasthttp.Client, userId string, productId string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error){
-	client = client2
 	// 首先, 构造client
+	client = client2
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
 		UserId:      userId,

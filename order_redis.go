@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	shop "go_redis/mysql/shop/goods"
 	"log"
 	"strconv"
 	"time"
@@ -20,12 +21,12 @@ func InitStore() error {
 	if err!=nil {
 		panic("初始化连接失败: conn fail")
 	}
-	// 首先, flush redis
-	err = conn.Send("flushdb")
-	if err != nil {
-		log.Println("flushdb err", err)
-		return err
-	}
+	//// 首先, flush redis
+	//err = conn.Send("flushdb")
+	//if err != nil {
+	//	log.Println("flushdb err", err)
+	//	return err
+	//}
 	//for i:=0; i<len(pList); i++ {
 	//	for j:=0; j<pList[i].StoreNum; j++ {
 	//		err = conn.Send("rpush", "store:"+pList[i].ProductId+":have", 0)
@@ -35,14 +36,20 @@ func InitStore() error {
 	//		}
 	//	}
 	//}
-	for i := 0; i < len(pList); i++ {
-		err = conn.Send("hmset", "store:"+pList[i].productID, "productName", pList[i].ProductName, "productId", pList[i].productID, "storeNum", pList[i].StoreNum)
+	goodsList, err := shop.QueryGoods()
+	if err!=nil {
+		panic("从MySQL数据库加载goods数据失败")
+	}
+	for i := 0; i < len(goodsList); i++ {
+		err = conn.Send("hmset", "store:"+strconv.Itoa(goodsList[i].ProductId), "productName", goodsList[i].ProductName, "productId", goodsList[i].ProductId, "storeNum", goodsList[i].Inventory)
 		if err != nil {
-			log.Printf("%+v创建hash `store:%s`失败", err, pList[i].productID)
+			log.Printf("%+v创建hash `store:%s`失败", err, goodsList[i].ProductName)
 			return err
 		}
 	}
-	log.Printf("store hash 初始化完成!\n")
+	log.Printf("从MySQL数据库中加载数据到redis中成功!\n")
+	// 加载limit purchase数据, 比如: 这件商品什么时候可以购买, 一个人可以购买多少件?
+
 	return nil
 }
 
@@ -103,6 +110,10 @@ func orderNumberGenerator() string {
 func (u *User) orderGenerator(productID string, purchaseNum int) (string, error) {
 	conn := pool.Get()
 	defer conn.Close()
+
+	// 存放用户订单信息的redis
+	conn1 := pool1.Get()
+	defer conn1.Close()
 	//// 只要list rpop之后的值不是nil就可以
 	//_, err := redis.Int(conn.Do("rpop", "store:"+productId+":have"))
 	//if err == redis.ErrNil {
@@ -128,7 +139,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到别的redis上面
 	// 生成订单信息
 	orderNum := orderNumberGenerator()
-	ok, err := redis.String(conn.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
+	ok, err := redis.String(conn1.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
 	if err != nil {
 		log.Printf("用户%s生成订单过程中出现了错误: %+v\n", u.userID, err)
 		return "", err

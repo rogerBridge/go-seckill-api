@@ -1,7 +1,8 @@
 package main
 
 import (
-	"fmt"
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"sort"
 	"strconv"
@@ -9,9 +10,43 @@ import (
 )
 
 // 同时请求的client数量
-var concurrentNum = 20000
-var socket = "127.0.0.1:4000"
-var URL = fmt.Sprintf("http://%s/buy", socket)
+//var concurrentNum = 20000
+//var socket = "127.0.0.1:4000"
+//var URL = fmt.Sprintf("http://%s/buy", socket)
+
+var (
+	concurrentNum int
+	schema        string
+	URL           string
+)
+
+type config struct {
+	ConcurrentNum int    `json:"concurrentNum"`
+	Schema        string `json:"schema"`
+	URL           string `json:"URL"`
+}
+
+func init() {
+	config := loadConfig()
+	concurrentNum = config.ConcurrentNum
+	schema = config.Schema
+	URL = schema + config.URL
+}
+
+func loadConfig() *config {
+	fileBytes, err := ioutil.ReadFile("config.json")
+	if err != nil {
+		log.Printf("加载配置文件失败: %v\n", err)
+		panic(err)
+	}
+	c := new(config)
+	err = json.Unmarshal(fileBytes, c)
+	if err != nil {
+		log.Printf("反向json失败\n")
+		panic(err)
+	}
+	return c
+}
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
@@ -19,7 +54,7 @@ func main() {
 	// 时间统计队列
 	timeStatistics := make(chan float64, concurrentNum)
 
-	start := 10000
+	start := 0
 	end := start + concurrentNum
 
 	//dialer := &net.Dialer{
@@ -37,7 +72,7 @@ func main() {
 	//  x 人同时抢购"10000"这件商品
 	for i := start; i < end; i++ {
 		w.Add(1)
-		go fastSingleRequest(client2, strconv.Itoa(i), "10000", &w, timeStatistics)
+		go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
 		//go singleRequest(client1, strconv.Itoa(i), "10000", &w, timeStatistics)
 	}
 

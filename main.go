@@ -1,11 +1,10 @@
 package main
 
 import (
-	"log"
-	"sync"
-
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"log"
+	"sync"
 )
 
 func init() {
@@ -37,6 +36,12 @@ func newConn(w *sync.WaitGroup) {
 }
 
 func main() {
+	//shop.InsertGoods()
+	//err := shop.UpdateGoods()
+	//if err!=nil {
+	//	log.Println(err)
+	//}
+
 	//mux := http.NewServeMux()
 	//mux.HandleFunc("/buy", buy)
 	//// "/cancelBuy" 这个接口只能由后台来调用
@@ -49,6 +54,8 @@ func main() {
 	//}
 	r := router.New()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
+	r.GET("/goodsList", goodsList)
+	r.POST("/syncRedis", syncRedis)
 	r.POST("/buy", buy)
 	r.POST("/cancelBuy", cancelBuy)
 	//mux := func(ctx *fasthttp.RequestCtx) {

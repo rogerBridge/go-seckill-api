@@ -2,10 +2,13 @@ package main
 
 import (
 	"encoding/json"
+	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
 	"go_redis/jsonStruct"
+	shop "go_redis/mysql/shop/goods"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func errorHandle(w http.ResponseWriter, err error, code int) {
@@ -191,4 +194,93 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	//w.Header().Set("Content-Type", "application/json")
 	//w.Write(content)
 	return
+}
+
+// 调用这个函数, 立刻同步(mysql中存在 && redis中不存在)的商品数据到redis
+func syncRedis(ctx *fasthttp.RequestCtx) {
+	redisconn := pool.Get()
+	defer redisconn.Close()
+
+	storeList, err := redis.Strings(redisconn.Do("keys", "store:*"))
+	if err!=nil {
+		log.Println(err)
+	}
+	// 分离商品的ID出来, 到单独的store id list
+	storeIDlist := make([]string, 0, 128)
+	for _, v := range storeList {
+		storeIDlist = append(storeIDlist, v[6:])
+	}
+	log.Println(storeIDlist)
+	// 从现有的MySQL表格中找到具体数据
+	goodsList, err := shop.QueryGoods()
+	if err!=nil {
+		log.Println(err)
+	}
+	for _, v := range goodsList {
+		_, ok := FindElement(storeIDlist, strconv.Itoa(v.ProductId))
+		if !ok {
+			// 给redis中添加相关商品数据
+			err = redisconn.Send("hmset", "store:"+strconv.Itoa(v.ProductId), "productName", v.ProductName, "productId", v.ProductId, "storeNum", v.Inventory)
+			if err != nil {
+				log.Printf("%+v创建hash `store:%s`失败", err, v.ProductId)
+			}
+		}
+	}
+	if err!=nil {
+		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+	}
+	ctx.Response.SetStatusCode(200)
+	respJson, err := jsonStruct.CommonResp(jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "处理成功",
+		Data: nil,
+	})
+	if err!=nil {
+		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+	}
+	ctx.Response.SetBody(respJson)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+}
+
+// 展示商品清单
+func goodsList(ctx *fasthttp.RequestCtx) {
+	redisconn := pool.Get()
+	defer redisconn.Close()
+
+	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
+	if err!=nil {
+		log.Println(err)
+		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+	}
+	type goods struct {
+		ProductName string `redis:"productName"`
+		ProductId int `redis:"productId"`
+		StoreNum int `redis:"storeNum"`
+	}
+	goodsList := make([]*goods, 0)
+	for _, v := range reply {
+		log.Println(v)
+		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
+		if err!=nil {
+			log.Println(err)
+		}
+		log.Println(goodsMap)
+		g := new(goods)
+		err = redis.ScanStruct(goodsMap, g)
+		if err!=nil {
+			log.Println("redis scanStruct error: ", err)
+		}
+		log.Println(g)
+		goodsList = append(goodsList, g)
+	}
+	response := jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "success",
+		Data: goodsList,
+	}
+	err = json.NewEncoder(ctx.Response.BodyWriter()).Encode(response)
+	if err!=nil {
+		ctx.Error("internel error", fasthttp.StatusInternalServerError)
+	}
+	ctx.Response.Header.Set("Content-Type", "application/json")
 }

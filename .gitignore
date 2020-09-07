@@ -7,4 +7,3 @@ redisDocker/data/*
 redisDocker/slavers/redisDocker*/data
 redisDocker/sentinels/redisSentinel*/sentinel.conf
 main
-pressure_test/test

@@ -78,3 +78,20 @@ var pool = &redis.Pool{
 		return con, nil
 	},
 }
+
+// 存储订单信息, 购买信息
+var pool1 = &redis.Pool{
+	MaxIdle:     20000,
+	IdleTimeout: 300 * time.Second,
+	Dial: func() (conn redis.Conn, err error) {
+		networkType := "tcp"
+		//host := "127.0.0.1"
+		host := "orderInfoRedis"
+		masterSocket := host + ":6379"
+		con, err := redis.Dial(networkType, masterSocket)
+		if err != nil {
+			return nil, err
+		}
+		return con, nil
+	},
+}

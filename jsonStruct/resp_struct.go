@@ -16,7 +16,7 @@ func CommonResp(c CommonResponse) ([]byte, error){
 	v, err := json.Marshal(c)
 	if err!=nil {
 		log.Println(err)
-		return []byte("a"), err
+		return []byte(""), err
 	}
 	return v, nil
 }
