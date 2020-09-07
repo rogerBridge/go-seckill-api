@@ -2,7 +2,8 @@ package main
 
 import (
 	"errors"
-	shop "go_redis/mysql/shop/goods"
+	"go_redis/mysql/shop/goods"
+	"go_redis/mysql/shop/purchase_limits"
 	"log"
 	"strconv"
 	"time"
@@ -36,7 +37,7 @@ func InitStore() error {
 	//		}
 	//	}
 	//}
-	goodsList, err := shop.QueryGoods()
+	goodsList, err := goods.QueryGoods()
 	if err!=nil {
 		panic("从MySQL数据库加载goods数据失败")
 	}
@@ -49,7 +50,19 @@ func InitStore() error {
 	}
 	log.Printf("从MySQL数据库中加载数据到redis中成功!\n")
 	// 加载limit purchase数据, 比如: 这件商品什么时候可以购买, 一个人可以购买多少件?
-
+	r, err := purchase_limits.QueryPurchaseLimits()
+	if err!=nil {
+		log.Println(err)
+	}
+	// limitNum[string]LimitPurchase
+	for _, v := range r {
+		err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
+		if err!=nil {
+			log.Println(err)
+			return err
+		}
+		log.Println(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
+	}
 	return nil
 }
 
@@ -60,11 +73,13 @@ type User struct {
 
 // CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
+	// 这里开始写限制购买等逻辑, 例如: 一个人最多购买几件, 购买的时间段限制等等
 	_, ok := limitNumMap[productID] // 这里改用redis配置
 	if !ok {
-		log.Printf("请求的商品不在限购名单中, 不合法")
-		return false, errors.New("请求的商品不在限购名单中, 不合法")
+		log.Printf("请求的商品不在限购名单中")
+		return false, errors.New("请求的商品不在限购名单中")
 	}
+
 	if purchaseNum < 1 || purchaseNum > limitNumMap[productID] {
 		return false, errors.New("商品数量不合法或者购买商品数量超出限制")
 	}

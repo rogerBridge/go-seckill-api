@@ -264,7 +264,7 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 		if err!=nil {
 			log.Println(err)
 		}
-		log.Println(goodsMap)
+		//log.Println(goodsMap)
 		g := new(goods)
 		err = redis.ScanStruct(goodsMap, g)
 		if err!=nil {

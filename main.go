@@ -36,12 +36,6 @@ func newConn(w *sync.WaitGroup) {
 }
 
 func main() {
-	//shop.InsertGoods()
-	//err := shop.UpdateGoods()
-	//if err!=nil {
-	//	log.Println(err)
-	//}
-
 	//mux := http.NewServeMux()
 	//mux.HandleFunc("/buy", buy)
 	//// "/cancelBuy" 这个接口只能由后台来调用
@@ -52,6 +46,7 @@ func main() {
 	//	log.Println(err)
 	//	return
 	//}
+
 	r := router.New()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
 	r.GET("/goodsList", goodsList)
