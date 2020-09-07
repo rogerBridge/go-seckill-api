@@ -60,7 +60,7 @@ type User struct {
 
 // CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
-	_, ok := limitNumMap[productID]
+	_, ok := limitNumMap[productID] // 这里改用redis配置
 	if !ok {
 		log.Printf("请求的商品不在限购名单中, 不合法")
 		return false, errors.New("请求的商品不在限购名单中, 不合法")
@@ -76,9 +76,10 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 
 // UserFilter 检查用户是否满足购买某种商品的权限
 func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
-
 	conn := pool.Get()
 	defer conn.Close()
+	conn1 := pool1.Get()
+	defer conn1.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
 	if err!=nil {
@@ -89,7 +90,7 @@ func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
 		return false, nil
 	}
 	// hget 用户是否已经购买过了?
-	r, err := redis.Int(conn.Do("hget", "user:"+u.userID+":bought", productID))
+	r, err := redis.Int(conn1.Do("hget", "user:"+u.userID+":bought", productID))
 	// 如果用户没有购买过
 	if err == redis.ErrNil {
 		return true, nil
@@ -136,7 +137,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 		}
 		return "", errors.New("库存数量不够客户想要的")
 	}
-	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到别的redis上面
+	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到MySQL上面
 	// 生成订单信息
 	orderNum := orderNumberGenerator()
 	ok, err := redis.String(conn1.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
@@ -153,17 +154,17 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 
 // Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会face限制购买数量的规则哦
 func (u *User) Bought(productID string, purchaseNum int) error {
-	conn := pool.Get()
-	defer conn.Close()
+	conn1 := pool1.Get()
+	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
-	flag, err := redis.Int(conn.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
+	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
 	if err != nil {
 		log.Println("给user:bought这个hash添加用户已购买这个信息的时候, 遇到了错误", err)
 		return err
 	}
 	// 如果想要购买的物品已经存在(之前购买过), setnx没办法添加, 那就再添加一遍吧~
 	if flag == 0 {
-		err = conn.Send("hincrby", "user:"+u.userID+":bought", productID, purchaseNum)
+		err = conn1.Send("hincrby", "user:"+u.userID+":bought", productID, purchaseNum)
 		if err != nil {
 			log.Println(err)
 			return err
