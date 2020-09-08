@@ -69,7 +69,7 @@ func main() {
 	//	panic(err)
 	//}
 
-	 //x 人同时抢购"10001"这件商品
+	//x 人同时抢购"10001"这件商品
 	for i := start; i < end; i++ {
 		w.Add(1)
 		go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
