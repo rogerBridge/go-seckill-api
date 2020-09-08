@@ -17,22 +17,20 @@
 
     1. 卖出商品a 100件, 限制每个人只能购买同款商品1件;
     2. 卖出商品a 100件, 商品b 100件, 商品a限制每个人只能购买2件, 商品b限制每个人只能购买1件;
-    3. 卖出商品a x件(x>0 && type(x)=="int"), 限购aa件(aa<=x). 商品b y件(y>0 && type(y)=="int"), 限购bb件(bb<=y), 商品c z件(z>0&& type(z)=="int"), 限购cc件(cc<=z) ......, 
+    3. 多件商品, 设置特定时间段, 例如: a商品限制在xxxx.xx.xx xx:xx:xx ~ yyyy:yy.yy yy:yy:yy时间段内进行购买,
+    每个人限制购买2件, 商品b购买特定时间段, 每个人限制购买5件, 商品c不做限制;
     
     
 - 流程
     
 
 - 部署方法
-
-    - 打包成二进制文件, 通过nginx转发, 或者直接使用裸二进制文件
-        1. 部署redis, 端口号: 6379, AUTH: "hello"
-        2. cd redis_play && go build -o redis_play *.go && ./redis_play
-        3. 运行redis_play, 默认情况下, redis只能通过localhost连接, 为了安全嘛~, 通过http来调用redis就好了呀, 然后把端口暴露给公网.
-        4. 可以使用Postman测试功能, 自己写或者用我的位于pressure_test目录下的压测脚本测试并发性能, 
-           目前只覆盖了两种场景(1. 10000名用户同时抢购productId: 10000的商品(库存:200), 2. 10000名用户同时抢购2种商品, productId:10000, productId:10001, per 200件库存)
-    - 做成docker
-        - [x] 完成
+    - Docker部署:
+    1. 实验版:
+        - 两个Redis实例, 分别位于目录: redisDocker/runRedis.sh, redisDocker/orderInfoRedis/runRedis.sh;
+        - 一个MySQL实例, 位于目录: mysql/runMysql.sh
+        - 一个webapp实例, 位于: buils.sh
+        - 建议: 运行在本地, 搭配Nginx反向代理服务器, 配合TLS使用
 
 - 性能测试
 
@@ -46,12 +44,12 @@
         
         内存占用(反复跑pressure_test后停在了这个地方, peak value 400MB):
     ![pressure_test_memory](./img/pressure.png)
-    1. 用户20000名, 同时请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1库存数量: 200件, 测试结果如下:
-    连续三次测试:
+    1. 用户20000名, 请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1, 库存数量: 200件, 测试结果如下:
+    连续 5 次测试:
     
     ![1.1](./img/1.1.png)
     
     2. 20000名用户, 其中10000名用户抢购商品"10000", 库存为200, 10000名用户抢购商品"10001", 数量为200, 测试结果如下:
-    连续三次测试:
+    连续 5 次测试:
     
     ![2.1](./img/2.1.png)

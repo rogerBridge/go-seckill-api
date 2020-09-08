@@ -2,7 +2,6 @@ vendor/
 play
 .idea/
 redisBuy
-mysql/
 redisDocker/data/*
 redisDocker/slavers/redisDocker*/data
 redisDocker/sentinels/redisSentinel*/sentinel.conf
