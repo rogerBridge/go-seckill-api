@@ -5,5 +5,5 @@ redisBuy
 redisDocker/data/*
 redisDocker/slavers/redisDocker*/data
 redisDocker/sentinels/redisSentinel*/sentinel.conf
-redisDocker/orderInfoRedis/data/*
+redisDocker/orderInfoRedis/data
 main

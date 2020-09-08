@@ -30,6 +30,7 @@
         - 两个Redis实例, 分别位于目录: redisDocker/runRedis.sh, redisDocker/orderInfoRedis/runRedis.sh;
         - 一个MySQL实例, 位于目录: mysql/runMysql.sh
         - 一个webapp实例, 位于: buils.sh
+        - 一键部署: `bash sharpRun.sh`
         - 建议: 运行在本地, 搭配Nginx反向代理服务器, 配合TLS使用
 
 - 性能测试
