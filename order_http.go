@@ -53,7 +53,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8005,
-			Msg:  "您购买的商品数量已达到上限或者缺货",
+			Msg:  "您购买的商品数量已达到上限或者缺货;"+err.Error(),
 			Data: nil,
 		}
 		content, err := c.MarshalJSON()
@@ -72,7 +72,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8002,
-				Msg:  "库存数量不足呀~",
+				Msg:  "库存数量不足呀;"+err.Error(),
 				Data: nil,
 			}
 			content, err := c.MarshalJSON()
@@ -94,7 +94,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8004,
-				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误!",
+				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误;"+err.Error(),
 				Data: nil,
 			}
 			content, err := c.MarshalJSON()
@@ -196,22 +196,55 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	return
 }
 
-// 调用这个函数, 立刻同步(mysql中存在 && redis中不存在)的商品数据到redis
-func syncRedis(ctx *fasthttp.RequestCtx) {
+// 调用这个函数, 立刻同步
+// (mysql中存在 && redis中不存在)的商品数据到redis, 这个接口的用处是: mysql中新添加的商品数据, 需要同步到redis中, 同时保证redis中已存在的商品数据不变
+// (redis和mysql中都存在的商品, redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
+func syncGoods(ctx *fasthttp.RequestCtx) {
 	redisconn := pool.Get()
 	defer redisconn.Close()
-
+	// 首先, 将redis中存在的商品信息同步到mysql中
+	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
+	if err!=nil {
+		log.Println(err)
+		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+	}
+	type goods struct {
+		ProductName string `redis:"productName"`
+		ProductId int `redis:"productId"`
+		StoreNum int `redis:"storeNum"`
+	}
+	goodsListRedis := make([]*goods, 0)
+	for _, v := range reply {
+		log.Println(v)
+		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
+		if err!=nil {
+			log.Println(err)
+		}
+		//log.Println(goodsMap)
+		g := new(goods)
+		err = redis.ScanStruct(goodsMap, g)
+		if err!=nil {
+			log.Println("redis scanStruct error: ", err)
+		}
+		log.Println(g)
+		goodsListRedis = append(goodsListRedis, g)
+	}
+	for _, v := range goodsListRedis {
+		err := shop.UpdateGoods(v.ProductId, v.ProductName, v.StoreNum)
+		if err!=nil{
+			log.Println(err)
+		}
+	}
+	// 在现有的MySQL表格中找到所有的商品数据, 比对redis的productList, 如果发现有商品不存在于redis中, 就把它添加进去
 	storeList, err := redis.Strings(redisconn.Do("keys", "store:*"))
 	if err!=nil {
 		log.Println(err)
 	}
-	// 分离商品的ID出来, 到单独的store id list
-	storeIDlist := make([]string, 0, 128)
+	storeIDlist := make([]string, 0, 128)  // 分离redis中商品的ID出来, 到单独的store id list
 	for _, v := range storeList {
 		storeIDlist = append(storeIDlist, v[6:])
 	}
-	log.Println(storeIDlist)
-	// 从现有的MySQL表格中找到具体数据
+	log.Println(storeIDlist) // redis中存在的商品信息
 	goodsList, err := shop.QueryGoods()
 	if err!=nil {
 		log.Println(err)

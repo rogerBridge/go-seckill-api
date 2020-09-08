@@ -17,7 +17,8 @@ import (
 func InitStore() error {
 	conn := pool.Get()
 	defer conn.Close()
-	conn1 := pool.Get()
+
+	conn1 := pool1.Get()
 	defer conn1.Close()
 
 	// PING PONG
@@ -77,7 +78,6 @@ func loadLimit() error {
 	for k, _ := range purchaseLimit {
 		delete(purchaseLimit, k)
 	}
-
 	r, err := purchase_limits.QueryPurchaseLimits()
 	if err != nil {
 		return err
@@ -89,13 +89,12 @@ func loadLimit() error {
 	log.Println("加载后的指针型变量purchaseLimit: ", purchaseLimit)
 	for _, v := range purchaseLimit {
 		log.Println(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
-		err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
-		if err != nil {
-			log.Println(err)
-			return err
-		}
+		//err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
+		//if err != nil {
+		//	log.Println(err)
+		//	return err
+		//}
 	}
-	log.Println("load limit_purchase from MySQL to Redis success")
 	return nil
 }
 
@@ -112,6 +111,10 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 	if _, ok := purchaseLimit[productID]; ok {
 		if purchaseNum < 1 || purchaseNum > purchaseLimit[productID].LimitNum {
 			return false, errors.New("商品数量小于1或者购买商品数量超出限制")
+		}
+		now := time.Now()
+		if now.After(purchaseLimit[productID].EndPurchaseDatetime) || now.Before(purchaseLimit[productID].StartPurchaseDatetime) {
+			return false, errors.New("购买时间不符合要求")
 		}
 		if ok, _ := u.UserFilter(productID, purchaseNum, true); ok {
 			return true, nil

@@ -57,7 +57,7 @@ func main() {
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
 	r.POST("/syncGoodsLimit", syncGoodsLimit)
 	r.GET("/goodsList", goodsList)
-	r.POST("/syncRedis", syncRedis)
+	r.POST("/syncGoods", syncGoods)
 	r.POST("/buy", buy)
 	r.POST("/cancelBuy", cancelBuy)
 	//mux := func(ctx *fasthttp.RequestCtx) {
