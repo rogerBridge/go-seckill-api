@@ -6,4 +6,5 @@ mysql/
 redisDocker/data/*
 redisDocker/slavers/redisDocker*/data
 redisDocker/sentinels/redisSentinel*/sentinel.conf
+redisDocker/orderInfoRedis/data
 main
