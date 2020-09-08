@@ -4,6 +4,7 @@ import (
 	"errors"
 	"go_redis/mysql/shop/goods"
 	"go_redis/mysql/shop/purchase_limits"
+	"go_redis/mysql/shop/structure"
 	"log"
 	"strconv"
 	"time"
@@ -16,29 +17,32 @@ import (
 func InitStore() error {
 	conn := pool.Get()
 	defer conn.Close()
+	conn1 := pool.Get()
+	defer conn1.Close()
 
 	// PING PONG
 	err := conn.Send("ping")
+	if err != nil {
+		panic("初始化连接失败: conn fail")
+	}
+	err = conn1.Send("ping")
 	if err!=nil {
 		panic("初始化连接失败: conn fail")
 	}
-	//// 首先, flush redis
-	//err = conn.Send("flushdb")
-	//if err != nil {
-	//	log.Println("flushdb err", err)
-	//	return err
-	//}
-	//for i:=0; i<len(pList); i++ {
-	//	for j:=0; j<pList[i].StoreNum; j++ {
-	//		err = conn.Send("rpush", "store:"+pList[i].ProductId+":have", 0)
-	//		if err!=nil {
-	//			log.Printf("初始化商品库存失败!\n")
-	//			return err
-	//		}
-	//	}
-	//}
+	// 首先, flushdb redis
+	err = conn.Send("flushdb")
+	if err != nil {
+		log.Println("flushdb err", err)
+		return err
+	}
+	err = conn1.Send("flushdb")
+	if err != nil {
+		log.Println("flushdb err", err)
+		return err
+	}
+
 	goodsList, err := goods.QueryGoods()
-	if err!=nil {
+	if err != nil {
 		panic("从MySQL数据库加载goods数据失败")
 	}
 	for i := 0; i < len(goodsList); i++ {
@@ -48,23 +52,55 @@ func InitStore() error {
 			return err
 		}
 	}
-	log.Printf("从MySQL数据库中加载数据到redis中成功!\n")
-	// 加载limit purchase数据, 比如: 这件商品什么时候可以购买, 一个人可以购买多少件?
-	r, err := purchase_limits.QueryPurchaseLimits()
-	if err!=nil {
-		log.Println(err)
+	log.Printf("从MySQL数据库中加载goods数据到redis中成功!\n")
+	//// 加载limit purchase数据, 比如: 这件商品什么时候可以购买, 一个人可以购买多少件?
+	//r, err := purchase_limits.QueryPurchaseLimits()
+	//if err!=nil {
+	//	log.Println(err)
+	//}
+	//// limitNum[string]LimitPurchase
+	//for _, v := range r {
+	//	err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
+	//	if err!=nil {
+	//		log.Println(err)
+	//		return err
+	//	}
+	//	log.Println(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
+	//}
+	return nil
+}
+
+// 加载limit
+func loadLimit() error {
+	conn := pool.Get()
+	defer conn.Close()
+	for k, _ := range purchaseLimit {
+		delete(purchaseLimit, k)
 	}
-	// limitNum[string]LimitPurchase
+
+	r, err := purchase_limits.QueryPurchaseLimits()
+	if err != nil {
+		return err
+	}
 	for _, v := range r {
+		// make map本身就是一个指针型变量
+		purchaseLimit[strconv.Itoa(v.ProductId)] = v
+	}
+	log.Println("加载后的指针型变量purchaseLimit: ", purchaseLimit)
+	for _, v := range purchaseLimit {
+		log.Println(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
 		err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
-		if err!=nil {
+		if err != nil {
 			log.Println(err)
 			return err
 		}
-		log.Println(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
 	}
+	log.Println("load limit_purchase from MySQL to Redis success")
 	return nil
 }
+
+// 全局变量, 存储purchase_limits
+var purchaseLimit = make(map[string]*structure.PurchaseLimits)
 
 // User is a type to be exported
 type User struct {
@@ -73,31 +109,34 @@ type User struct {
 
 // CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
-	// 这里开始写限制购买等逻辑, 例如: 一个人最多购买几件, 购买的时间段限制等等
-	_, ok := limitNumMap[productID] // 这里改用redis配置
-	if !ok {
-		log.Printf("请求的商品不在限购名单中")
-		return false, errors.New("请求的商品不在限购名单中")
+	if _, ok := purchaseLimit[productID]; ok {
+		if purchaseNum < 1 || purchaseNum > purchaseLimit[productID].LimitNum {
+			return false, errors.New("商品数量小于1或者购买商品数量超出限制")
+		}
+		if ok, _ := u.UserFilter(productID, purchaseNum, true); ok {
+			return true, nil
+		}
+		return false, errors.New("购买数量过大或者其他错误")
+	} else {
+		if purchaseNum < 1 {
+			return false, errors.New("商品数量小于1")
+		}
+		if ok, _ := u.UserFilter(productID, purchaseNum, false); ok {
+			return true, nil
+		}
+		return false, errors.New("其他错误")
 	}
-
-	if purchaseNum < 1 || purchaseNum > limitNumMap[productID] {
-		return false, errors.New("商品数量不合法或者购买商品数量超出限制")
-	}
-	if ok, _ := u.UserFilter(productID, purchaseNum); ok {
-		return true, nil
-	}
-	return false, errors.New("不满足userFilter条件")
 }
 
 // UserFilter 检查用户是否满足购买某种商品的权限
-func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
+func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (bool, error) {
 	conn := pool.Get()
 	defer conn.Close()
 	conn1 := pool1.Get()
 	defer conn1.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
-	if err!=nil {
+	if err != nil {
 		log.Printf("获取商品:%s时出现错误\n", productID)
 		return false, err
 	}
@@ -110,10 +149,16 @@ func (u *User) UserFilter(productID string, purchaseNum int) (bool, error) {
 	if err == redis.ErrNil {
 		return true, nil
 	}
-	// 如果用户已经购买过, 那么这次购买+之前购买的数量不可以超过总体的限制
-	if (r + purchaseNum) <= limitNumMap[productID] {
+	// 如果用户购买过了, 看一看是否存在购买限制
+	if hasLimit {
+		// 用户想要购买的数量+已购买的数量<=限制购买的数量
+		if (r + purchaseNum) <= purchaseLimit[productID].LimitNum {
+			return true, nil
+		}
+	} else {
 		return true, nil
 	}
+	// 如果用户已经购买过, 那么这次购买+之前购买的数量不可以超过总体的限制
 	return false, errors.New("购买数量过大或者其他错误")
 }
 
@@ -192,8 +237,11 @@ func (u *User) Bought(productID string, purchaseNum int) error {
 func (u *User) CancelBuy(orderNum string) error {
 	conn := pool.Get()
 	defer conn.Close()
+
+	conn1 := pool1.Get()
+	defer conn1.Close()
 	// 查看订单号是否存在? && 状态是否是process
-	isOrderExist, err := redis.Int(conn.Do("exists", "user:"+u.userID+":order:"+orderNum))
+	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.userID+":order:"+orderNum))
 	if err != nil {
 		log.Printf("%+v 查询user:%s:order:%s 时出错!", u, u.userID, orderNum)
 		return err
@@ -202,7 +250,7 @@ func (u *User) CancelBuy(orderNum string) error {
 		log.Printf("%+v 查询user:%s:order:%s 时不存在!", u, u.userID, orderNum)
 		return errors.New("系统中没有找到该订单")
 	}
-	status, err := redis.String(conn.Do("hget", "user:"+u.userID+":order:"+orderNum, "status"))
+	status, err := redis.String(conn1.Do("hget", "user:"+u.userID+":order:"+orderNum, "status"))
 	if err != nil {
 		log.Printf("%+v 获取用户:%s订单:%s合法性的时候出现了错误!", u, u.userID, orderNum)
 		return err
@@ -212,18 +260,18 @@ func (u *User) CancelBuy(orderNum string) error {
 		return errors.New("订单状态错误!只有process状态的订单才可以执行退订单操作")
 	}
 	// 根据订单号找出来商品的productId, purchaseNum
-	productID, err := redis.String(conn.Do("hget", "user:"+u.userID+":order:"+orderNum, "productId"))
+	productID, err := redis.String(conn1.Do("hget", "user:"+u.userID+":order:"+orderNum, "productId"))
 	if err != nil {
 		log.Printf("hget user:%s:order:%s productId error", u.userID, orderNum)
 		return err
 	}
-	purchaseNum, err := redis.Int(conn.Do("hget", "user:"+u.userID+":order:"+orderNum, "purchaseNum"))
+	purchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.userID+":order:"+orderNum, "purchaseNum"))
 	if err != nil {
 		log.Printf("hget user:%s:order:%s purchaseNum error", u.userID, orderNum)
 		return err
 	}
 
-	isExist, err := redis.Int(conn.Do("hexists", "user:"+u.userID+":bought", productID))
+	isExist, err := redis.Int(conn1.Do("hexists", "user:"+u.userID+":bought", productID))
 	if err != nil {
 		log.Printf("%+v 查询user:userID:bought时出错!", u)
 		return err
@@ -232,18 +280,19 @@ func (u *User) CancelBuy(orderNum string) error {
 		log.Printf("%+v 没有购买过%s", u, productID)
 		return errors.New("没有购买过的东东, 不可以取消哦~")
 	}
-	// 人家用户真的购买过...
-	existPurchaseNum, err := redis.Int(conn.Do("hget", "user:"+u.userID+":bought", productID))
+	// 如果人家用户真的购买过...
+	existPurchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.userID+":bought", productID))
 	if err != nil {
 		log.Printf("%+v 获取已购买商品%s时出现错误! %+v", u, productID, err)
 		return err
 	}
+	// 有的人不止购买了一次
 	if !(existPurchaseNum >= purchaseNum) {
 		log.Printf("%+v 已购买数量减去登记的购买数量时出现了错误!", u)
 		return errors.New("取消购买的数量不能大于购买的数量")
 	}
 	// 给这个订单打个tag status:cancel
-	_, err = redis.Int(conn.Do("hset", "user:"+u.userID+":order:"+orderNum, "status", "cancel"))
+	_, err = redis.Int(conn1.Do("hset", "user:"+u.userID+":order:"+orderNum, "status", "cancel"))
 	if err != nil {
 		log.Printf("%+v 尝试更改订单: %s 状态时出现错误, 错误原因是: %v\n", u, orderNum, err) // 这里应该将订单状态还原, 并且将错误日志记录在案
 		return errors.New(err.Error())
@@ -256,7 +305,7 @@ func (u *User) CancelBuy(orderNum string) error {
 		return errors.New(u.userID + "取消订单时出错")
 	}
 	// 然后, 改变: user:[userID]:bought 这个hash表里面key对应的value
-	err = conn.Send("hincrby", "user:"+u.userID+":bought", productID, "-"+incrString)
+	err = conn1.Send("hincrby", "user:"+u.userID+":bought", productID, "-"+incrString)
 	if err != nil {
 		log.Printf("%+v 变更bought表时出错\n", u)
 		return errors.New(u.userID + "变更bought表时出错")

@@ -14,6 +14,12 @@ func init() {
 		log.Println(err)
 		return
 	}
+	// 加载MySQL中的limit到全局变量和redis中
+	err = loadLimit()
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	// // 搞一些闲置的redis连接
 	// var wg sync.WaitGroup
 	// for i := 0; i < 10000/2; i++ {
@@ -24,7 +30,7 @@ func init() {
 	// log.Println("预热redis链接成功")
 }
 
-// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的性能消耗
+// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的时间消耗
 func newConn(w *sync.WaitGroup) {
 	conn := pool.Get()
 	defer conn.Close()
@@ -49,6 +55,7 @@ func main() {
 
 	r := router.New()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
+	r.POST("/syncGoodsLimit", syncGoodsLimit)
 	r.GET("/goodsList", goodsList)
 	r.POST("/syncRedis", syncRedis)
 	r.POST("/buy", buy)

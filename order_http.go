@@ -53,7 +53,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8005,
-			Msg:  "您购买的商品数量已达到上限或者不满足购买条件",
+			Msg:  "您购买的商品数量已达到上限或者缺货",
 			Data: nil,
 		}
 		content, err := c.MarshalJSON()
@@ -277,6 +277,27 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 		Code: 8001,
 		Msg:  "success",
 		Data: goodsList,
+	}
+	err = json.NewEncoder(ctx.Response.BodyWriter()).Encode(response)
+	if err!=nil {
+		ctx.Error("internel error", fasthttp.StatusInternalServerError)
+	}
+	ctx.Response.Header.Set("Content-Type", "application/json")
+}
+
+// 更新商品限制计划
+// 例如, 在更新MySQL后, 若要将商品购买限制同步到mysql中, 只需要调用goodsLimit这个接口就可以
+func syncGoodsLimit(ctx *fasthttp.RequestCtx) {
+	// 加载limit限制计划
+	err := loadLimit()
+	if err != nil {
+		log.Println(err)
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+	}
+	response := jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "success",
+		Data: nil,
 	}
 	err = json.NewEncoder(ctx.Response.BodyWriter()).Encode(response)
 	if err!=nil {

@@ -138,5 +138,5 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 		allTime += v
 	}
 	log.Printf("最大响应时间: %.4fms, 最小响应时间: %.4fms, 平均响应时间: %.4fms, TPS: %.0f\n", 1000*timeStatisticsList[len(timeStatisticsList)-1], 1000*timeStatisticsList[0], 1000*allTime/float64(len(timeStatisticsList)), float64(len(timeStatisticsList))/timeStatisticsList[len(timeStatisticsList)-1])
-	log.Printf("1s 内处理的请求数量占总体请求数量的%.3f%%\n", 100*float64(durationB0And1)/float64(concurrentNum))
+	log.Printf("0~1s 内处理的请求数量: %d, 占总体请求数量的%.3f%%\n", durationB0And1, 100*float64(durationB0And1)/float64(concurrentNum))
 }
