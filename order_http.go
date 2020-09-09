@@ -217,12 +217,12 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
 		return
 	}
-	type goods struct {
+	type Goods struct {
 		ProductName string `redis:"productName"`
 		ProductId   int    `redis:"productId"`
 		StoreNum    int    `redis:"storeNum"`
 	}
-	goodsListRedis := make([]*goods, 0)
+	goodsListRedis := make([]*Goods, 0)
 	for _, v := range reply {
 		log.Println(v)
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
@@ -232,7 +232,7 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 			return
 		}
 		//log.Println(goodsMap)
-		g := new(goods)
+		g := new(Goods)
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
 			log.Println("redis scanStruct error: ", err)
@@ -253,8 +253,8 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	for _, v := range goodsListRedis {
 		_, err := tx.Exec("update goods set product_name=?, inventory=? where product_id=?", v.ProductName, v.StoreNum, v.ProductId)
 		if err != nil {
-			err = tx.Rollback()
-			if err != nil {
+			err1 := tx.Rollback()
+			if err1 != nil {
 				log.Println(err)
 				return
 			}
