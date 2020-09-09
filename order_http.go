@@ -2,10 +2,12 @@ package main
 
 import (
 	"encoding/json"
+	_ "github.com/go-sql-driver/mysql"
 	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
 	"go_redis/jsonStruct"
-	shop "go_redis/mysql/shop/goods"
+	"go_redis/mysql"
+	"go_redis/mysql/shop/goods"
 	"log"
 	"net/http"
 	"strconv"
@@ -53,12 +55,13 @@ func buy(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		c := jsonStruct.CommonResponse{
 			Code: 8005,
-			Msg:  "您购买的商品数量已达到上限或者缺货;"+err.Error(),
+			Msg:  "您购买的商品数量已达到上限或者缺货;" + err.Error(),
 			Data: nil,
 		}
 		content, err := c.MarshalJSON()
 		//content, err := jsonStruct.CommonResp(c)
 		if err != nil {
+			log.Println(err)
 			ctx.Error("response info error", 500)
 			return
 		}
@@ -72,12 +75,13 @@ func buy(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8002,
-				Msg:  "库存数量不足呀;"+err.Error(),
+				Msg:  "库存数量不足呀;" + err.Error(),
 				Data: nil,
 			}
 			content, err := c.MarshalJSON()
 			//content, err := jsonStruct.CommonResp(c)
 			if err != nil {
+				log.Println(err)
 				ctx.Error("store num is not enough", 500)
 				return
 				//errorHandle(w, errors.New(err.Error()), 500)
@@ -94,13 +98,14 @@ func buy(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			c := jsonStruct.CommonResponse{
 				Code: 8004,
-				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误;"+err.Error(),
+				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误;" + err.Error(),
 				Data: nil,
 			}
 			content, err := c.MarshalJSON()
 			//content, err := jsonStruct.CommonResp(c)
 			if err != nil {
 				//errorHandle(w, errors.New(err.Error()), 500)
+				log.Println()
 				ctx.Error("add bought list error", 500)
 				return
 			}
@@ -120,7 +125,9 @@ func buy(ctx *fasthttp.RequestCtx) {
 		content, err := c.MarshalJSON()
 		//content, err := jsonStruct.CommonResp(c)
 		if err != nil {
+			log.Println(err)
 			ctx.Error("json marshal error", 500)
+			return
 			//errorHandle(w, errors.New(err.Error()), 500)
 		}
 		ctx.SetContentType("application/json")
@@ -169,6 +176,7 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 		}
 		content, err := jsonStruct.CommonResp(c)
 		if err != nil {
+			log.Println("encode resp body to []byte error", err)
 			ctx.Error("encode resp body to []byte error", 500)
 			return
 		}
@@ -185,6 +193,7 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	}
 	content, err := jsonStruct.CommonResp(c)
 	if err != nil {
+		log.Println(err)
 		ctx.Error("encode resp body to []byte error", 500)
 		return
 		//errorHandle(w, errors.New(err.Error()), 500)
@@ -193,61 +202,107 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 	ctx.SetBody(content)
 	//w.Header().Set("Content-Type", "application/json")
 	//w.Write(content)
-	return
 }
 
 // 调用这个函数, 立刻同步
-// (mysql中存在 && redis中不存在)的商品数据到redis, 这个接口的用处是: mysql中新添加的商品数据, 需要同步到redis中, 同时保证redis中已存在的商品数据不变
-// (redis和mysql中都存在的商品, redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
-func syncGoods(ctx *fasthttp.RequestCtx) {
+// (redis中存在的商品(一般情况下, 这个时候mysql中也是存在对应的产品的), redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
+// 用途: 更新redis中的商品数据到mysql中
+func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	redisconn := pool.Get()
 	defer redisconn.Close()
 	// 首先, 将redis中存在的商品信息同步到mysql中
 	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
-	if err!=nil {
+	if err != nil {
 		log.Println(err)
 		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+		return
 	}
 	type goods struct {
 		ProductName string `redis:"productName"`
-		ProductId int `redis:"productId"`
-		StoreNum int `redis:"storeNum"`
+		ProductId   int    `redis:"productId"`
+		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsListRedis := make([]*goods, 0)
 	for _, v := range reply {
 		log.Println(v)
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
-		if err!=nil {
+		if err != nil {
 			log.Println(err)
+			ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+			return
 		}
 		//log.Println(goodsMap)
 		g := new(goods)
 		err = redis.ScanStruct(goodsMap, g)
-		if err!=nil {
+		if err != nil {
 			log.Println("redis scanStruct error: ", err)
+			ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+			return
 		}
 		log.Println(g)
 		goodsListRedis = append(goodsListRedis, g)
 	}
+	// 开始一个mysql事务
+	tx, err := mysql.Conn.Begin()
+	if err != nil {
+		log.Println(err)
+		ctx.Error(err.Error(), 500)
+		return
+	}
+	// 这里必须使用事务, 不能这么一条一条的搞
 	for _, v := range goodsListRedis {
-		err := shop.UpdateGoods(v.ProductId, v.ProductName, v.StoreNum)
-		if err!=nil{
-			log.Println(err)
+		_, err := tx.Exec("update goods set product_name=?, inventory=? where product_id=?", v.ProductName, v.StoreNum, v.ProductId)
+		if err != nil {
+			err = tx.Rollback()
+			if err != nil {
+				log.Println(err)
+				return
+			}
+			errLog(ctx, err, err.Error(), 500)
+			return
 		}
 	}
-	// 在现有的MySQL表格中找到所有的商品数据, 比对redis的productList, 如果发现有商品不存在于redis中, 就把它添加进去
-	storeList, err := redis.Strings(redisconn.Do("keys", "store:*"))
+	err = tx.Commit()
 	if err!=nil {
 		log.Println(err)
+		ctx.Error(err.Error(), 500)
+		return
 	}
-	storeIDlist := make([]string, 0, 128)  // 分离redis中商品的ID出来, 到单独的store id list
+	respJson, err := jsonStruct.CommonResp(jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "处理成功",
+		Data: nil,
+	})
+	if err!=nil {
+		errLog(ctx, err, err.Error(), 500)
+		return
+	}
+	ctx.Response.SetStatusCode(200)
+	ctx.Response.SetBody(respJson)
+	ctx.Response.Header.Set("Content-Type", "application/json")
+}
+
+// (mysql中存在 && redis中不存在)的商品数据到redis, 这个接口的用处是: mysql中新添加的商品数据, 需要同步到redis中, 同时保证redis中已存在的商品数据不变
+// 用途: Mysql中添加了新的商品数据,把它同步到redis中
+func syncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
+	redisconn := pool.Get()
+	defer redisconn.Close()
+	// 在现有的MySQL表格中找到所有的商品数据, 比对redis的productList, 如果发现有商品不存在于redis中, 就把它添加进去
+	storeList, err := redis.Strings(redisconn.Do("keys", "store:*"))
+	if err != nil {
+		log.Println(err)
+		ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		return
+	}
+	storeIDlist := make([]string, 0, 128) // 分离redis中商品的ID出来, 到单独的store id list
 	for _, v := range storeList {
 		storeIDlist = append(storeIDlist, v[6:])
 	}
 	log.Println(storeIDlist) // redis中存在的商品信息
-	goodsList, err := shop.QueryGoods()
-	if err!=nil {
-		log.Println(err)
+	goodsList, err := goods.QueryGoods()
+	if err != nil {
+		errLog(ctx, err, err.Error(), 500)
+		return
 	}
 	for _, v := range goodsList {
 		_, ok := FindElement(storeIDlist, strconv.Itoa(v.ProductId))
@@ -255,22 +310,22 @@ func syncGoods(ctx *fasthttp.RequestCtx) {
 			// 给redis中添加相关商品数据
 			err = redisconn.Send("hmset", "store:"+strconv.Itoa(v.ProductId), "productName", v.ProductName, "productId", v.ProductId, "storeNum", v.Inventory)
 			if err != nil {
-				log.Printf("%+v创建hash `store:%s`失败", err, v.ProductId)
+				log.Printf("%+v创建hash `store:%d`失败", err, v.ProductId)
+				ctx.Error("给redis添加更新的产品数据出现错误", 500)
+				return
 			}
 		}
 	}
-	if err!=nil {
-		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
-	}
-	ctx.Response.SetStatusCode(200)
 	respJson, err := jsonStruct.CommonResp(jsonStruct.CommonResponse{
 		Code: 8001,
 		Msg:  "处理成功",
 		Data: nil,
 	})
-	if err!=nil {
-		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+	if err != nil {
+		errLog(ctx, err, err.Error(), 500)
+		return
 	}
+	ctx.Response.SetStatusCode(200)
 	ctx.Response.SetBody(respJson)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 }
@@ -281,27 +336,32 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 	defer redisconn.Close()
 
 	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
-	if err!=nil {
+	if err != nil {
 		log.Println(err)
 		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+		return
 	}
 	type goods struct {
 		ProductName string `redis:"productName"`
-		ProductId int `redis:"productId"`
-		StoreNum int `redis:"storeNum"`
+		ProductId   int    `redis:"productId"`
+		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsList := make([]*goods, 0)
 	for _, v := range reply {
 		log.Println(v)
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
-		if err!=nil {
+		if err != nil {
 			log.Println(err)
+			ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+			return
 		}
 		//log.Println(goodsMap)
 		g := new(goods)
 		err = redis.ScanStruct(goodsMap, g)
-		if err!=nil {
+		if err != nil {
 			log.Println("redis scanStruct error: ", err)
+			ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+			return
 		}
 		log.Println(g)
 		goodsList = append(goodsList, g)
@@ -312,8 +372,10 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 		Data: goodsList,
 	}
 	err = json.NewEncoder(ctx.Response.BodyWriter()).Encode(response)
-	if err!=nil {
-		ctx.Error("internel error", fasthttp.StatusInternalServerError)
+	if err != nil {
+		log.Println(err)
+		ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
+		return
 	}
 	ctx.Response.Header.Set("Content-Type", "application/json")
 }
@@ -333,7 +395,7 @@ func syncGoodsLimit(ctx *fasthttp.RequestCtx) {
 		Data: nil,
 	}
 	err = json.NewEncoder(ctx.Response.BodyWriter()).Encode(response)
-	if err!=nil {
+	if err != nil {
 		ctx.Error("internel error", fasthttp.StatusInternalServerError)
 	}
 	ctx.Response.Header.Set("Content-Type", "application/json")

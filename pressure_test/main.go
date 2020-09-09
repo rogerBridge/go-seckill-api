@@ -73,12 +73,12 @@ func main() {
 	for i := start; i < end; i++ {
 		w.Add(1)
 		go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
-		//go singleRequest(client1, strconv.Itoa(i), "10000", &w, timeStatistics)
+		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
 	}
 
 	//for i:=start; i<end-10000; i++ {
 	//	w.Add(2)
-	//	// userId 范围10000~14999的同时抢购"10000"和"10001"
+	//	// userId 范围10000~20000的同时抢购"10000"和"10001"
 	//	go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
 	//	go fastSingleRequest(client2, strconv.Itoa(i+10000), "10002", &w, timeStatistics)
 	//}
@@ -132,6 +132,7 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 	log.Println("在2~3秒内服务器就有返回的请求数量是:", durationB2And3)
 	log.Println("在3~4秒内服务器就有返回的请求数量是:", durationB3And4)
 	log.Println("在4~5秒内服务器就有返回的请求数量是:", durationB4And5)
+	log.Println("大于5秒服务器返回的请求数量是:", durationBiggerThan5)
 	sort.Float64s(timeStatisticsList)
 	allTime := 0.0
 	for _, v := range timeStatisticsList {

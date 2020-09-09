@@ -162,7 +162,7 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 		return true, nil
 	}
 	// 如果用户已经购买过, 那么这次购买+之前购买的数量不可以超过总体的限制
-	return false, errors.New("购买数量过大或者其他错误")
+	return false, errors.New("其他错误")
 }
 
 // ksuid generate string
