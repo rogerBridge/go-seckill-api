@@ -1,13 +1,12 @@
-package main
+package send
 
 import (
 	"github.com/streadway/amqp"
 	"go_redis/rabbitmq/common"
-	"os"
 	"strings"
 )
 
-func Send() {
+func Send(msg []byte) {
 	conn, err := amqp.Dial("amqp://root:12345678@my_rabbit:5672/root_vhost")
 	common.Errlog(err, "Failed to connect my_rabbit")
 	defer conn.Close()
@@ -28,10 +27,10 @@ func Send() {
 	common.Errlog(err, "declare exchange fail")
 
 	q, err := ch.QueueDeclare(
-		"",
+		"send2mysql",
 		true,
 		false,
-		true,
+		false,
 		false,
 		nil,
 	)
@@ -46,7 +45,6 @@ func Send() {
 	)
 	common.Errlog(err, "bind exchange to queue error")
 
-	msg := args(os.Args)
 	err = ch.Publish(
 		"logs",
 		"logsRecord", // message's routing key
@@ -55,11 +53,10 @@ func Send() {
 		amqp.Publishing{
 			DeliveryMode: amqp.Persistent, // msg persistent
 			ContentType:  "text/plain",
-			Body:         []byte(msg),
+			Body:         msg,
 		},
 	)
 	common.Errlog(err, "publish msg to queue error")
-
 }
 
 func args(args []string) string {

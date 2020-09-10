@@ -15,6 +15,13 @@ func InsertGoods(productId int, productName string, inventory int) error {
 		log.Println(err)
 		return err
 	}
+	//rowsAffect, err := result.RowsAffected()
+	//if err!=nil {
+	//	log.Printf("%v", err)
+	//}
+	//if rowsAffect==0{
+	//	return errors.New("nothing insert")
+	//}
 	return nil
 }
 

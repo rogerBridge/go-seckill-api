@@ -42,6 +42,9 @@ func newConn(w *sync.WaitGroup) {
 }
 
 func main() {
+	//orders.InsertOrders("xxxxxx", "leo2n", 123, 1, time.Now(), "process")
+	//receive.Receive()
+
 	//mux := http.NewServeMux()
 	//mux.HandleFunc("/buy", buy)
 	//// "/cancelBuy" 这个接口只能由后台来调用

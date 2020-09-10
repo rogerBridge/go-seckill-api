@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"go_redis/mysql/shop/goods"
+	"go_redis/mysql/shop/orders"
 	"go_redis/mysql/shop/purchase_limits"
 	"go_redis/mysql/shop/structure"
+	"go_redis/rabbitmq/send"
 	"log"
 	"strconv"
 	"time"
@@ -203,16 +206,35 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到MySQL上面
 	// 生成订单信息
 	orderNum := orderNumberGenerator()
-	ok, err := redis.String(conn1.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", time.Now().Format("2006-01-02 15:04:05"), "status", "process"))
+	now := time.Now()
+	ok, err := redis.String(conn1.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", now.Format("2006-01-02 15:04:05"), "status", "process"))
 	if err != nil {
 		log.Printf("用户%s生成订单过程中出现了错误: %+v\n", u.userID, err)
 		return "", err
 	}
 	if ok == "OK" {
 		log.Printf("%+v 购买 %s %d件成功", u, productID, purchaseNum)
-		return orderNum, nil
 	}
-	return "", errors.New("other error")
+	// 开始把生成的信息发送给mqtt exchange
+	order := new(structure.Orders)
+	order.OrderNum = orderNum
+	order.UserId = u.userID
+	order.ProductId, err = strconv.Atoi(productID)
+	if err!=nil {
+		log.Printf("%v", err)
+		return "", err
+	}
+	order.PurchaseNum = purchaseNum
+	order.OrderDatetime = now
+	order.Status = "process"
+	jsonBytes, err := json.Marshal(order)
+	if err!=nil {
+		log.Printf("%v", err)
+		return "", err
+	}
+	//log.Printf("%s", jsonBytes)
+	send.Send(jsonBytes)
+	return orderNum, nil
 }
 
 // Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会face限制购买数量的规则哦
@@ -313,5 +335,11 @@ func (u *User) CancelBuy(orderNum string) error {
 		log.Printf("%+v 变更bought表时出错\n", u)
 		return errors.New(u.userID + "变更bought表时出错")
 	}
+	// 最后, 将订单信息同步到mysql中, if订单号不唯一, 那就惨了
+	if err := orders.UpdateOrders("cancel", orderNum); err!=nil {
+		log.Printf("将订单信息发送到mysql时出现错误 %s", err)
+		return err
+	}
+	log.Printf("用户%s取消订单%s成功\n", u.userID, orderNum)
 	return nil
 }
