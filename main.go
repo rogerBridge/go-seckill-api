@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"go_redis/rabbitmq/receive"
 	"log"
 	"sync"
 )
@@ -55,6 +56,7 @@ func main() {
 	//	log.Println(err)
 	//	return
 	//}
+	go receive.Receive()
 
 	r := router.New()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
