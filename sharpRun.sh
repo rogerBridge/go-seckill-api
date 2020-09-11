@@ -11,7 +11,11 @@ bash runRedis.sh;
 cd $workdir/redisDocker/orderInfoRedis;
 bash runRedis.sh;
 
-echo "setup mqtt ...";
+echo "setup mqtt server ...";
+cd $workdir/rabbitmq;
+bash runRabbitMQ.sh;
+
+echo "setup mqtt receive ...";
 cd $workdir/rabbitmq/receive;
 bash runmqtt.sh;
 
