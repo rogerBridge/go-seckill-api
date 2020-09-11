@@ -3,24 +3,12 @@ package main
 import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-	"go_redis/rabbitmq/receive"
 	"log"
 	"sync"
 )
 
 func init() {
-	//runtime.GOMAXPROCS(runtime.NumCPU())
-	err := InitStore()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	// 加载MySQL中的limit到全局变量和redis中
-	err = loadLimit()
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	start()
 	// // 搞一些闲置的redis连接
 	// var wg sync.WaitGroup
 	// for i := 0; i < 10000/2; i++ {
@@ -42,6 +30,21 @@ func newConn(w *sync.WaitGroup) {
 	w.Done()
 }
 
+func start() {
+	//runtime.GOMAXPROCS(runtime.NumCPU())
+	err := InitStore()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	// 加载MySQL中的limit到全局变量和redis中
+	err = loadLimit()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+}
+
 func main() {
 	//orders.InsertOrders("xxxxxx", "leo2n", 123, 1, time.Now(), "process")
 	//receive.Receive()
@@ -56,7 +59,6 @@ func main() {
 	//	log.Println(err)
 	//	return
 	//}
-	go receive.Receive()
 
 	r := router.New()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)

@@ -4,11 +4,17 @@ workdir=$PWD;
 echo "setup mysql ...";
 cd $workdir/mysql;
 bash runMysql.sh;
-echo "settup redis ...";
+
+echo "setup redis ...";
 cd $workdir/redisDocker;
 bash runRedis.sh;
 cd $workdir/redisDocker/orderInfoRedis;
 bash runRedis.sh;
+
+echo "setup mqtt ...";
+cd $workdir/rabbitmq/receive;
+bash runmqtt.sh;
+
 echo "setup app ...";
 cd $workdir;
 bash build.sh;

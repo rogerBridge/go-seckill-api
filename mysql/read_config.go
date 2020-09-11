@@ -7,6 +7,20 @@ import (
 	"os"
 )
 
+// 定义mysql连接为全局变量
+var Conn *sql.DB
+
+func init() {
+	pwd, err := os.Getwd()
+	if err!=nil {
+		log.Fatalf("找不到当前工作路径, %s", err)
+	}
+	log.Printf("%s", pwd)
+	dataSource := ReadConfig(pwd+"/mysql/mysql_config.json")
+
+	Conn = InitMysqlConn(dataSource)
+}
+
 // 读取mysql数据库的设置
 func ReadConfig(fileName string) string {
 	type mysqlConfig struct {
@@ -29,9 +43,7 @@ func ReadConfig(fileName string) string {
 	return m.Username + ":" + m.Password + "@tcp(" + m.Ip + ":" + m.Port + ")/" + m.Database + params
 }
 
-var dataSource string = ReadConfig("mysql/mysql_config.json")
-
-func InitMysqlConn() *sql.DB {
+func InitMysqlConn(dataSource string) *sql.DB {
 	db, err := sql.Open("mysql", dataSource)
 	if err != nil {
 		log.Fatalf("conn establish error: %v\n", err)
@@ -42,6 +54,3 @@ func InitMysqlConn() *sql.DB {
 	}
 	return db
 }
-
-// 定义一个全局变量, 方便复用
-var Conn = InitMysqlConn()

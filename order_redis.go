@@ -7,6 +7,7 @@ import (
 	"go_redis/mysql/shop/orders"
 	"go_redis/mysql/shop/purchase_limits"
 	"go_redis/mysql/shop/structure"
+	"go_redis/rabbitmq/common"
 	"go_redis/rabbitmq/send"
 	"log"
 	"strconv"
@@ -15,6 +16,9 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/segmentio/ksuid"
 )
+
+var ch = common.Ch
+
 
 // InitStore 首先, 初始化redis中待抢购的商品信息
 func InitStore() error {
@@ -233,7 +237,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 		return "", err
 	}
 	//log.Printf("%s", jsonBytes)
-	send.Send(jsonBytes)
+	send.Send(jsonBytes, ch)
 	return orderNum, nil
 }
 
