@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
+	"go_redis/auth"
 	"log"
 	"sync"
 )
@@ -46,6 +47,17 @@ func start() {
 }
 
 func main() {
+	//u := new(structure.UserLogin)
+	//u.Username = "hello"
+	//u.Password = "12345678"
+	//err := users.InsertUsers(u)
+	//if err!=nil {
+	//	log.Printf("%s\n", err)
+	//}
+	//err := users.VerifyUsers(u)
+	//if err!=nil {
+	//	log.Printf("user %v not exist\n", u)
+	//}
 	//orders.InsertOrders("xxxxxx", "leo2n", 123, 1, time.Now(), "process")
 	//receive.Receive()
 
@@ -61,13 +73,17 @@ func main() {
 	//}
 
 	r := router.New()
+	//r := mux.NewRouter()
 	//r.Handle(fasthttp.MethodPost, "/buy", buy)
 	r.POST("/syncGoodsLimit", syncGoodsLimit)
 	r.GET("/goodsList", goodsList)
 	r.POST("/syncGoodsFromMysql2Redis", syncGoodsFromMysql2Redis)
 	r.POST("/syncGoodsFromRedis2Mysql", syncGoodsFromRedis2Mysql)
-	r.POST("/buy", buy)
+	r.POST("/buy", auth.MiddleAuth(buy))
 	r.POST("/cancelBuy", cancelBuy)
+	r.POST("/login", Login)
+	r.POST("/logout", Logout)
+	r.POST("/register", Register)
 	//mux := func(ctx *fasthttp.RequestCtx) {
 	//	switch string(ctx.Path()) {
 	//	case "/buy":
