@@ -1,11 +1,10 @@
 package main
 
 import (
-	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
-	"go_redis/auth"
+	"go_redis/controllers"
+	"go_redis/router"
 	"log"
-	"sync"
 )
 
 func init() {
@@ -19,27 +18,27 @@ func init() {
 	// defer wg.Wait()
 	// log.Println("预热redis链接成功")
 }
-
-// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的时间消耗
-func newConn(w *sync.WaitGroup) {
-	conn := pool.Get()
-	defer conn.Close()
-	_, err := conn.Do("ping")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	w.Done()
-}
+//
+//// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的时间消耗
+//func newConn(w *sync.WaitGroup) {
+//	conn := pool.Get()
+//	defer conn.Close()
+//	_, err := conn.Do("ping")
+//	if err != nil {
+//		log.Fatalln(err)
+//	}
+//	w.Done()
+//}
 
 func start() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
-	err := InitStore()
+	err := controllers.InitStore()
 	if err != nil {
 		log.Println(err)
 		return
 	}
 	// 加载MySQL中的limit到全局变量和redis中
-	err = loadLimit()
+	err = controllers.LoadLimit()
 	if err != nil {
 		log.Println(err)
 		return
@@ -72,18 +71,18 @@ func main() {
 	//	return
 	//}
 
-	r := router.New()
-	//r := mux.NewRouter()
-	//r.Handle(fasthttp.MethodPost, "/buy", buy)
-	r.POST("/syncGoodsLimit", syncGoodsLimit)
-	r.GET("/goodsList", goodsList)
-	r.POST("/syncGoodsFromMysql2Redis", syncGoodsFromMysql2Redis)
-	r.POST("/syncGoodsFromRedis2Mysql", syncGoodsFromRedis2Mysql)
-	r.POST("/buy", auth.MiddleAuth(buy))
-	r.POST("/cancelBuy", cancelBuy)
-	r.POST("/login", Login)
-	r.POST("/logout", Logout)
-	r.POST("/register", Register)
+	//r := router.New()
+	////r := mux.NewRouter()
+	////r.Handle(fasthttp.MethodPost, "/buy", buy)
+	//r.POST("/syncGoodsLimit", syncGoodsLimit)
+	//r.GET("/goodsList", goodsList)
+	//r.POST("/syncGoodsFromMysql2Redis", syncGoodsFromMysql2Redis)
+	//r.POST("/syncGoodsFromRedis2Mysql", syncGoodsFromRedis2Mysql)
+	//r.POST("/buy", auth.MiddleAuth(buy))
+	//r.POST("/cancelBuy", cancelBuy)
+	//r.POST("/login", Login)
+	//r.POST("/logout", Logout)
+	//r.POST("/register", Register)
 	//mux := func(ctx *fasthttp.RequestCtx) {
 	//	switch string(ctx.Path()) {
 	//	case "/buy":
@@ -94,6 +93,7 @@ func main() {
 	//		ctx.Error("not found", fasthttp.StatusNotFound)
 	//	}
 	//}
+	r := router.ThisRouter()
 	log.Println("Listen on :4000")
 	err := fasthttp.ListenAndServe(":4000", r.Handler)
 	if err != nil {

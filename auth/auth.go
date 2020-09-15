@@ -35,7 +35,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 				Data: nil,
 			})
 		} else {
-			// 验证token合法性
+			// 验证token是否可以被解析
 			token, _ := jwt.Parse(tokenStr, func(token *jwt.Token) (i interface{}, err error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 					utils.ResponseWithJson(ctx, http.StatusUnauthorized, jsonStruct.CommonResponse{
@@ -46,6 +46,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 				}
 				return []byte(""), nil // default return
 			})
+			// 验证token是否合法
 			if !token.Valid {
 				utils.ResponseWithJson(ctx, 401, jsonStruct.CommonResponse{
 					Code: 8401,

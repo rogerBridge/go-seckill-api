@@ -1,4 +1,4 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -9,6 +9,7 @@ import (
 	"go_redis/jsonStruct"
 	"go_redis/mysql"
 	"go_redis/mysql/shop/goods"
+	"go_redis/redis_config"
 	"go_redis/utils"
 	"log"
 	"net/http"
@@ -27,7 +28,7 @@ func errorHandle(w http.ResponseWriter, err error, code int) {
 func test(w http.ResponseWriter, r *http.Request) {
 }
 
-func buy(ctx *fasthttp.RequestCtx) {
+func Buy(ctx *fasthttp.RequestCtx) {
 	//// 请求方法限定为post
 	//if ctx.Request.Header.IsPost() == false {
 	//	ctx.Response.Header.Set("Allow", fasthttp.MethodPost)
@@ -156,7 +157,7 @@ func buy(ctx *fasthttp.RequestCtx) {
 
 // redis收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
 // 这个接口必须由后台调用, 因为我没有做数据校验
-func cancelBuy(ctx *fasthttp.RequestCtx) {
+func CancelBuy(ctx *fasthttp.RequestCtx) {
 	//if ctx.Request.Header.IsPost() == false {
 	//	ctx.Request.Header.Set("Allow", http.MethodPost)
 	//	ctx.Error("request method is not supported", 405)
@@ -235,8 +236,8 @@ func cancelBuy(ctx *fasthttp.RequestCtx) {
 // 调用这个函数, 立刻同步
 // (redis中存在的商品(一般情况下, 这个时候mysql中也是存在对应的产品的), redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
 // 用途: 更新redis中的商品数据到mysql中
-func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
-	redisconn := pool.Get()
+func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
+	redisconn := redis_config.Pool.Get()
 	defer redisconn.Close()
 	// 首先, 将redis中存在的商品信息同步到mysql中
 	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
@@ -251,9 +252,9 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	type Goods struct {
-		ProductName string `redis:"productName"`
-		ProductId   int    `redis:"productId"`
-		StoreNum    int    `redis:"storeNum"`
+		ProductName string `redis_config:"productName"`
+		ProductId   int    `redis_config:"productId"`
+		StoreNum    int    `redis_config:"storeNum"`
 	}
 	goodsListRedis := make([]*Goods, 0)
 	for _, v := range reply {
@@ -273,10 +274,10 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		g := new(Goods)
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
-			log.Println("redis scanStruct error: ", err)
+			log.Println("redis_config scanStruct error: ", err)
 			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 				Code: 8500,
-				Msg:  "redis scanStruct error",
+				Msg:  "redis_config scanStruct error",
 				Data: nil,
 			})
 			//ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
@@ -348,8 +349,8 @@ func syncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 
 // (mysql中存在 && redis中不存在)的商品数据到redis, 这个接口的用处是: mysql中新添加的商品数据, 需要同步到redis中, 同时保证redis中已存在的商品数据不变
 // 用途: Mysql中添加了新的商品数据,把它同步到redis中
-func syncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
-	redisconn := pool.Get()
+func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
+	redisconn := redis_config.Pool.Get()
 	defer redisconn.Close()
 	// 在现有的MySQL表格中找到所有的商品数据, 比对redis的productList, 如果发现有商品不存在于redis中, 就把它添加进去
 	storeList, err := redis.Strings(redisconn.Do("keys", "store:*"))
@@ -387,7 +388,7 @@ func syncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 				// 这里有风险, 万一给redis添加信息的时候出现错误, 那就凉凉
 				utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 					Code: 8500,
-					Msg:  "mysql to redis error",
+					Msg:  "mysql to redis_config error",
 					Data: nil,
 				})
 				//ctx.Error("给redis添加更新的产品数据出现错误", 500)
@@ -416,8 +417,8 @@ func syncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 }
 
 // 展示商品清单
-func goodsList(ctx *fasthttp.RequestCtx) {
-	redisconn := pool.Get()
+func GoodsList(ctx *fasthttp.RequestCtx) {
+	redisconn := redis_config.Pool.Get()
 	defer redisconn.Close()
 
 	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
@@ -432,9 +433,9 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	type good struct {
-		ProductName string `redis:"productName"`
-		ProductId   int    `redis:"productId"`
-		StoreNum    int    `redis:"storeNum"`
+		ProductName string `redis_config:"productName"`
+		ProductId   int    `redis_config:"productId"`
+		StoreNum    int    `redis_config:"storeNum"`
 	}
 	goodsList := make([]*good, 0)
 	for _, v := range reply {
@@ -454,10 +455,10 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 		g := new(good)
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
-			log.Println("redis scanStruct error: ", err)
+			log.Println("redis_config scanStruct error: ", err)
 			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 				Code: 8500,
-				Msg:  "redis scanStruct error",
+				Msg:  "redis_config scanStruct error",
 				Data: nil,
 			})
 			//ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
@@ -488,9 +489,9 @@ func goodsList(ctx *fasthttp.RequestCtx) {
 
 // 更新商品限制计划
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
-func syncGoodsLimit(ctx *fasthttp.RequestCtx) {
+func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	// 加载limit限制计划
-	err := loadLimit()
+	err := LoadLimit()
 	if err != nil {
 		log.Println(err)
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
@@ -518,3 +519,4 @@ func syncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	//}
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
+

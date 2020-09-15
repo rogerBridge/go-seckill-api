@@ -37,7 +37,7 @@ func VerifyUsers(u *structure.UserLogin) (int, error) {
 	row := mysql.Conn.QueryRow("select 1 from users where name=? and passwd=?", u.Username, GetMD5sum(u.Password))
 	err := row.Scan(&isExist)
 	if err != nil {
-		log.Printf("verify username and password error: %s\n", err)
+		log.Printf("verify username and password error: %v\n", err)
 		return 0, err
 	}
 	if isExist != 1 {

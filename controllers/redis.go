@@ -1,31 +1,30 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
 	"errors"
+	"github.com/gomodule/redigo/redis"
+	"github.com/segmentio/ksuid"
 	"go_redis/mysql/shop/goods"
 	"go_redis/mysql/shop/orders"
 	"go_redis/mysql/shop/purchase_limits"
 	"go_redis/mysql/shop/structure"
 	"go_redis/rabbitmq/common"
 	"go_redis/rabbitmq/send"
+	"go_redis/redis_config"
 	"log"
 	"strconv"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
-	"github.com/segmentio/ksuid"
 )
 
 var ch = common.Ch
 
-
 // InitStore 首先, 初始化redis中待抢购的商品信息
 func InitStore() error {
-	conn := pool.Get()
+	conn := redis_config.Pool.Get()
 	defer conn.Close()
 
-	conn1 := pool1.Get()
+	conn1 := redis_config.Pool1.Get()
 	defer conn1.Close()
 
 	// PING PONG
@@ -34,10 +33,10 @@ func InitStore() error {
 		panic("初始化连接失败: conn fail")
 	}
 	err = conn1.Send("ping")
-	if err!=nil {
+	if err != nil {
 		panic("初始化连接失败: conn fail")
 	}
-	// 首先, flushdb redis
+	// 首先, flushdb redis_config
 	err = conn.Send("flushdb")
 	if err != nil {
 		log.Println("flushdb err", err)
@@ -79,8 +78,8 @@ func InitStore() error {
 }
 
 // 加载limit
-func loadLimit() error {
-	conn := pool.Get()
+func LoadLimit() error {
+	conn := redis_config.Pool.Get()
 	defer conn.Close()
 	for k, _ := range purchaseLimit {
 		delete(purchaseLimit, k)
@@ -140,9 +139,9 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 
 // UserFilter 检查用户是否满足购买某种商品的权限
 func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (bool, error) {
-	conn := pool.Get()
+	conn := redis_config.Pool.Get()
 	defer conn.Close()
-	conn1 := pool1.Get()
+	conn1 := redis_config.Pool1.Get()
 	defer conn1.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
@@ -179,15 +178,15 @@ func orderNumberGenerator() string {
 
 // 生成订单
 func (u *User) orderGenerator(productID string, purchaseNum int) (string, error) {
-	conn := pool.Get()
+	conn := redis_config.Pool.Get()
 	defer conn.Close()
 
 	// 存放用户订单信息的redis
-	conn1 := pool1.Get()
+	conn1 := redis_config.Pool1.Get()
 	defer conn1.Close()
 	//// 只要list rpop之后的值不是nil就可以
-	//_, err := redis.Int(conn.Do("rpop", "store:"+productId+":have"))
-	//if err == redis.ErrNil {
+	//_, err := redis_config.Int(conn.Do("rpop", "store:"+productId+":have"))
+	//if err == redis_config.ErrNil {
 	//	return "", errors.New("库存不足")
 	//}
 
@@ -224,7 +223,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	order.OrderNum = orderNum
 	order.UserId = u.userID
 	order.ProductId, err = strconv.Atoi(productID)
-	if err!=nil {
+	if err != nil {
 		log.Printf("%v", err)
 		return "", err
 	}
@@ -232,7 +231,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 	order.OrderDatetime = now
 	order.Status = "process"
 	jsonBytes, err := json.Marshal(order)
-	if err!=nil {
+	if err != nil {
 		log.Printf("%v", err)
 		return "", err
 	}
@@ -243,7 +242,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 
 // Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会face限制购买数量的规则哦
 func (u *User) Bought(productID string, purchaseNum int) error {
-	conn1 := pool1.Get()
+	conn1 := redis_config.Pool1.Get()
 	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
 	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
@@ -264,10 +263,10 @@ func (u *User) Bought(productID string, purchaseNum int) error {
 
 // CancelBuy redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userID]:bought 中特定key对应的value
 func (u *User) CancelBuy(orderNum string) error {
-	conn := pool.Get()
+	conn := redis_config.Pool.Get()
 	defer conn.Close()
 
-	conn1 := pool1.Get()
+	conn1 := redis_config.Pool1.Get()
 	defer conn1.Close()
 	// 查看订单号是否存在? && 状态是否是process
 	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.userID+":order:"+orderNum))
@@ -340,7 +339,7 @@ func (u *User) CancelBuy(orderNum string) error {
 		return errors.New(u.userID + "变更bought表时出错")
 	}
 	// 最后, 将订单信息同步到mysql中, if订单号不唯一, 那就惨了
-	if err := orders.UpdateOrders("cancel", orderNum); err!=nil {
+	if err := orders.UpdateOrders("cancel", orderNum); err != nil {
 		log.Printf("将订单信息发送到mysql时出现错误 %s", err)
 		return err
 	}

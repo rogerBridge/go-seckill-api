@@ -1,4 +1,4 @@
-package main
+package controllers
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	exist, err := users.VerifyUsers(user)
-	log.Printf("verify user error: %s\n", err)
+	//log.Printf("verify user error: %v\n", err)
 	if exist == 1 {
 		token, err := auth.GenerateToken(user)
 		if err != nil {
