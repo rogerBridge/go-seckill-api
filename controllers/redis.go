@@ -30,11 +30,11 @@ func InitStore() error {
 	// PING PONG
 	err := conn.Send("ping")
 	if err != nil {
-		panic("初始化连接失败: conn fail")
+		panic("初始化连接redis pool 失败: conn fail")
 	}
 	err = conn1.Send("ping")
 	if err != nil {
-		panic("初始化连接失败: conn fail")
+		panic("初始化连接redis pool 1 失败: conn fail")
 	}
 	// 首先, flushdb redis_config
 	err = conn.Send("flushdb")

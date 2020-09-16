@@ -95,8 +95,5 @@ func main() {
 	//}
 	r := router.ThisRouter()
 	log.Println("Listen on :4000")
-	err := fasthttp.ListenAndServe(":4000", r.Handler)
-	if err != nil {
-		log.Fatalln(err)
-	}
+	log.Fatalln(fasthttp.ListenAndServe(":4000", r.Handler))
 }
