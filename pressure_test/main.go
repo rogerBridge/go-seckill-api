@@ -14,6 +14,7 @@ import (
 //var socket = "127.0.0.1:4000"
 //var URL = fmt.Sprintf("http://%s/buy", socket)
 
+var TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDAyNjY3NzYsInVzZXJuYW1lIjoiZmVucm1lbjMifQ.Q4CkFaMF2C0S6l7Csl26JPdnmfLUuh43l81-FhAX7Hg"
 var (
 	concurrentNum int
 	schema        string

@@ -38,6 +38,7 @@ func fastSingleRequest(client *fasthttp.Client, userId string, productId string,
 	}
 	req := &fasthttp.Request{}
 	//req := fasthttp.AcquireRequest()
+	req.Header.Set("Authorization", TOKEN)
 	req.Header.SetContentType("application/json")
 	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURI(URL)

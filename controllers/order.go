@@ -9,6 +9,7 @@ import (
 	"go_redis/jsonStruct"
 	"go_redis/mysql"
 	"go_redis/mysql/shop/goods"
+	"go_redis/mysql/shop/structure"
 	"go_redis/redis_config"
 	"go_redis/utils"
 	"log"
@@ -252,13 +253,13 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	type Goods struct {
-		ProductName string `redis_config:"productName"`
-		ProductId   int    `redis_config:"productId"`
-		StoreNum    int    `redis_config:"storeNum"`
+		ProductName string `redis:"productName"`
+		ProductId   int    `redis:"productId"`
+		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsListRedis := make([]*Goods, 0)
 	for _, v := range reply {
-		log.Println(v)
+		log.Println("every store:* info: ", v)
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
 		if err != nil {
 			log.Println(err)
@@ -274,16 +275,16 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		g := new(Goods)
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
-			log.Println("redis_config scanStruct error: ", err)
+			log.Println("redis scanStruct error: ", err)
 			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 				Code: 8500,
-				Msg:  "redis_config scanStruct error",
+				Msg:  "redis scanStruct error",
 				Data: nil,
 			})
 			//ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
 			return
 		}
-		log.Println(g)
+		log.Println("redis scanStruct is: ", g)
 		goodsListRedis = append(goodsListRedis, g)
 	}
 	// 开始一个mysql事务
@@ -388,7 +389,7 @@ func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 				// 这里有风险, 万一给redis添加信息的时候出现错误, 那就凉凉
 				utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 					Code: 8500,
-					Msg:  "mysql to redis_config error",
+					Msg:  "mysql to redis error",
 					Data: nil,
 				})
 				//ctx.Error("给redis添加更新的产品数据出现错误", 500)
@@ -433,13 +434,13 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	type good struct {
-		ProductName string `redis_config:"productName"`
-		ProductId   int    `redis_config:"productId"`
-		StoreNum    int    `redis_config:"storeNum"`
+		ProductName string `redis:"productName"`
+		ProductId   int    `redis:"productId"`
+		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsList := make([]*good, 0)
 	for _, v := range reply {
-		log.Println(v)
+		log.Println("every good is: ", v)
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
 		if err != nil {
 			log.Println(err)
@@ -455,16 +456,15 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		g := new(good)
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
-			log.Println("redis_config scanStruct error: ", err)
+			log.Println("redis scanStruct error: ", err)
 			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 				Code: 8500,
-				Msg:  "redis_config scanStruct error",
+				Msg:  "redis scanStruct error",
 				Data: nil,
 			})
-			//ctx.Error("内部处理错误", fasthttp.StatusInternalServerError)
 			return
 		}
-		log.Println(g)
+		log.Println("After redis scanStruct: ", g)
 		goodsList = append(goodsList, g)
 	}
 	utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
@@ -520,3 +520,255 @@ func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
 
+// 添加单个商品
+func AddGood(ctx *fasthttp.RequestCtx) {
+	// 首先, 从接口中获取good的info
+	g := new(structure.Goods)
+	err := json.Unmarshal(ctx.Request.Body(), g)
+	if err != nil {
+		log.Printf("unmarshal req body error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "请求的body解析错误",
+			Data: nil,
+		})
+		return
+	}
+	// mysql 开启事务
+	tx, err := mysql.Conn.Begin()
+	if err != nil {
+		log.Printf("mysql transaction open fail: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "服务器开启mysql transaction失败",
+			Data: nil,
+		})
+		return
+	}
+	// write data to redis, if err occur, call mysql tx.rollback
+	redisCoon := redis_config.Pool.Get()
+	defer redisCoon.Close()
+
+	_, err = redisCoon.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
+	if err != nil {
+		log.Printf("write data to redis error occur: %+v\n", err)
+		err = tx.Rollback()
+		if err != nil {
+			log.Fatalf("mysql transaction rollback error\n")
+		}
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "write data to redis error",
+			Data: nil,
+		})
+		return
+	}
+
+	// finish mysql transaction
+	_, err = tx.Exec("insert goods (product_id, product_name, inventory) values (?,?,?)", g.ProductId, g.ProductName, g.Inventory)
+	if err != nil {
+		log.Printf("transaction running error occur: %+v\n", err)
+		_ = tx.Rollback()
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql transaction exec error",
+			Data: nil,
+		})
+		return
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("add goods fail: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql transaction commit error",
+			Data: nil,
+		})
+	}
+	utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "add good succuss",
+		Data: nil,
+	})
+	return
+}
+
+// 修改单个商品信息
+func ModifyGood(ctx *fasthttp.RequestCtx) {
+	// 首先, 校验格式对不对
+	g := new(structure.Goods)
+	err := json.Unmarshal(ctx.Request.Body(), g)
+	if err != nil {
+		log.Printf("unmarshal req body error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "请求的body解析错误",
+			Data: nil,
+		})
+		return
+	}
+	// 之后, 查找mysql中是否存在这个商品
+	isExist, err := goods.IsExist(g.ProductId)
+	if err != nil {
+		log.Printf("查找商品是否存在时出现错误: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "查找商品是否存在时出现错误",
+			Data: nil,
+		})
+		return
+	}
+	if isExist != 1 {
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "更新的商品不存在",
+			Data: nil,
+		})
+		return
+	}
+	// 如果存在, 开启mysql事务, 修改mysql和redis
+	tx, err := mysql.Conn.Begin()
+	if err != nil {
+		log.Printf("mysql transaction start fail: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql transaction start fail",
+			Data: nil,
+		})
+		return
+	}
+	err = goods.UpdateGoods(tx, g.ProductId, g.ProductName, g.Inventory)
+	if err != nil {
+		log.Printf("mysql transaction exec fail: %+v\n", err)
+		_ = tx.Rollback()
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql transaction exec fail",
+			Data: nil,
+		})
+		return
+	}
+	redisConn := redis_config.Pool.Get()
+	defer redisConn.Close()
+
+	_, err = redisConn.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
+	if err != nil {
+		log.Printf("redis hmset error: %+v\n", err)
+
+		err = tx.Rollback()
+		if err != nil {
+			log.Printf("tx rollback error: %+v\n", err)
+			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+				Code: 8500,
+				Msg:  "mysql rollback error",
+				Data: nil,
+			})
+			return
+		}
+
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "redis hmset error",
+			Data: nil,
+		})
+	}
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("mysql tx exec error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql tx commit error",
+			Data: nil,
+		})
+	}
+	utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "modify good success",
+		Data: nil,
+	})
+}
+
+// 删除单个商品信息, mysql: is_delete=1 and redis del store:{product_id}
+func DeleteGood(ctx *fasthttp.RequestCtx) {
+	g := new(structure.GoodDelete)
+	err := json.Unmarshal(ctx.Request.Body(), g)
+	if err!=nil {
+		log.Printf("request body params error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "解析参数错误",
+			Data: nil,
+		})
+		return
+	}
+	// 查看要删除的商品是否存在
+	isExist, err := goods.IsExist(g.ProductId)
+	if err!=nil {
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "查看删除的商品是否存在出现错误",
+			Data: nil,
+		})
+		return
+	}
+	if isExist != 1 {
+		log.Printf("商品不存在\n")
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "删除的商品不存在",
+			Data: nil,
+		})
+		return
+	}
+	// 开启mysql transaction
+	tx, err := mysql.Conn.Begin()
+	if err!=nil {
+		log.Printf("start mysql transaction error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "开启mysql transation 错误",
+			Data: nil,
+		})
+		return
+	}
+	err = goods.DeleteGoods(tx, g.ProductId)
+	if err!=nil {
+		log.Printf("exec mysql transaction error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "执行mysql transaction 错误",
+			Data: nil,
+		})
+		return
+	}
+
+	redisConn := redis_config.Pool.Get()
+	defer redisConn.Close()
+	_, err = redisConn.Do("del", "store:"+strconv.Itoa(g.ProductId))
+	if err!=nil {
+		log.Printf("redis del store:productId error: %+v\n", err)
+		_ = tx.Rollback()
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "redis del store:productId error",
+			Data: nil,
+		})
+	}
+	err = tx.Commit()
+	if err!=nil {
+		log.Printf("mysql tx commit error: %+v\n", err)
+		utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "mysql tx commit error",
+			Data: nil,
+		})
+		return
+	}
+	utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "删除商品成功",
+		Data: nil,
+	})
+	return
+}

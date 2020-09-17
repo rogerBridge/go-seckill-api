@@ -15,7 +15,7 @@ func init() {
 	if err!=nil {
 		log.Fatalf("找不到当前工作路径, %s", err)
 	}
-	log.Printf("%s", pwd)
+	log.Printf("Current Work Dir: %s", pwd)
 	dataSource := ReadConfig(pwd+"/mysql/mysql_config.json")
 
 	Conn = InitMysqlConn(dataSource)

@@ -9,21 +9,21 @@ import (
 
 func init() {
 	start()
-	// // 搞一些闲置的redis连接
-	// var wg sync.WaitGroup
-	// for i := 0; i < 10000/2; i++ {
-	// 	wg.Add(1)
-	// 	go newConn(&wg)
-	// }
-	// defer wg.Wait()
-	// log.Println("预热redis链接成功")
+	//// 搞一些闲置的redis连接
+	//var wg sync.WaitGroup
+	//for i := 0; i < 5000; i++ {
+	//	wg.Add(2)
+	//	go newConn(&wg, redis_config.Pool.Get())
+	//	go newConn(&wg, redis_config.Pool1.Get())
+	//}
+	//wg.Wait()
+	//log.Println("预热redis链接成功")
 }
 //
 //// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的时间消耗
-//func newConn(w *sync.WaitGroup) {
-//	conn := pool.Get()
+//func newConn(w *sync.WaitGroup, conn redis.Conn) {
 //	defer conn.Close()
-//	_, err := conn.Do("ping")
+//	_, err := conn.Do("get", "name")
 //	if err != nil {
 //		log.Fatalln(err)
 //	}

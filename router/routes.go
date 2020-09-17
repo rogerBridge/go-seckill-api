@@ -22,7 +22,10 @@ func register(method, pattern string, handler fasthttp.RequestHandler, middle fu
 
 func init() {
 	register(fasthttp.MethodPost, "/syncGoodsLimit", controllers.SyncGoodsLimit, nil)
-	register(fasthttp.MethodPost, "/goodsList", controllers.GoodsList, nil)
+	register(fasthttp.MethodGet, "/goodsList", controllers.GoodsList, nil)
+	register(fasthttp.MethodPost, "/addGood", controllers.AddGood, nil)
+	register(fasthttp.MethodPost, "/modifyGood", controllers.ModifyGood, nil)
+	register(fasthttp.MethodPost, "/deleteGood", controllers.DeleteGood, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, nil)
 	register(fasthttp.MethodPost, "/buy", controllers.Buy, auth.MiddleAuth)
