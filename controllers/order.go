@@ -534,6 +534,25 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+	// 查看待添加的商品是否存在
+	isExist, err := goods.IsExist(g.ProductId)
+	if err != nil {
+		log.Printf("查找商品是否存在时出现错误: %+v\n", err)
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "查找商品是否存在时出现错误",
+			Data: nil,
+		})
+		return
+	}
+	if isExist == 1 {
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  "要添加的商品已存在, 不得重复添加",
+			Data: nil,
+		})
+		return
+	}
 	// mysql 开启事务
 	tx, err := mysql.Conn.Begin()
 	if err != nil {
@@ -545,33 +564,31 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	// write data to redis, if err occur, call mysql tx.rollback
-	redisCoon := redis_config.Pool.Get()
-	defer redisCoon.Close()
 
-	_, err = redisCoon.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
+	// exec mysql transaction
+	err = goods.InsertGoods(tx, g.ProductId, g.ProductName, g.Inventory)
+	//_, err = tx.Exec("insert goods (product_id, product_name, inventory) values (?,?,?)", g.ProductId, g.ProductName, g.Inventory)
 	if err != nil {
-		log.Printf("write data to redis error occur: %+v\n", err)
-		err = tx.Rollback()
-		if err != nil {
-			log.Fatalf("mysql transaction rollback error\n")
-		}
+		log.Printf("transaction exec error occur: %+v\n", err)
+		_ = tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 			Code: 8500,
-			Msg:  "write data to redis error",
+			Msg:  "mysql transaction exec error",
 			Data: nil,
 		})
 		return
 	}
 
-	// finish mysql transaction
-	_, err = tx.Exec("insert goods (product_id, product_name, inventory) values (?,?,?)", g.ProductId, g.ProductName, g.Inventory)
+	// write data to redis, if err occur, call mysql tx.rollback
+	redisCoon := redis_config.Pool.Get()
+	defer redisCoon.Close()
+	_, err = redisCoon.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
 	if err != nil {
-		log.Printf("transaction running error occur: %+v\n", err)
+		log.Printf("write data to redis error occur: %+v\n", err)
 		_ = tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 			Code: 8500,
-			Msg:  "mysql transaction exec error",
+			Msg:  "write data to redis error",
 			Data: nil,
 		})
 		return
@@ -638,6 +655,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+
 	err = goods.UpdateGoods(tx, g.ProductId, g.ProductName, g.Inventory)
 	if err != nil {
 		log.Printf("mysql transaction exec fail: %+v\n", err)
@@ -649,13 +667,12 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+
 	redisConn := redis_config.Pool.Get()
 	defer redisConn.Close()
-
 	_, err = redisConn.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
 	if err != nil {
 		log.Printf("redis hmset error: %+v\n", err)
-
 		err = tx.Rollback()
 		if err != nil {
 			log.Printf("tx rollback error: %+v\n", err)
@@ -673,6 +690,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 			Data: nil,
 		})
 	}
+
 	err = tx.Commit()
 	if err != nil {
 		log.Printf("mysql tx exec error: %+v\n", err)
@@ -735,6 +753,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	err = goods.DeleteGoods(tx, g.ProductId)
 	if err!=nil {
 		log.Printf("exec mysql transaction error: %+v\n", err)
+		_ = tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 			Code: 8500,
 			Msg:  "执行mysql transaction 错误",
@@ -755,6 +774,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 			Data: nil,
 		})
 	}
+
 	err = tx.Commit()
 	if err!=nil {
 		log.Printf("mysql tx commit error: %+v\n", err)
