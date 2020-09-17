@@ -6,6 +6,7 @@ import (
 	"go_redis/jsonStruct"
 	"go_redis/mysql/shop/structure"
 	"go_redis/utils"
+	"log"
 	"net/http"
 	"time"
 )
@@ -18,7 +19,7 @@ var secret = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"
 func GenerateToken(user *structure.UserLogin) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"username": user.Username,
-		"exp":      time.Now().Add(time.Hour * 24).Unix(), // 24 hours expire
+		"exp":      time.Now().Add(time.Minute * 10).Unix(), // 24 hours expire
 	})
 	return token.SignedString([]byte(secret))
 }
@@ -34,25 +35,30 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 				Msg:  "unauthorized",
 				Data: nil,
 			})
+			return
 		} else {
 			// 验证token是否可以被解析
 			token, _ := jwt.Parse(tokenStr, func(token *jwt.Token) (i interface{}, err error) {
 				if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+					log.Printf("token parse error\n")
 					utils.ResponseWithJson(ctx, http.StatusUnauthorized, jsonStruct.CommonResponse{
 						Code: 8401,
 						Msg:  "unauthorized",
 						Data: nil,
 					})
+					return
 				}
-				return []byte(""), nil // default return
+				return []byte(secret), nil // default return
 			})
 			// 验证token是否合法
 			if !token.Valid {
+				log.Printf("token is not valid\n")
 				utils.ResponseWithJson(ctx, 401, jsonStruct.CommonResponse{
 					Code: 8401,
 					Msg:  "unauthorized",
 					Data: nil,
 				})
+				return
 			}
 			handler(ctx)
 		}
