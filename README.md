@@ -11,7 +11,8 @@
     - [x] 支持订单取消
     - [x] 订单号使用ksuid, 类似于uuid
     - [x] 生成订单后内容传输给队列, 如rabbitmq, 写入Mysql数据库
-    - [x] 完善前端+用户ID(合法性, JWT)校验
+    - [x] 用户ID(JWT)校验
+    - [ ] vue单页应用 
 
 - 应用情景
 
@@ -44,13 +45,13 @@
         go version: go1.14.4 linux/amd64
         
         内存占用(反复跑pressure_test后停在了这个地方, peak value 400MB):
-    ![pressure_test_memory](./img/pressure.png)
+    ![pressure_test_memory](pressure_test/img/pressure.png)
     1. 用户20000名, 请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1, 库存数量: 200件, 测试结果如下:
     连续 5 次测试:
     
-    ![1.1](./img/1.1.png)
+    ![1.1](pressure_test/img/1.1.png)
     
     2. 20000名用户, 其中10000名用户抢购商品"10000", 库存为200, 10000名用户抢购商品"10001", 数量为200, 测试结果如下:
     连续 5 次测试:
     
-    ![2.1](./img/2.1.png)
+    ![2.1](pressure_test/img/2.1.png)
