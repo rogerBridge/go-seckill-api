@@ -14,11 +14,12 @@ import (
 //var socket = "127.0.0.1:4000"
 //var URL = fmt.Sprintf("http://%s/buy", socket)
 
-var TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDAyNjY3NzYsInVzZXJuYW1lIjoiZmVucm1lbjMifQ.Q4CkFaMF2C0S6l7Csl26JPdnmfLUuh43l81-FhAX7Hg"
+var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDA3OTEyMjgsInVzZXJuYW1lIjoiZmVucm1lbiJ9.L1-UwEGrAQOf0m-IrLVDd9ckEFGN7t0Tu_N7I0bEzfw"
+
 var (
 	concurrentNum int
 	schema        string
-	URL           string
+	url           string
 )
 
 type config struct {
@@ -31,7 +32,7 @@ func init() {
 	config := loadConfig()
 	concurrentNum = config.ConcurrentNum
 	schema = config.Schema
-	URL = schema + config.URL
+	url = schema + config.URL
 }
 
 func loadConfig() *config {
@@ -115,17 +116,17 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 		x := timeStatisticsList[i]
 		switch {
 		case x >= 0 && x < 1:
-			durationB0And1 += 1
+			durationB0And1++
 		case x >= 1 && x < 2:
-			durationB1And2 += 1
+			durationB1And2++
 		case x >= 2 && x < 3:
-			durationB2And3 += 1
+			durationB2And3++
 		case x >= 3 && x < 4:
-			durationB3And4 += 1
+			durationB3And4++
 		case x >= 4 && x < 5:
-			durationB4And5 += 1
+			durationB4And5++
 		case x >= 5:
-			durationBiggerThan5 += 1
+			durationBiggerThan5++
 		}
 	}
 	log.Println("在0~1秒内服务器就有返回的请求数量是:", durationB0And1)

@@ -2,16 +2,17 @@ package controllers
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
 	"go_redis/auth"
 	"go_redis/jsonStruct"
 	"go_redis/mysql/shop/structure"
 	"go_redis/mysql/shop/users"
 	"go_redis/utils"
 	"log"
+
+	"github.com/valyala/fasthttp"
 )
 
-// 登录, 并且获取token
+// Login 登录, 并且获取token
 func Login(ctx *fasthttp.RequestCtx) {
 	//var user structure.UserLogin
 	user := new(structure.UserLogin)
@@ -24,7 +25,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	exist, err := users.VerifyUsers(user)
+	exist, _ := users.VerifyUsers(user)
 	//log.Printf("verify user error: %v\n", err)
 	if exist == 1 {
 		token, err := auth.GenerateToken(user)
@@ -53,12 +54,12 @@ func Login(ctx *fasthttp.RequestCtx) {
 	}
 }
 
+// Logout 删除token
 func Logout(ctx *fasthttp.RequestCtx) {
 	utils.ResponseWithJson(ctx, 500, structure.UserLogout{Message: "系统维护"})
-	return
 }
 
-// 用户注册必须提供的参数: 用户名, 密码
+// Register 用户注册必须提供的参数: 用户名, 密码
 func Register(ctx *fasthttp.RequestCtx) {
 	user := new(structure.UserRegister)
 	err := json.Unmarshal(ctx.Request.Body(), user)
@@ -76,7 +77,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 		user.Birthday = "2006-01-02 13:04:05"
 	}
 	err = users.InsertUsers(user)
-	if err!=nil {
+	if err != nil {
 		log.Printf("insert users error: %s\n", err)
 		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
 			Code: 8401,
@@ -84,12 +85,10 @@ func Register(ctx *fasthttp.RequestCtx) {
 			Data: nil,
 		})
 		return
-	}else {
-		utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
-			Code: 8001,
-			Msg:  "register success",
-			Data: nil,
-		})
-		return
 	}
+	utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+		Code: 8001,
+		Msg:  "register success",
+		Data: nil,
+	})
 }

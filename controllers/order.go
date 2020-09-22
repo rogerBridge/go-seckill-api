@@ -3,9 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/gomodule/redigo/redis"
-	"github.com/valyala/fasthttp"
 	"go_redis/jsonStruct"
 	"go_redis/mysql"
 	"go_redis/mysql/shop/goods"
@@ -13,22 +10,26 @@ import (
 	"go_redis/redis_config"
 	"go_redis/utils"
 	"log"
-	"net/http"
 	"strconv"
+
+	"github.com/gomodule/redigo/redis"
+	"github.com/valyala/fasthttp"
 )
 
-func errorHandle(w http.ResponseWriter, err error, code int) {
-	log.Println(err)
-	http.Error(w, err.Error(), code)
-}
+// func errorHandle(w http.ResponseWriter, err error, code int) {
+// 	log.Println(err)
+// 	http.Error(w, err.Error(), code)
+// }
 
 //var cancelBuyLock sync.Mutex
 
 // 处理用户要购买某种商品时, 提交的参数: userId, productId, productNum 的参数的处理呀
 // 使用application/json的方式
-func test(w http.ResponseWriter, r *http.Request) {
-}
+// func test(w http.ResponseWriter, r *http.Request) {
+// }
 
+// Buy ...
+// 购买商品的接口
 func Buy(ctx *fasthttp.RequestCtx) {
 	//// 请求方法限定为post
 	//if ctx.Request.Header.IsPost() == false {
@@ -156,6 +157,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	}
 }
 
+// CancelBuy this function
 // redis收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
 // 这个接口必须由后台调用, 因为我没有做数据校验
 func CancelBuy(ctx *fasthttp.RequestCtx) {
@@ -220,7 +222,6 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 		Msg:  fmt.Sprintf("用户: %s 取消订单: %s 成功", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum),
 		Data: nil,
 	})
-	return
 	//content, err := jsonStruct.CommonResp(c)
 	//if err != nil {
 	//	log.Println(err)
@@ -234,8 +235,8 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 	//w.Write(content)
 }
 
-// 调用这个函数, 立刻同步
-// (redis中存在的商品(一般情况下, 这个时候mysql中也是存在对应的产品的), redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
+// SyncGoodsFromRedis2Mysql ...
+// 调用这个函数, 立刻同步(redis中存在的商品(一般情况下, 这个时候mysql中也是存在对应的产品的), redis中的数据同步到mysql), 将redis中已变更的商品数据, 同步到mysql中
 // 用途: 更新redis中的商品数据到mysql中
 func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	redisconn := redis_config.Pool.Get()
@@ -254,7 +255,7 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	}
 	type Goods struct {
 		ProductName string `redis:"productName"`
-		ProductId   int    `redis:"productId"`
+		ProductID   int    `redis:"productId"`
 		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsListRedis := make([]*Goods, 0)
@@ -301,7 +302,7 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	}
 	// 这里必须使用事务, 不能这么一条一条的搞
 	for _, v := range goodsListRedis {
-		_, err := tx.Exec("update goods set product_name=?, inventory=? where product_id=?", v.ProductName, v.StoreNum, v.ProductId)
+		_, err := tx.Exec("update goods set product_name=?, inventory=? where product_id=?", v.ProductName, v.StoreNum, v.ProductID)
 		if err != nil {
 			err1 := tx.Rollback()
 			if err1 != nil {
@@ -333,7 +334,6 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 		Msg:  "同步redis信息到mysql成功",
 		Data: nil,
 	})
-	return
 	//respJson, err := jsonStruct.CommonResp(jsonStruct.CommonResponse{
 	//	Code: 8001,
 	//	Msg:  "处理成功",
@@ -348,6 +348,7 @@ func SyncGoodsFromRedis2Mysql(ctx *fasthttp.RequestCtx) {
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
 
+// SyncGoodsFromMysql2Redis ...
 // (mysql中存在 && redis中不存在)的商品数据到redis, 这个接口的用处是: mysql中新添加的商品数据, 需要同步到redis中, 同时保证redis中已存在的商品数据不变
 // 用途: Mysql中添加了新的商品数据,把它同步到redis中
 func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
@@ -402,7 +403,6 @@ func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 		Msg:  "将mysql中新添加的数据缓存到redis中成功",
 		Data: nil,
 	})
-	return
 	//respJson, err := jsonStruct.CommonResp(jsonStruct.CommonResponse{
 	//	Code: 8001,
 	//	Msg:  "处理成功",
@@ -417,6 +417,7 @@ func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
 
+// GoodsList ...
 // 展示商品清单
 func GoodsList(ctx *fasthttp.RequestCtx) {
 	redisconn := redis_config.Pool.Get()
@@ -435,7 +436,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 	}
 	type good struct {
 		ProductName string `redis:"productName"`
-		ProductId   int    `redis:"productId"`
+		ProductID   int    `redis:"productId"`
 		StoreNum    int    `redis:"storeNum"`
 	}
 	goodsList := make([]*good, 0)
@@ -472,7 +473,6 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		Msg:  "获取商品清单成功",
 		Data: goodsList,
 	})
-	return
 	//response := jsonStruct.CommonResponse{
 	//	Code: 8001,
 	//	Msg:  "success",
@@ -487,6 +487,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
 
+// SyncGoodsLimit ...
 // 更新商品限制计划
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
 func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
@@ -507,7 +508,6 @@ func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 		Msg:  "加载mysql中限制购买的数据到全局变量purchaseLimit",
 		Data: nil,
 	})
-	return
 	//response := jsonStruct.CommonResponse{
 	//	Code: 8001,
 	//	Msg:  "success",
@@ -520,6 +520,7 @@ func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	//ctx.Response.Header.Set("Content-Type", "application/json")
 }
 
+// AddGood ...
 // 添加单个商品
 func AddGood(ctx *fasthttp.RequestCtx) {
 	// 首先, 从接口中获取good的info
@@ -608,9 +609,9 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 		Msg:  "add good succuss",
 		Data: nil,
 	})
-	return
 }
 
+// ModifyGood ...
 // 修改单个商品信息
 func ModifyGood(ctx *fasthttp.RequestCtx) {
 	// 首先, 校验格式对不对
@@ -707,11 +708,12 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 	})
 }
 
+// DeleteGood ...
 // 删除单个商品信息, mysql: is_delete=1 and redis del store:{product_id}
 func DeleteGood(ctx *fasthttp.RequestCtx) {
 	g := new(structure.GoodDelete)
 	err := json.Unmarshal(ctx.Request.Body(), g)
-	if err!=nil {
+	if err != nil {
 		log.Printf("request body params error: %+v\n", err)
 		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
 			Code: 8400,
@@ -722,7 +724,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	}
 	// 查看要删除的商品是否存在
 	isExist, err := goods.IsExist(g.ProductId)
-	if err!=nil {
+	if err != nil {
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 			Code: 8500,
 			Msg:  "查看删除的商品是否存在出现错误",
@@ -741,7 +743,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	}
 	// 开启mysql transaction
 	tx, err := mysql.Conn.Begin()
-	if err!=nil {
+	if err != nil {
 		log.Printf("start mysql transaction error: %+v\n", err)
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
 			Code: 8500,
@@ -751,7 +753,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	err = goods.DeleteGoods(tx, g.ProductId)
-	if err!=nil {
+	if err != nil {
 		log.Printf("exec mysql transaction error: %+v\n", err)
 		_ = tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
@@ -765,7 +767,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	redisConn := redis_config.Pool.Get()
 	defer redisConn.Close()
 	_, err = redisConn.Do("del", "store:"+strconv.Itoa(g.ProductId))
-	if err!=nil {
+	if err != nil {
 		log.Printf("redis del store:productId error: %+v\n", err)
 		_ = tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
@@ -776,7 +778,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	}
 
 	err = tx.Commit()
-	if err!=nil {
+	if err != nil {
 		log.Printf("mysql tx commit error: %+v\n", err)
 		utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
 			Code: 8500,
@@ -790,5 +792,4 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		Msg:  "删除商品成功",
 		Data: nil,
 	})
-	return
 }

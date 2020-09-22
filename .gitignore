@@ -8,3 +8,4 @@ redisDocker/sentinels/redisSentinel*/sentinel.conf
 redisDocker/orderInfoRedis/data
 main
 receive
+playground

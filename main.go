@@ -1,10 +1,11 @@
 package main
 
 import (
-	"github.com/valyala/fasthttp"
 	"go_redis/controllers"
 	"go_redis/router"
 	"log"
+
+	"github.com/valyala/fasthttp"
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 	//wg.Wait()
 	//log.Println("预热redis链接成功")
 }
+
 //
 //// 预热一下客户端, 减少之后的redisPool的链接的内存分配建立连接导致的时间消耗
 //func newConn(w *sync.WaitGroup, conn redis.Conn) {
@@ -30,6 +32,7 @@ func init() {
 //	w.Done()
 //}
 
+// preload func set
 func start() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := controllers.InitStore()

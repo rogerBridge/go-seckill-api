@@ -3,8 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"github.com/gomodule/redigo/redis"
-	"github.com/segmentio/ksuid"
 	"go_redis/mysql/shop/goods"
 	"go_redis/mysql/shop/orders"
 	"go_redis/mysql/shop/purchase_limits"
@@ -15,6 +13,9 @@ import (
 	"log"
 	"strconv"
 	"time"
+
+	"github.com/gomodule/redigo/redis"
+	"github.com/segmentio/ksuid"
 )
 
 var ch = common.Ch
@@ -77,11 +78,12 @@ func InitStore() error {
 	return nil
 }
 
+// LoadLimit ...
 // 加载limit
 func LoadLimit() error {
 	conn := redis_config.Pool.Get()
 	defer conn.Close()
-	for k, _ := range purchaseLimit {
+	for k := range purchaseLimit {
 		delete(purchaseLimit, k)
 	}
 	r, err := purchase_limits.QueryPurchaseLimits()

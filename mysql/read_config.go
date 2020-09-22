@@ -5,28 +5,30 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
-// 定义mysql连接为全局变量
+// Conn 定义mysql连接为全局变量
 var Conn *sql.DB
 
 func init() {
 	pwd, err := os.Getwd()
-	if err!=nil {
+	if err != nil {
 		log.Fatalf("找不到当前工作路径, %s", err)
 	}
 	log.Printf("Current Work Dir: %s", pwd)
-	dataSource := ReadConfig(pwd+"/mysql/mysql_config.json")
+	dataSource := ReadConfig(pwd + "/mysql/mysql_config.json")
 
 	Conn = InitMysqlConn(dataSource)
 }
 
-// 读取mysql数据库的设置
+// ReadConfig 读取mysql数据库的设置
 func ReadConfig(fileName string) string {
 	type mysqlConfig struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
-		Ip       string `json:"ip"`
+		IP       string `json:"ip"`
 		Port     string `json:"port"`
 		Database string `json:"database"`
 	}
@@ -40,9 +42,10 @@ func ReadConfig(fileName string) string {
 		log.Fatalln(err)
 	}
 	params := "?parseTime=true"
-	return m.Username + ":" + m.Password + "@tcp(" + m.Ip + ":" + m.Port + ")/" + m.Database + params
+	return m.Username + ":" + m.Password + "@tcp(" + m.IP + ":" + m.Port + ")/" + m.Database + params
 }
 
+// InitMysqlConn ...
 func InitMysqlConn(dataSource string) *sql.DB {
 	db, err := sql.Open("mysql", dataSource)
 	if err != nil {

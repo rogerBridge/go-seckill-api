@@ -12,17 +12,16 @@ import (
 )
 
 var client1 = &http.Client{
-	Transport: &http.Transport{
-	},
-	Timeout: 30 * time.Second,
+	Transport: &http.Transport{},
+	Timeout:   30 * time.Second,
 }
 
-func singleRequest(client *http.Client, userId string, productId string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
+func singleRequest(client *http.Client, userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
 	client = client1
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
-		UserId:      userId,
-		ProductId:   productId,
+		UserId:      userID,
+		ProductId:   productID,
 		PurchaseNum: 1,
 	}
 	reqBody, err := json.Marshal(r)
@@ -30,7 +29,7 @@ func singleRequest(client *http.Client, userId string, productId string, w *sync
 		log.Println(err)
 		return false, err
 	}
-	req, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		log.Println(err)
 		return false, err
