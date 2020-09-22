@@ -95,4 +95,3 @@ var Pool1 = &redis.Pool{
 		return con, nil
 	},
 }
-

@@ -25,7 +25,7 @@ var (
 type config struct {
 	ConcurrentNum int    `json:"concurrentNum"`
 	Schema        string `json:"schema"`
-	URL           string `json:"URL"`
+	URL           string `json:"url"`
 }
 
 func init() {
@@ -44,7 +44,7 @@ func loadConfig() *config {
 	c := new(config)
 	err = json.Unmarshal(fileBytes, c)
 	if err != nil {
-		log.Printf("反向json失败\n")
+		log.Printf("read json config from file to struct error \n")
 		panic(err)
 	}
 	return c
@@ -72,10 +72,22 @@ func main() {
 	//}
 
 	//x 人同时抢购"10001"这件商品
+	errChan := make(chan error, concurrentNum)
 	for i := start; i < end; i++ {
 		w.Add(1)
-		go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
+		//go (func(i int) {
+		//	_, err := fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
+		//	if err != nil {
+		//		errChan <- err
+		//	}
+		//})(i)
+		go fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
 		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
+	}
+	close(errChan)
+
+	for err := range errChan {
+		log.Println(err)
 	}
 
 	//for i:=start; i<end-10000; i++ {

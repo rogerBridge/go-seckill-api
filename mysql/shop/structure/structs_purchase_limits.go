@@ -8,4 +8,3 @@ type PurchaseLimits struct {
 	StartPurchaseDatetime time.Time
 	EndPurchaseDatetime   time.Time
 }
-

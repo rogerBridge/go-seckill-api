@@ -7,8 +7,8 @@ type BuyReq struct {
 }
 
 type CancelBuyReq struct {
-	UserId      string `json:"userId"`
-	OrderNum    string `json:"orderNum"`
+	UserId   string `json:"userId"`
+	OrderNum string `json:"orderNum"`
 }
 
 //func DecodeBuyReq(buyReq io.ReadCloser) (*BuyReq, error) {

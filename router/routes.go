@@ -1,10 +1,11 @@
 package router
 
 import (
-	"github.com/fasthttp/router"
-	"github.com/valyala/fasthttp"
 	"go_redis/auth"
 	"go_redis/controllers"
+
+	"github.com/fasthttp/router"
+	"github.com/valyala/fasthttp"
 )
 
 type Route struct {
@@ -16,6 +17,7 @@ type Route struct {
 
 var routes = make([]Route, 0)
 
+// 路由中间件注册
 func register(method, pattern string, handler fasthttp.RequestHandler, middle func(handler fasthttp.RequestHandler) fasthttp.RequestHandler) {
 	routes = append(routes, Route{method, pattern, handler, middle})
 }
@@ -35,7 +37,6 @@ func init() {
 	register(fasthttp.MethodPost, "/register", controllers.Register, nil)
 }
 
-//
 func ThisRouter() *router.Router {
 	r := router.New()
 	for _, route := range routes {

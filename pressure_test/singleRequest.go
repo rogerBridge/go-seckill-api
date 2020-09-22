@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"go_redis/pressure_test/jsonStruct"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"sync"
@@ -44,6 +43,7 @@ func singleRequest(client *http.Client, userID string, productID string, w *sync
 		w.Done()
 		return false, err
 	}
+
 	// 服务器无效响应
 	if resp.StatusCode != 200 {
 		w.Done() // 如果不使用的话, 万一程序在此处退出, wait函数将阻塞测试程序的运行
@@ -52,14 +52,14 @@ func singleRequest(client *http.Client, userID string, productID string, w *sync
 	t1 := time.Since(t0)           // 客户端结束发起请求的时间
 	timeStatistics <- t1.Seconds() // 将客户端发起请求的时间发送给timeStatistics
 
-	defer resp.Body.Close()
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		log.Println(err)
-		w.Done()
-		return false, err
-	}
-	w.Done()
+	// _, err = ioutil.ReadAll(resp.Body)
+	// defer resp.Body.Close()
+	// if err != nil {
+	// 	log.Println(err)
+	// 	w.Done()
+	// 	return false, err
+	// }
 	//log.Println(string(respByte))
+	w.Done()
 	return true, nil
 }

@@ -157,9 +157,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	}
 }
 
-// CancelBuy this function
-// redis收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
-// 这个接口必须由后台调用, 因为我没有做数据校验
+// CancelBuy 收到后台的请求, 用户取消了订单, 需要用到的参数有: userId, productId, purchaseNum,  redis直接操作用户的: user:[userId]:bought 里面key为productId的, 赋值为0
 func CancelBuy(ctx *fasthttp.RequestCtx) {
 	//if ctx.Request.Header.IsPost() == false {
 	//	ctx.Request.Header.Set("Allow", http.MethodPost)

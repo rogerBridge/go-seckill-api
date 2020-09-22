@@ -12,8 +12,8 @@ type UserLogout struct {
 type UserRegister struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
-	Sex string `json:"sex"`
+	Sex      string `json:"sex"`
 	Birthday string `json:"birthday"`
-	Address string `json:"address"`
-	Email string `json:"email"`
+	Address  string `json:"address"`
+	Email    string `json:"email"`
 }

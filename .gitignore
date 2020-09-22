@@ -9,3 +9,4 @@ redisDocker/orderInfoRedis/data
 main
 receive
 playground
+.vscode

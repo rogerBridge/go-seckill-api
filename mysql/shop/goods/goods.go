@@ -70,11 +70,11 @@ func IsExist(productId int) (int, error) {
 	row := mysql.Conn.QueryRow("select exists(select * from goods where product_id=? and is_delete=0)", productId)
 	var isExist int
 	err := row.Scan(&isExist)
-	if err!=nil {
+	if err != nil {
 		log.Printf("row.Scan error: %+v\n", err)
 		return 0, err
 	}
-	if isExist==1{
+	if isExist == 1 {
 		return 1, nil
 	}
 	return 0, nil
