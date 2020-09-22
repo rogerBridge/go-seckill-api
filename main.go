@@ -61,7 +61,7 @@ func main() {
 	//	log.Printf("user %v not exist\n", u)
 	//}
 	//orders.InsertOrders("xxxxxx", "leo2n", 123, 1, time.Now(), "process")
-	//receive.Receive()
+	// receive.Receive(common.Ch)
 
 	//mux := http.NewServeMux()
 	//mux.HandleFunc("/buy", buy)
@@ -96,6 +96,7 @@ func main() {
 	//		ctx.Error("not found", fasthttp.StatusNotFound)
 	//	}
 	//}
+
 	r := router.ThisRouter()
 	log.Println("Listen on :4000")
 	log.Fatalln(fasthttp.ListenAndServe(":4000", r.Handler))
