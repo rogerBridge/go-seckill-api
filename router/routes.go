@@ -24,17 +24,19 @@ func register(method, pattern string, handler fasthttp.RequestHandler, middle fu
 
 func init() {
 	register(fasthttp.MethodPost, "/syncGoodsLimit", controllers.SyncGoodsLimit, nil)
-	register(fasthttp.MethodGet, "/goodsList", controllers.GoodsList, nil)
-	register(fasthttp.MethodPost, "/addGood", controllers.AddGood, nil)
-	register(fasthttp.MethodPost, "/modifyGood", controllers.ModifyGood, nil)
-	register(fasthttp.MethodPost, "/deleteGood", controllers.DeleteGood, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, nil)
+
+	register(fasthttp.MethodGet, "/goodsList", controllers.GoodsList, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/addGood", controllers.AddGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/modifyGood", controllers.ModifyGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/deleteGood", controllers.DeleteGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/buy", controllers.Buy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/cancelBuy", controllers.CancelBuy, nil)
-	register(fasthttp.MethodPost, "/login", controllers.Login, nil)
-	register(fasthttp.MethodPost, "/logout", controllers.Logout, nil)
+	register(fasthttp.MethodPost, "/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/logout", controllers.Logout, auth.MiddleAuth)
+
 	register(fasthttp.MethodPost, "/register", controllers.Register, nil)
+	register(fasthttp.MethodPost, "/login", controllers.Login, nil)
 }
 
 func ThisRouter() *router.Router {

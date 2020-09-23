@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"os"
 	"sort"
 	"strconv"
 	"sync"
@@ -13,8 +14,6 @@ import (
 //var concurrentNum = 20000
 //var socket = "127.0.0.1:4000"
 //var URL = fmt.Sprintf("http://%s/buy", socket)
-
-var token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2MDA3OTEyMjgsInVzZXJuYW1lIjoiZmVucm1lbiJ9.L1-UwEGrAQOf0m-IrLVDd9ckEFGN7t0Tu_N7I0bEzfw"
 
 var (
 	concurrentNum int
@@ -52,6 +51,11 @@ func loadConfig() *config {
 
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
+	token, err := getToken()
+	if err != nil {
+		log.Println(err)
+		os.Exit(-1)
+	}
 	var w sync.WaitGroup
 	// 时间统计队列
 	timeStatistics := make(chan float64, concurrentNum)
@@ -81,7 +85,7 @@ func main() {
 		//		errChan <- err
 		//	}
 		//})(i)
-		go fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
+		go fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics, token)
 		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
 	}
 	close(errChan)

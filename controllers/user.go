@@ -6,6 +6,7 @@ import (
 	"go_redis/jsonStruct"
 	"go_redis/mysql/shop/structure"
 	"go_redis/mysql/shop/users"
+	"go_redis/redis_config"
 	"go_redis/utils"
 	"log"
 
@@ -56,7 +57,34 @@ func Login(ctx *fasthttp.RequestCtx) {
 
 // Logout 删除token
 func Logout(ctx *fasthttp.RequestCtx) {
-	utils.ResponseWithJson(ctx, 500, structure.UserLogout{Message: "系统维护"})
+	// get username from token string
+	tokenStr := string(ctx.Request.Header.Peek("Authorization"))
+	//
+	tokenInfo, err := auth.ParseToken(tokenStr)
+	if err != nil {
+		log.Printf(err.Error())
+		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			Code: 8400,
+			Msg:  err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	username := tokenInfo.Username
+	redisconn := redis_config.Pool2.Get()
+	defer redisconn.Close()
+
+	_, err = redisconn.Do("del", "token:"+username)
+	if err != nil {
+		log.Printf("%+v\n", err.Error())
+		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			Code: 8500,
+			Msg:  "del token in redis error",
+			Data: nil,
+		})
+		return
+	}
+	utils.ResponseWithJson(ctx, 200, structure.UserLogout{Message: "logout successful"})
 }
 
 // Register 用户注册必须提供的参数: 用户名, 密码

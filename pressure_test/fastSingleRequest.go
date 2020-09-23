@@ -22,9 +22,14 @@ var client2 = &fasthttp.Client{
 	ReadTimeout: 60 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
 }
 
-func fastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
+func fastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64, token string) (bool, error) {
 	// 首先, 构造client
 	client := client2
+	req := &fasthttp.Request{}
+	req.Header.Set("Authorization", token)
+	req.Header.SetContentType("application/json")
+	req.Header.SetMethod(http.MethodPost)
+	req.SetRequestURI(url)
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
 		UserId:      userID,
@@ -37,12 +42,7 @@ func fastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeS
 		log.Println(err)
 		return false, err
 	}
-	req := &fasthttp.Request{}
 	//req := fasthttp.AcquireRequest()
-	req.Header.Set("Authorization", token)
-	req.Header.SetContentType("application/json")
-	req.Header.SetMethod(http.MethodPost)
-	req.SetRequestURI(url)
 	req.SetBody(reqBody)
 
 	resp := &fasthttp.Response{}

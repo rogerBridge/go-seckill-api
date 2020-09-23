@@ -10,6 +10,8 @@ cd $workdir/redisDocker;
 bash runRedis.sh;
 cd $workdir/redisDocker/orderInfoRedis;
 bash runRedis.sh;
+cd $workdir/redisDocker/tokenRedis;
+bash runRedis.sh;
 
 echo "setup mqtt server ...";
 cd $workdir/rabbitmq;
