@@ -64,7 +64,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 	if err != nil {
-		log.Printf("user: %s CanBuyIt error: %s\n", u.userID, err.Error())
+		log.Printf("user: %+v CanBuyIt error: %s\n", u, err.Error())
 		//content, err := c.MarshalJSON()
 		//content, err := jsonStruct.CommonResp(c)
 		//if err != nil {
@@ -78,7 +78,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		//}
 		utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
 			Code: 8005,
-			Msg:  "您购买的商品数量已达到上限或者缺货;" + err.Error(),
+			Msg:  "您购买的商品数量已达到上限或者缺货: " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -112,7 +112,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		if err != nil {
 			utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
 				Code: 8004,
-				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误;" + err.Error(),
+				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误: " + err.Error(),
 				Data: nil,
 			})
 			//content, err := c.MarshalJSON()
@@ -443,7 +443,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
 		if err != nil {
 			log.Println(err)
-			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, jsonStruct.CommonResponse{
 				Code: 8500,
 				Msg:  "获取商品key: value时出现错误",
 				Data: nil,
@@ -456,7 +456,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		err = redis.ScanStruct(goodsMap, g)
 		if err != nil {
 			log.Println("redis scanStruct error: ", err)
-			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, jsonStruct.CommonResponse{
 				Code: 8500,
 				Msg:  "redis scanStruct error",
 				Data: nil,
@@ -466,7 +466,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 		log.Println("After redis scanStruct: ", g)
 		goodsList = append(goodsList, g)
 	}
-	utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+	utils.ResponseWithJson(ctx, fasthttp.StatusOK, jsonStruct.CommonResponse{
 		Code: 8001,
 		Msg:  "获取商品清单成功",
 		Data: goodsList,
