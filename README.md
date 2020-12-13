@@ -40,13 +40,13 @@
     
         系统: Ubuntu 20.04 LTS
     
-        CPU: Intel i5 8250U (4H8T) (runtime.GOMAXPROCS设置为1个线程, 但通过htop发现, 8个线程全部被占用了, 我也不知道咋回事,  This call will go away when the scheduler improves, 意思是升级了scheduler所以这个go sway了?)
-    
+        实例gvm : Amazon Lightsail 2H4G $20/month
+        
         go version: go1.14.4 linux/amd64
         
         内存占用(反复跑pressure_test后停在了这个地方, peak value 400MB):
     ![pressure_test_memory](pressure_test/img/pressure.png)
-    1. 用户20000名, 请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1, 库存数量: 200件, 测试结果如下:
+    1. 用户15000名, 请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1, 库存数量: 200件, 测试结果如下:
     连续 5 次测试:
     
     ![1.1](pressure_test/img/1.1.png)
