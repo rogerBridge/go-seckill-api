@@ -79,7 +79,7 @@ func InitStore() error {
 }
 
 // LoadLimit ...
-// 加载limit
+// 加载mysql 中的limit到运行时中
 func LoadLimit() error {
 	conn := redis_config.Pool.Get()
 	defer conn.Close()
@@ -127,7 +127,7 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 		if ok, _ := u.UserFilter(productID, purchaseNum, true); ok {
 			return true, nil
 		}
-		return false, errors.New("购买数量过大或者其他错误")
+		return false, errors.New("购买数量超出限制")
 	} else {
 		if purchaseNum < 1 {
 			return false, errors.New("商品数量小于1")
