@@ -48,7 +48,7 @@ func VerifyUsers(u *structure.UserLogin) (int, error) {
 	return isExist, nil
 }
 
-// 将hash转为md5
+// 将text string转为 md5 string
 func GetMD5sum(text string) string {
 	hash := md5.Sum([]byte(text + salt))
 	return hex.EncodeToString(hash[:])

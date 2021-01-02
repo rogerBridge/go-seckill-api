@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"fmt"
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
@@ -20,9 +21,9 @@ var secret = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"
 // 要求如下: 24h后过期
 func GenerateToken(user *structure.UserLogin) (string, error) {
 	expireDuration := 24 * time.Hour
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": user.Username,
-		"exp":      time.Now().Add(expireDuration).Unix(), // 24 hours expire
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
+		ExpiresAt: time.Now().Add(expireDuration).Unix(),
+		Id:        user.Username,
 	})
 	tokenReturn, err := token.SignedString([]byte(secret))
 	if err != nil {
@@ -40,7 +41,7 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 	return tokenReturn, nil
 }
 
-// token middleware
+// MiddleAuth 是一个request前置处理器, 可以将request交给下一级处理前先行处理
 func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
@@ -77,10 +78,14 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			})
 			return
 		}
+		// 通过了上面的考验, 请求终于来到了handler的手上
 		handler(ctx)
 	}
 }
 
+/*
+	TokenInfo 是解析tokenString之后的一系列信息, 例如: 用户名, 过期时间etc, 放入一个结构体中
+*/
 type TokenInfo struct {
 	TokenString string `json:"tokenString"`
 	Username    string `json:"username"`
@@ -94,7 +99,7 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 		return tokenInfo, errors.New("nil tokenStr")
 	} else {
 		// 验证token是否可以被解析
-		token, err := jwt.Parse(tokenStr, func(token *jwt.Token) (i interface{}, err error) {
+		token, err := jwt.ParseWithClaims(tokenStr, &jwt.StandardClaims{}, func(token *jwt.Token) (i interface{}, err error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return
 			}
@@ -106,13 +111,13 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			return tokenInfo, err
 		}
 		// 如果可以顺利解析, 将解析后的值分配到 tokenInfo 结构体中
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
 			tokenInfo.TokenString = tokenStr
-			tokenInfo.Username = claims["username"].(string)
-			tokenInfo.Expiration = int64(claims["exp"].(float64))
+			tokenInfo.Username = claims.Id
+			tokenInfo.Expiration = claims.ExpiresAt
 			return tokenInfo, nil
 		} else {
-			return tokenInfo, errors.New("token parse to struct error")
+			return tokenInfo, errors.New(fmt.Sprintf("parse token to struct error: %+v\n", err))
 		}
 	}
 }

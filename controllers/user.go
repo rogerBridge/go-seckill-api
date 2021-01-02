@@ -13,7 +13,8 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// Login 登录, 并且获取token
+// Login 登录, 生成token, 放入redis之中
+
 func Login(ctx *fasthttp.RequestCtx) {
 	//var user structure.UserLogin
 	user := new(structure.UserLogin)

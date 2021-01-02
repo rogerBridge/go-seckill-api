@@ -162,7 +162,7 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 	}
 	// 如果用户购买过了, 看一看是否存在购买限制
 	if hasLimit {
-		// 用户想要购买的数量+已购买的数量<=限制购买的数量
+		// 用户: 已购买的数量+想要购买的数量<=限制购买的数量
 		if (r + purchaseNum) <= purchaseLimit[productID].LimitNum {
 			return true, nil
 		}

@@ -12,7 +12,7 @@ type CommonResponse struct {
 	Data interface{} `json:"data"`
 }
 
-//
+// 传入需要返回的数据结构体, 然后返回[]byte
 func CommonResp(c CommonResponse) ([]byte, error) {
 	v, err := json.Marshal(c)
 	if err != nil {
