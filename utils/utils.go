@@ -20,11 +20,14 @@ func FindElement(slice []string, val string) (int, bool) {
 // ResponseWithJson http接口的统一的信息返回
 func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interface{}) {
 	err := json.NewEncoder(ctx.Response.BodyWriter()).Encode(payload)
-	// response, err := json.Marshal(payload)
+	response, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("struct to []byte error happen\n")
+		ctx.Response.Header.Set("Content-Type", "application/json")
+		ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
+		return
 	}
-	// ctx.Response.SetBody(response)
+	ctx.Response.SetBody(response)
 	ctx.Response.Header.Set("Content-Type", "application/json")
 	ctx.Response.SetStatusCode(statusCode)
 }
