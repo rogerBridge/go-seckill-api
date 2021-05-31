@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# orderInfoRedis 运行 一个redis实例, 用于存储订单信息
 docker stop orderInfoRedis && docker rm orderInfoRedis;
 docker network create redisStore;
 docker run -d \

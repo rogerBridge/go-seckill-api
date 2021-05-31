@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# tokenRedis 创建一个redis实例, 用来存储token, 做单点登录处理或者超时处理
 docker stop tokenRedis && docker rm tokenRedis;
 docker network create redisStore;
 docker run -d \

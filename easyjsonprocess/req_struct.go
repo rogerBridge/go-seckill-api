@@ -1,4 +1,4 @@
-package jsonStruct
+package easyjsonprocess
 
 type BuyReq struct {
 	UserId      string `json:"userId"`

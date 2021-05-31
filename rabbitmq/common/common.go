@@ -1,8 +1,9 @@
 package common
 
 import (
-	"github.com/streadway/amqp"
 	"log"
+
+	"github.com/streadway/amqp"
 )
 
 func Errlog(err error, msg string) {
@@ -11,11 +12,15 @@ func Errlog(err error, msg string) {
 	}
 }
 
-var Ch = GetChannel()
+// Ch作为全局变量, 可以被包外引用, rabbitmqServerName是rabbitmqServer容器在redisStore这个网络中的名称, 其他容器可以根据它的名字找到它
+var rabbitmqServerName = "rabbitmqServer"
+var Ch = GetChannel(rabbitmqServerName)
 
-func GetChannel() *amqp.Channel {
-	conn, err := amqp.Dial("amqp://root:12345678@my_rabbit:5672/root_vhost")
-	Errlog(err, "Failed to connect my_rabbit")
+// 作为客户端, 和rabbitmq server建立信道, 声明exchange, 声明queue, 绑定queue
+func GetChannel(rabbitmqServerName string) *amqp.Channel {
+	// 注意, rabbitmqServer的初始化, rabbitmqServer是docker容器在network之中的名称
+	conn, err := amqp.Dial("amqp://root:12345678@" + rabbitmqServerName + ":5672/root_vhost")
+	Errlog(err, "Failed to connect rabbitmqServer")
 	//defer conn.Close()
 
 	ch, err := conn.Channel()
@@ -23,7 +28,7 @@ func GetChannel() *amqp.Channel {
 	//defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"logs",
+		"logs", // 这个exchange负责将订单消息发送给处理写mysql.shop.orders的应用
 		"direct",
 		true,
 		false,
@@ -34,7 +39,7 @@ func GetChannel() *amqp.Channel {
 	Errlog(err, "declare exchange fail")
 
 	q, err := ch.QueueDeclare(
-		"send2mysql",
+		"sendToMysql", //queue name
 		true,
 		false,
 		false,

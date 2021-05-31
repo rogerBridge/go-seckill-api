@@ -1,4 +1,4 @@
-package jsonStruct
+package easyjsonprocess
 
 import (
 	"encoding/json"

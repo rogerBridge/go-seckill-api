@@ -1,10 +1,11 @@
 package purchase_limits
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"go_redis/mysql"
-	"go_redis/mysql/shop/structure"
+	"redisplay/mysql"
+	"redisplay/mysql/shop/structure"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func InsertPurchaseLimits(productID int, limitNum int, startPurchaseTime time.Time, endPurchaseTime time.Time) error {

@@ -2,10 +2,10 @@ package main
 
 import (
 	//"encoding/json"
-	"go_redis/pressure_test/jsonStruct"
 	"log"
 	"net"
 	"net/http"
+	"redisplay/pressure_test/jsonStruct"
 	"sync"
 	"time"
 

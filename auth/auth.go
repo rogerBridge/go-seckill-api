@@ -3,18 +3,20 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"log"
+	"redisplay/easyjsonprocess"
+	"redisplay/mysql/shop/structure"
+	"redisplay/redisconf"
+	"redisplay/utils"
+	"time"
+
 	"github.com/dgrijalva/jwt-go"
 	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
-	"go_redis/jsonStruct"
-	"go_redis/mysql/shop/structure"
-	"go_redis/redis_config"
-	"go_redis/utils"
-	"log"
-	"time"
 )
 
 // server side sign token need secret
+// stateless token
 var secret = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"
 
 // 生成符合要求的JWT token
@@ -30,13 +32,16 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 		log.Fatal("error happen while generate token\n")
 	}
 	// 将生成的token放入redis
-	redisconn := redis_config.Pool2.Get()
+	redisconn := redisconf.Pool2.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("set", "token:"+user.Username, tokenReturn)
-	_, err = redisconn.Do("expire", "token:"+user.Username, int64(expireDuration)/1e9) // 1e9 = 1 Second
 	if err != nil {
 		log.Fatalln("error while set user:token", err)
+	}
+	_, err = redisconn.Do("expire", "token:"+user.Username, int64(expireDuration)/1e9) // 1e9 = 1 Second
+	if err != nil {
+		log.Fatalln("error while expire user:token", err)
 	}
 	return tokenReturn, nil
 }
@@ -48,7 +53,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
 		if err != nil {
-			utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 				Code: 8400,
 				Msg:  err.Error(),
 				Data: nil,
@@ -56,13 +61,13 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			return
 		}
 		username := tokeninfo.Username
-		redisconn := redis_config.Pool2.Get()
+		redisconn := redisconf.Pool2.Get()
 		defer redisconn.Close()
 
 		tokenFromRedis, err := redis.String(redisconn.Do("get", "token:"+username))
 		if err != nil {
 			log.Printf("while get token from redis, error: %+v\n", err)
-			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 				Code: 8500,
 				Msg:  "while get token from redis, error",
 				Data: nil,
@@ -71,7 +76,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		}
 		if tokenFromRedis != tokeninfo.TokenString {
 			log.Printf("unvalid token")
-			utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 				Code: 8400,
 				Msg:  "while get token from redis, error",
 				Data: nil,
@@ -117,7 +122,7 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			tokenInfo.Expiration = claims.ExpiresAt
 			return tokenInfo, nil
 		} else {
-			return tokenInfo, errors.New(fmt.Sprintf("parse token to struct error: %+v\n", err))
+			return tokenInfo, fmt.Errorf("parse token to struct error: %+v\n", err)
 		}
 	}
 }

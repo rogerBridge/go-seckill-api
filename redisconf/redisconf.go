@@ -1,4 +1,4 @@
-package redis_config
+package redisconf
 
 import (
 	"time"
@@ -57,7 +57,7 @@ var Pool = &redis.Pool{
 	Dial: func() (conn redis.Conn, err error) {
 		networkType := "tcp"
 		//host := "127.0.0.1"
-		host := "redis_config"
+		host := "goodsInfoRedis"
 		masterSocket := host + ":6379"
 		// 如果想要保证webapp在redis挂了的时候, 随着sentinel切换而变更socket
 		//c, err := redis_config.Dial("tcp", "127.0.0.1:6400")

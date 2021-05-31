@@ -3,14 +3,14 @@ package controllers
 import (
 	"encoding/json"
 	"errors"
-	"go_redis/mysql/shop/goods"
-	"go_redis/mysql/shop/orders"
-	"go_redis/mysql/shop/purchase_limits"
-	"go_redis/mysql/shop/structure"
-	"go_redis/rabbitmq/common"
-	"go_redis/rabbitmq/send"
-	"go_redis/redis_config"
 	"log"
+	"redisplay/mysql/shop/goods"
+	"redisplay/mysql/shop/orders"
+	"redisplay/mysql/shop/purchase_limits"
+	"redisplay/mysql/shop/structure"
+	"redisplay/rabbitmq/common"
+	"redisplay/rabbitmq/send"
+	"redisplay/redisconf"
 	"strconv"
 	"time"
 
@@ -22,10 +22,10 @@ var ch = common.Ch
 
 // InitStore 首先, 初始化redis中待抢购的商品信息
 func InitStore() error {
-	conn := redis_config.Pool.Get()
+	conn := redisconf.Pool.Get()
 	defer conn.Close()
 
-	conn1 := redis_config.Pool1.Get()
+	conn1 := redisconf.Pool1.Get()
 	defer conn1.Close()
 
 	// PING PONG
@@ -37,7 +37,7 @@ func InitStore() error {
 	if err != nil {
 		panic("初始化连接redis pool 1 失败: conn fail")
 	}
-	// 首先, flushdb redis_config
+	// 首先, flushdb redisconf
 	err = conn.Send("flushdb")
 	if err != nil {
 		log.Println("flushdb err", err)
@@ -81,7 +81,7 @@ func InitStore() error {
 // LoadLimit ...
 // 加载mysql 中的limit到运行时中
 func LoadLimit() error {
-	conn := redis_config.Pool.Get()
+	conn := redisconf.Pool.Get()
 	defer conn.Close()
 	for k := range purchaseLimit {
 		delete(purchaseLimit, k)
@@ -141,9 +141,9 @@ func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 
 // UserFilter 检查用户是否满足购买某种商品的权限
 func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (bool, error) {
-	conn := redis_config.Pool.Get()
+	conn := redisconf.Pool.Get()
 	defer conn.Close()
-	conn1 := redis_config.Pool1.Get()
+	conn1 := redisconf.Pool1.Get()
 	defer conn1.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
@@ -173,22 +173,22 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 	return false, errors.New("其他错误")
 }
 
-// ksuid generate string
+// ksuid generate string, KSUID将这个作为订单编号
 func orderNumberGenerator() string {
 	return ksuid.New().String()
 }
 
-// 生成订单
+// 生成订单信息, 首先存入redis缓存, 然后发送到mqtt broker
 func (u *User) orderGenerator(productID string, purchaseNum int) (string, error) {
-	conn := redis_config.Pool.Get()
+	conn := redisconf.Pool.Get()
 	defer conn.Close()
 
 	// 存放用户订单信息的redis
-	conn1 := redis_config.Pool1.Get()
+	conn1 := redisconf.Pool1.Get()
 	defer conn1.Close()
 	//// 只要list rpop之后的值不是nil就可以
-	//_, err := redis_config.Int(conn.Do("rpop", "store:"+productId+":have"))
-	//if err == redis_config.ErrNil {
+	//_, err := redisconf.Int(conn.Do("rpop", "store:"+productId+":have"))
+	//if err == redisconf.ErrNil {
 	//	return "", errors.New("库存不足")
 	//}
 
@@ -209,7 +209,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 		return "", errors.New("库存数量不够客户想要的")
 	}
 	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到MySQL上面
-	// 生成订单信息
+	// 生成订单信息, 感觉这里如果用: 时间戳+用户ID 的话, 更好
 	orderNum := orderNumberGenerator()
 	now := time.Now()
 	ok, err := redis.String(conn1.Do("hmset", "user:"+u.userID+":order:"+orderNum, "orderNum", orderNum, "userID", u.userID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", now.Format("2006-01-02 15:04:05"), "status", "process"))
@@ -244,7 +244,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 
 // Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会face限制购买数量的规则哦
 func (u *User) Bought(productID string, purchaseNum int) error {
-	conn1 := redis_config.Pool1.Get()
+	conn1 := redisconf.Pool1.Get()
 	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
 	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
@@ -265,10 +265,10 @@ func (u *User) Bought(productID string, purchaseNum int) error {
 
 // CancelBuy redis接收到订单中心返回给我们的取消的订单, 我们需要恢复库存数和改变 user:[userID]:bought 中特定key对应的value
 func (u *User) CancelBuy(orderNum string) error {
-	conn := redis_config.Pool.Get()
+	conn := redisconf.Pool.Get()
 	defer conn.Close()
 
-	conn1 := redis_config.Pool1.Get()
+	conn1 := redisconf.Pool1.Get()
 	defer conn1.Close()
 	// 查看订单号是否存在? && 状态是否是process
 	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.userID+":order:"+orderNum))

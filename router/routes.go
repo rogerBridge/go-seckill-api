@@ -1,8 +1,8 @@
 package router
 
 import (
-	"go_redis/auth"
-	"go_redis/controllers"
+	"redisplay/auth"
+	"redisplay/controllers"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"

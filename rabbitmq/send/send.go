@@ -1,8 +1,9 @@
 package send
 
 import (
+	"redisplay/rabbitmq/common"
+
 	"github.com/streadway/amqp"
-	"go_redis/rabbitmq/common"
 )
 
 func Send(msg []byte, ch *amqp.Channel) {

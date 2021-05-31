@@ -1,8 +1,8 @@
 package main
 
 import (
-	"go_redis/rabbitmq/common"
-	"go_redis/rabbitmq/receive"
+	"redisplay/rabbitmq/common"
+	"redisplay/rabbitmq/receive"
 )
 
 func main() {

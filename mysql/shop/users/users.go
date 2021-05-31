@@ -3,10 +3,11 @@ package users
 import (
 	"crypto/md5"
 	"encoding/hex"
-	_ "github.com/go-sql-driver/mysql"
-	"go_redis/mysql"
-	"go_redis/mysql/shop/structure"
 	"log"
+	"redisplay/mysql"
+	"redisplay/mysql/shop/structure"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 var salt = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"

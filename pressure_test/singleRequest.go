@@ -3,9 +3,9 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"go_redis/pressure_test/jsonStruct"
 	"log"
 	"net/http"
+	"redisplay/pressure_test/jsonStruct"
 	"sync"
 	"time"
 )

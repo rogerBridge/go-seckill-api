@@ -1,10 +1,11 @@
 package orders
 
 import (
-	_ "github.com/go-sql-driver/mysql"
-	"go_redis/mysql"
 	"log"
+	"redisplay/mysql"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 func InsertOrders(orderNum string, userId string, productId int, purchaseNum int, orderDatetime time.Time, status string) error {

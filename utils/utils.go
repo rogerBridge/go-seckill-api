@@ -20,6 +20,10 @@ func FindElement(slice []string, val string) (int, bool) {
 // ResponseWithJson http接口的统一的信息返回
 func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interface{}) {
 	err := json.NewEncoder(ctx.Response.BodyWriter()).Encode(payload)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	response, err := json.Marshal(payload)
 	if err != nil {
 		log.Printf("struct to []byte error happen\n")

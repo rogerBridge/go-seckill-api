@@ -2,13 +2,13 @@ package controllers
 
 import (
 	"encoding/json"
-	"go_redis/auth"
-	"go_redis/jsonStruct"
-	"go_redis/mysql/shop/structure"
-	"go_redis/mysql/shop/users"
-	"go_redis/redis_config"
-	"go_redis/utils"
 	"log"
+	"redisplay/auth"
+	"redisplay/easyjsonprocess"
+	"redisplay/mysql/shop/structure"
+	"redisplay/mysql/shop/users"
+	"redisplay/redisconf"
+	"redisplay/utils"
 
 	"github.com/valyala/fasthttp"
 )
@@ -20,7 +20,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 	user := new(structure.UserLogin)
 	err := json.Unmarshal(ctx.Request.Body(), &user)
 	if err != nil {
-		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  "bad params",
 			Data: nil,
@@ -32,14 +32,14 @@ func Login(ctx *fasthttp.RequestCtx) {
 	if exist == 1 {
 		token, err := auth.GenerateToken(user)
 		if err != nil {
-			utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 				Code: 8500,
 				Msg:  "while generate token error",
 				Data: nil,
 			})
 			return
 		}
-		utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8001,
 			Msg:  "login success",
 			Data: structure.Jwt{
@@ -48,7 +48,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 			},
 		})
 	} else {
-		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "用户名或密码错误",
 			Data: nil,
@@ -63,8 +63,8 @@ func Logout(ctx *fasthttp.RequestCtx) {
 	//
 	tokenInfo, err := auth.ParseToken(tokenStr)
 	if err != nil {
-		log.Printf(err.Error())
-		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+		log.Println(err.Error())
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  err.Error(),
 			Data: nil,
@@ -72,13 +72,13 @@ func Logout(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	username := tokenInfo.Username
-	redisconn := redis_config.Pool2.Get()
+	redisconn := redisconf.Pool2.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("del", "token:"+username)
 	if err != nil {
 		log.Printf("%+v\n", err.Error())
-		utils.ResponseWithJson(ctx, 500, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  "del token in redis error",
 			Data: nil,
@@ -94,7 +94,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), user)
 	if err != nil {
 		log.Printf("parse request body error: %s\n", err)
-		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "bad params",
 			Data: nil,
@@ -108,14 +108,14 @@ func Register(ctx *fasthttp.RequestCtx) {
 	err = users.InsertUsers(user)
 	if err != nil {
 		log.Printf("insert users error: %s\n", err)
-		utils.ResponseWithJson(ctx, 400, jsonStruct.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8401,
 			Msg:  "insert to users error",
 			Data: nil,
 		})
 		return
 	}
-	utils.ResponseWithJson(ctx, 200, jsonStruct.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8001,
 		Msg:  "register success",
 		Data: nil,

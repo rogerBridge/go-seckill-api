@@ -1,9 +1,9 @@
 package main
 
 import (
-	"go_redis/controllers"
-	"go_redis/router"
 	"log"
+	"redisplay/controllers"
+	"redisplay/router"
 
 	"github.com/valyala/fasthttp"
 )
@@ -32,6 +32,7 @@ func init() {
 //}
 
 // preload func set
+// first of all, init redis shop information, second, load limit variables to global var and redis
 func start() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := controllers.InitStore()

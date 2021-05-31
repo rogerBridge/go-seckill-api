@@ -2,10 +2,11 @@ package goods
 
 import (
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"go_redis/mysql"
-	"go_redis/mysql/shop/structure"
 	"log"
+	"redisplay/mysql"
+	"redisplay/mysql/shop/structure"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 // insert 一些数据

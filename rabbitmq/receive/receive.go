@@ -2,17 +2,18 @@ package receive
 
 import (
 	"encoding/json"
-	"go_redis/mysql/shop/orders"
-	"go_redis/mysql/shop/structure"
-	"go_redis/rabbitmq/common"
 	"log"
+	"redisplay/mysql/shop/orders"
+	"redisplay/mysql/shop/structure"
+	"redisplay/rabbitmq/common"
 
 	"github.com/streadway/amqp"
 )
 
+// 从特定的channel里面接收信息, 然后处理
 func Receive(ch *amqp.Channel) {
 	msgs, err := ch.Consume(
-		"send2mysql",
+		"sendToMysql", // queue name
 		"",
 		false, // no ack
 		false,
@@ -44,6 +45,6 @@ func Receive(ch *amqp.Channel) {
 			}
 		}
 	}()
-	log.Printf("Listening...")
+	log.Printf("Listening incoming mqtt information ...")
 	<-forever
 }

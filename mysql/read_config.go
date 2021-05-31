@@ -23,7 +23,7 @@ func init() {
 	Conn = InitMysqlConn(dataSource)
 }
 
-// ReadConfig 读取mysql数据库的设置
+// ReadConfig 读取mysql数据库的设置, 并输出: "username:password@tcp(IPaddress:port)/database+params" format
 func ReadConfig(fileName string) string {
 	type mysqlConfig struct {
 		Username string `json:"username"`
