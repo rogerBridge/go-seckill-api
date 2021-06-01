@@ -180,7 +180,7 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 // ksuid generate string, KSUID将这个作为订单编号
 // 订单号生成器的逻辑需要改变
 func orderNumberGenerator(u *User) string {
-	return strconv.Itoa(int(time.Now().UnixNano())) + u.userID + ksuid.New().String()
+	return fmt.Sprintf("%s-%s-%s", strconv.Itoa(int(time.Now().UnixNano())), u.userID, ksuid.New().String())
 }
 
 // 生成订单信息, 首先存入redis缓存, 然后发送到mqtt broker

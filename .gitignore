@@ -7,6 +7,7 @@ redisDocker/slavers/redisDocker*/data
 redisDocker/sentinels/redisSentinel*/sentinel.conf
 redisDocker/orderInfoRedis/data
 redisDocker/tokenRedis/data
+redisDocker/goodsInfoRedis/data
 main
 receive
 playground
