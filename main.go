@@ -33,6 +33,7 @@ func init() {
 
 // preload func set
 // first of all, init redis shop information, second, load limit variables to global var and redis
+// 首先,
 func start() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := controllers.InitStore()

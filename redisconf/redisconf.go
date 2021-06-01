@@ -51,6 +51,7 @@ import (
 //var pool = newSentinelPool()
 
 // Pool 调用会非常频繁, 因为每个请求都可能会询问Pool
+// 实例: goodsInfoRedis的连接池
 var Pool = &redis.Pool{
 	MaxIdle:     20000,
 	IdleTimeout: 60 * time.Second,
@@ -81,6 +82,7 @@ var Pool = &redis.Pool{
 }
 
 // 存储订单信息, 购买信息
+// 实例: orderInfoRedis的连接池
 var Pool1 = &redis.Pool{
 	MaxIdle:     20000,
 	IdleTimeout: 300 * time.Second,
@@ -98,6 +100,7 @@ var Pool1 = &redis.Pool{
 }
 
 // 存储token信息
+// 实例: tokenRedis的连接池
 var Pool2 = &redis.Pool{
 	MaxIdle:     20000,
 	IdleTimeout: 300 * time.Second,

@@ -7,7 +7,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// FindElement if sth in elements, return its index, true, if not, return -1, false
+// FindElement if val in slice, return its index, true, if not, return -1, false
 func FindElement(slice []string, val string) (int, bool) {
 	for i, item := range slice {
 		if item == val {

@@ -6,7 +6,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-func Send(msg []byte, ch *amqp.Channel) {
+func Send(msg []byte, ch *amqp.Channel) error {
 	err := ch.Publish(
 		"logs",
 		"logsRecord", // message's routing key
@@ -19,4 +19,5 @@ func Send(msg []byte, ch *amqp.Channel) {
 		},
 	)
 	common.Errlog(err, "publish msg to queue error")
+	return err
 }
