@@ -2,7 +2,6 @@ package utils
 
 import (
 	"encoding/json"
-	"log"
 
 	"github.com/valyala/fasthttp"
 )
@@ -19,14 +18,9 @@ func FindElement(slice []string, val string) (int, bool) {
 
 // ResponseWithJson http接口的统一的信息返回
 func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interface{}) {
-	err := json.NewEncoder(ctx.Response.BodyWriter()).Encode(payload)
-	if err != nil {
-		log.Println(err)
-		return
-	}
 	response, err := json.Marshal(payload)
 	if err != nil {
-		log.Printf("struct to []byte error happen\n")
+		logger.Warnf("struct to []byte error happen")
 		ctx.Response.Header.Set("Content-Type", "application/json")
 		ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
 		return

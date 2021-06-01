@@ -9,7 +9,7 @@ import (
 	"redisplay/mysql/shop/orders"
 	"redisplay/mysql/shop/purchase_limits"
 	"redisplay/mysql/shop/structure"
-	"redisplay/rabbitmq/send"
+	"redisplay/rabbitmq/sender"
 	"redisplay/redisconf"
 	"strconv"
 	"time"
@@ -244,7 +244,7 @@ func (u *User) orderGenerator(productID string, purchaseNum int) (string, error)
 		return "", err
 	}
 	//log.Printf("%s", jsonBytes)
-	err = send.Send(jsonBytes, ch)
+	err = sender.Send(jsonBytes, ch)
 	if err != nil {
 		logger.Warnf("%v send msg: %v error message: %v", u, jsonBytes, err)
 		return "", err

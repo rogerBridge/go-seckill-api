@@ -2,9 +2,9 @@ package main
 
 import (
 	"redisplay/rabbitmq/common"
-	"redisplay/rabbitmq/receive"
+	"redisplay/rabbitmq/receiver"
 )
 
 func main() {
-	receive.Receive(common.Ch)
+	receiver.Receive(common.Ch)
 }
