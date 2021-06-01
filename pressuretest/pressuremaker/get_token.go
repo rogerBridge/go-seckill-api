@@ -1,16 +1,17 @@
-package main
+package pressuremaker
 
 import (
 	"encoding/json"
-	"github.com/valyala/fasthttp"
 	"log"
 	"net"
 	"net/http"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 // 每次跑测试前, 找后台申请一个最新的token
-func getToken() (string, error) {
+func GetToken() (string, error) {
 	url := "http://localhost:4000/login"
 	client := &fasthttp.Client{
 		Dial: func(addr string) (conn net.Conn, err error) {

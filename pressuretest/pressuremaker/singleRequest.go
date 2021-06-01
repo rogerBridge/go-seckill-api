@@ -1,22 +1,21 @@
-package main
+package pressuremaker
 
 import (
 	"bytes"
 	"encoding/json"
-	"log"
 	"net/http"
-	"redisplay/pressure_test/jsonStruct"
+	"redisplay/pressuretest/jsonStruct"
 	"sync"
 	"time"
 )
 
-var client1 = &http.Client{
+var clientHttp = &http.Client{
 	Transport: &http.Transport{},
 	Timeout:   30 * time.Second,
 }
 
-func singleRequest(client *http.Client, userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
-	client = client1
+func SingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
+	client := clientHttp
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
 		UserId:      userID,
@@ -25,12 +24,12 @@ func singleRequest(client *http.Client, userID string, productID string, w *sync
 	}
 	reqBody, err := json.Marshal(r)
 	if err != nil {
-		log.Println(err)
+		logger.Warnf("Marshal json error message %v", err)
 		return false, err
 	}
-	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(reqBody))
 	if err != nil {
-		log.Println(err)
+		logger.Warnf("send http request error message %v", err)
 		return false, err
 	}
 	req.Header.Set("Content-Type", "application/json")

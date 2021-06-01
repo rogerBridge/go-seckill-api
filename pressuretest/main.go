@@ -1,10 +1,9 @@
 package main
 
 import (
-	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
+	"redisplay/pressuretest/pressuremaker"
 	"sort"
 	"strconv"
 	"sync"
@@ -15,53 +14,19 @@ import (
 //var socket = "127.0.0.1:4000"
 //var URL = fmt.Sprintf("http://%s/buy", socket)
 
-var (
-	concurrentNum int
-	schema        string
-	url           string
-)
-
-type config struct {
-	ConcurrentNum int    `json:"concurrentNum"`
-	Schema        string `json:"schema"`
-	URL           string `json:"url"`
-}
-
-func init() {
-	config := loadConfig()
-	concurrentNum = config.ConcurrentNum
-	schema = config.Schema
-	url = schema + config.URL
-}
-
-func loadConfig() *config {
-	fileBytes, err := ioutil.ReadFile("config.json")
-	if err != nil {
-		log.Printf("加载配置文件失败: %v\n", err)
-		panic(err)
-	}
-	c := new(config)
-	err = json.Unmarshal(fileBytes, c)
-	if err != nil {
-		log.Printf("read json config from file to struct error \n")
-		panic(err)
-	}
-	return c
-}
-
 // 这个包对已经写成的功能模块进行压力测试
 func main() {
-	token, err := getToken()
+	token, err := pressuremaker.GetToken()
 	if err != nil {
-		log.Println(err)
+		logger.Warnf("when generate token, error message %v", err)
 		os.Exit(-1)
 	}
 	var w sync.WaitGroup
 	// 时间统计队列
-	timeStatistics := make(chan float64, concurrentNum)
+	timeStatistics := make(chan float64, pressuremaker.ConcurrentNum)
 
 	start := 0
-	end := start + concurrentNum
+	end := start + pressuremaker.ConcurrentNum
 
 	//dialer := &net.Dialer{
 	//	LocalAddr: &net.TCPAddr{
@@ -76,22 +41,18 @@ func main() {
 	//}
 
 	//x 人同时抢购"10001"这件商品
-	errChan := make(chan error, concurrentNum)
+	errChan := make(chan error, pressuremaker.ConcurrentNum)
 	for i := start; i < end; i++ {
 		w.Add(1)
-		//go (func(i int) {
-		//	_, err := fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics)
-		//	if err != nil {
-		//		errChan <- err
-		//	}
-		//})(i)
-		go fastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics, token)
+		// 会将所有的error发送给errChan这个channel, 方便之后统计
+		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10004", &w, timeStatistics, token)
 		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
 	}
 	close(errChan)
 
+	// 遍历errChan之中的错误信息
 	for err := range errChan {
-		log.Println(err)
+		logger.Warnf("%v", err)
 	}
 
 	//for i:=start; i<end-10000; i++ {
@@ -102,14 +63,14 @@ func main() {
 	//}
 
 	w.Wait()
-	// 关闭时间统计队列, 开始我们的计算!
+	// 关闭时间统计channel, 开始我们的计算!
 	close(timeStatistics)
 
 	//t1 := time.Since(t0).Seconds()
 	//log.Printf("服务器角度的每秒事务处理量: %.2f, %d个客户端请求总时间段: %.4fs\n", float64(end-start)/t1, concurrentNum, t1)
 
 	// 把统计到的时间节点放置到一个slice中, 写需要计算的函数方法
-	timeStatisticsList := make([]float64, 0, concurrentNum)
+	timeStatisticsList := make([]float64, 0, pressuremaker.ConcurrentNum)
 	for t := range timeStatistics {
 		timeStatisticsList = append(timeStatisticsList, t)
 	}
@@ -118,7 +79,7 @@ func main() {
 
 func playTimeStatisticsList(timeStatisticsList []float64) {
 	// 请求未完成, 中途夭折的请求的数量
-	errorNum := concurrentNum - len(timeStatisticsList)
+	errorNum := pressuremaker.ConcurrentNum - len(timeStatisticsList)
 	log.Printf("客户端总共发送请求: %d个, 客户端角度的没有被服务器处理的请求数量:%d", len(timeStatisticsList), errorNum)
 
 	durationB0And1 := 0      // 时间间隔在[0,1)
@@ -157,5 +118,5 @@ func playTimeStatisticsList(timeStatisticsList []float64) {
 		allTime += v
 	}
 	log.Printf("最大响应时间: %.4fms, 最小响应时间: %.4fms, 平均响应时间: %.4fms, TPS: %.0f\n", 1000*timeStatisticsList[len(timeStatisticsList)-1], 1000*timeStatisticsList[0], 1000*allTime/float64(len(timeStatisticsList)), float64(len(timeStatisticsList))/timeStatisticsList[len(timeStatisticsList)-1])
-	log.Printf("0~1s 内处理的请求数量: %d, 占总体请求数量的%.3f%%\n", durationB0And1, 100*float64(durationB0And1)/float64(concurrentNum))
+	log.Printf("0~1s 内处理的请求数量: %d, 占总体请求数量的%.3f%%\n", durationB0And1, 100*float64(durationB0And1)/float64(pressuremaker.ConcurrentNum))
 }
