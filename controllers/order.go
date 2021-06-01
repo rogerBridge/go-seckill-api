@@ -63,7 +63,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 	if err != nil {
-		logger.Warnf("user: %+v CanBuyIt error: %v", buyReqPointer.UserId, err)
+		logger.Warnf("user: %+v CanBuyIt error: %v 您不满足购买商品条件", buyReqPointer.UserId, err)
 		//content, err := c.MarshalJSON()
 		//content, err := easyjsonprocess.CommonResp(c)
 		//if err != nil {
