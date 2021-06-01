@@ -9,6 +9,7 @@ require (
 	github.com/gomodule/redigo v1.8.4
 	github.com/mailru/easyjson v0.7.7
 	github.com/segmentio/ksuid v1.0.3
+	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
 	github.com/valyala/fasthttp v1.25.0
 )

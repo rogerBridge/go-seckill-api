@@ -32,6 +32,7 @@ func UpdatePurchaseLimits(productID int, limitNum int, startPurchaseTime time.Ti
 	return nil
 }
 
+// 获取特定商品的购买限制数据
 func QueryPurchaseLimits() ([]*structure.PurchaseLimits, error) {
 	limitsList := make([]*structure.PurchaseLimits, 0, 10)
 	rows, err := mysql.Conn.Query("select product_id, limit_num, start_purchase_time, end_purchase_time from purchase_limits where is_delete is false")

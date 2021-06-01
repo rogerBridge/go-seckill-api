@@ -47,6 +47,8 @@ func UpdateGoods(tx *sql.Tx, productId int, productName string, inventory int) e
 	return nil
 }
 
+// query goods from shop.goods table
+// 从shop.goods中获取商品清单
 func QueryGoods() ([]*structure.Goods, error) {
 	goodsList := make([]*structure.Goods, 0, 10)
 	rows, err := mysql.Conn.Query("select product_id, product_name, inventory from goods where is_delete is false")

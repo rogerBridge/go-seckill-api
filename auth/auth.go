@@ -1,9 +1,11 @@
+/*
+Package auth is a package provide redisplay API auth service
+*/
 package auth
 
 import (
 	"errors"
 	"fmt"
-	"log"
 	"redisplay/easyjsonprocess"
 	"redisplay/mysql/shop/structure"
 	"redisplay/redisconf"
@@ -15,38 +17,33 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// server side sign token need secret
-// stateless token
-var secret = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"
-
 // 生成符合要求的JWT token
-// 要求如下: 24h后过期
 func GenerateToken(user *structure.UserLogin) (string, error) {
-	expireDuration := 24 * time.Hour
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(expireDuration).Unix(),
+		ExpiresAt: time.Now().Add(ExpireDuration).Unix(),
 		Id:        user.Username,
 	})
 	tokenReturn, err := token.SignedString([]byte(secret))
 	if err != nil {
-		log.Fatal("error happen while generate token\n")
+		logger.Fatalf("crash when generate token: %v\n", err)
 	}
-	// 将生成的token放入redis
+	// 将生成的token放入tokenRedis
 	redisconn := redisconf.Pool2.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("set", "token:"+user.Username, tokenReturn)
 	if err != nil {
-		log.Fatalln("error while set user:token", err)
+		logger.Fatalf("crash when set user: %v's token, error msg: %v", user.Username, err)
 	}
-	_, err = redisconn.Do("expire", "token:"+user.Username, int64(expireDuration)/1e9) // 1e9 = 1 Second
+	_, err = redisconn.Do("expire", "token:"+user.Username, int64(ExpireDuration)/1e9) // 1e9 = 1 Second
 	if err != nil {
-		log.Fatalln("error while expire user:token", err)
+		logger.Fatalf("crash when expire user: %v's token, error msg: %v", user.Username, err)
 	}
 	return tokenReturn, nil
 }
 
-// MiddleAuth 是一个request前置处理器, 可以将request交给下一级处理前先行处理
+// MiddleAuth 是一个request前置处理器, 可以验证请求的合法性
+// 只有token值合格的时候才放行请求到下一个处理器
 func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
@@ -55,7 +52,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		if err != nil {
 			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 				Code: 8400,
-				Msg:  err.Error(),
+				Msg:  fmt.Sprintf("While parse token, error happen, error message is: %v", err),
 				Data: nil,
 			})
 			return
@@ -66,19 +63,23 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 		tokenFromRedis, err := redis.String(redisconn.Do("get", "token:"+username))
 		if err != nil {
-			log.Printf("while get token from redis, error: %+v\n", err)
+			logger.Warnf("While user: %v getting token from tokenRedis, error message: %v", tokeninfo.Username, err)
 			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 				Code: 8500,
-				Msg:  "while get token from redis, error",
+				Msg:  "While getting token from tokenRedis, error",
 				Data: nil,
 			})
 			return
 		}
+		// 这里存在小问题
+		// 显示: 帐号已经登录, 请在别处退出后, 再重新登录
+		// 应该是: 把之前的token替换掉, 并提示: 帐号在别处登录, 已经被踢出, 以新的登录为主
+		// 或者是可以存储多个token
 		if tokenFromRedis != tokeninfo.TokenString {
-			log.Printf("unvalid token")
+			logger.Warnf("user: %v request token not equal to tokenRedis's token", tokeninfo.Username)
 			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 				Code: 8400,
-				Msg:  "while get token from redis, error",
+				Msg:  "提交的token与服务器缓存的token不符",
 				Data: nil,
 			})
 			return
@@ -108,11 +109,11 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return
 			}
-			return []byte(secret), nil // default return
+			return []byte(secret), nil
 		})
 		// err 中包含错误
 		if err != nil {
-			log.Printf("token parse error: %+v\n", err)
+			logger.Warnf("Token parse error: %v", err)
 			return tokenInfo, err
 		}
 		// 如果可以顺利解析, 将解析后的值分配到 tokenInfo 结构体中
@@ -122,7 +123,8 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			tokenInfo.Expiration = claims.ExpiresAt
 			return tokenInfo, nil
 		} else {
-			return tokenInfo, fmt.Errorf("parse token to struct error: %+v\n", err)
+			logger.Warnf("error happen when parse token to struct tokenInfo, error message: %v", err)
+			return tokenInfo, err
 		}
 	}
 }

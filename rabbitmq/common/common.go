@@ -1,25 +1,24 @@
 package common
 
 import (
-	"log"
-
 	"github.com/streadway/amqp"
 )
 
+// 一旦出现任何rabbitmq问题, 立刻中止程序
 func Errlog(err error, msg string) {
 	if err != nil {
-		log.Fatalf("%s: %s", err, msg)
+		logger.Fatalf("%v: %v", err, msg)
 	}
 }
-
-// Ch作为全局变量, 可以被包外引用, rabbitmqServerName是rabbitmqServer容器在redisStore这个网络中的名称, 其他容器可以根据它的名字找到它
-var rabbitmqServerName = "rabbitmqServer"
-var Ch = GetChannel(rabbitmqServerName)
 
 // 作为客户端, 和rabbitmq server建立信道, 声明exchange, 声明queue, 绑定queue
 func GetChannel(rabbitmqServerName string) *amqp.Channel {
 	// 注意, rabbitmqServer的初始化, rabbitmqServer是docker容器在network之中的名称
-	conn, err := amqp.Dial("amqp://root:12345678@" + rabbitmqServerName + ":5672/root_vhost")
+	URL := "amqp://" + rabbitmqServerUsername + ":" + rabbitmqServerPassword + "@" + rabbitmqServerName + ":" +
+		rabbitmqServerPort + rabbitmqServerPath
+	logger.Infof("url is: %v", URL)
+
+	conn, err := amqp.Dial(URL)
 	Errlog(err, "Failed to connect rabbitmqServer")
 	//defer conn.Close()
 
