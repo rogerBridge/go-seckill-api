@@ -16,7 +16,7 @@ func GetChannel(rabbitmqServerName string) *amqp.Channel {
 	// 注意, rabbitmqServer的初始化, rabbitmqServer是docker容器在network之中的名称
 	URL := "amqp://" + rabbitmqServerUsername + ":" + rabbitmqServerPassword + "@" + rabbitmqServerName + ":" +
 		rabbitmqServerPort + rabbitmqServerPath
-	logger.Infof("url is: %v", URL)
+	logger.Infof("mqtt server url is: %v", URL)
 
 	conn, err := amqp.Dial(URL)
 	Errlog(err, "Failed to connect rabbitmqServer")
