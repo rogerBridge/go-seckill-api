@@ -20,7 +20,7 @@ func FindElement(slice []string, val string) (int, bool) {
 func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interface{}) {
 	response, err := json.Marshal(payload)
 	if err != nil {
-		logger.Warnf("struct to []byte error happen")
+		logger.Warnf("ResponseWithJson: struct to []byte error happen")
 		ctx.Response.Header.Set("Content-Type", "application/json")
 		ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
 		return

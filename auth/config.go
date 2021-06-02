@@ -7,6 +7,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// func init() {
+// 	logrus.SetLevel(logrus.WarnLevel)
+// }
+
 // server side sign token need secret
 // stateless token
 var secret = "1hXNV1rlgoEoT9U9gWqSmyYS9G1"

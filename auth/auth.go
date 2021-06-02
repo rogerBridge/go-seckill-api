@@ -25,7 +25,7 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 	})
 	tokenReturn, err := token.SignedString([]byte(secret))
 	if err != nil {
-		logger.Fatalf("crash when generate token: %v\n", err)
+		logger.Fatalf("GenerateToken: crash when generate token: %v\n", err)
 	}
 	// 将生成的token放入tokenRedis
 	redisconn := redisconf.Pool2.Get()
@@ -33,11 +33,11 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 
 	_, err = redisconn.Do("set", "token:"+user.Username, tokenReturn)
 	if err != nil {
-		logger.Fatalf("crash when set user: %v's token, error msg: %v", user.Username, err)
+		logger.Fatalf("GenerateToken: crash when set user: %v's token, error msg: %v", user.Username, err)
 	}
 	_, err = redisconn.Do("expire", "token:"+user.Username, int64(ExpireDuration)/1e9) // 1e9 = 1 Second
 	if err != nil {
-		logger.Fatalf("crash when expire user: %v's token, error msg: %v", user.Username, err)
+		logger.Fatalf("GenerateToken: crash when expire user: %v's token, error msg: %v", user.Username, err)
 	}
 	return tokenReturn, nil
 }
@@ -63,7 +63,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 
 		tokenFromRedis, err := redis.String(redisconn.Do("get", "token:"+username))
 		if err != nil {
-			logger.Warnf("While user: %v getting token from tokenRedis, error message: %v", tokeninfo.Username, err)
+			logger.Warnf("MiddleAuth: While user: %v getting token from tokenRedis, error message: %v", tokeninfo.Username, err)
 			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 				Code: 8500,
 				Msg:  "While getting token from tokenRedis, error",
@@ -76,7 +76,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		// 应该是: 把之前的token替换掉, 并提示: 帐号在别处登录, 已经被踢出, 以新的登录为主
 		// 或者是可以存储多个token
 		if tokenFromRedis != tokeninfo.TokenString {
-			logger.Warnf("user: %v request token not equal to tokenRedis's token", tokeninfo.Username)
+			logger.Warnf("MiddleAuth: user: %v request token not equal to tokenRedis's token", tokeninfo.Username)
 			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 				Code: 8400,
 				Msg:  "提交的token与服务器缓存的token不符",
@@ -113,7 +113,7 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 		})
 		// err 中包含错误
 		if err != nil {
-			logger.Warnf("Token parse error: %v", err)
+			logger.Warnf("ParseToken: Token parse error: %v", err)
 			return tokenInfo, err
 		}
 		// 如果可以顺利解析, 将解析后的值分配到 tokenInfo 结构体中
@@ -123,7 +123,7 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			tokenInfo.Expiration = claims.ExpiresAt
 			return tokenInfo, nil
 		} else {
-			logger.Warnf("error happen when parse token to struct tokenInfo, error message: %v", err)
+			logger.Warnf("ParseToken: error happen when parse token to struct tokenInfo, error message: %v", err)
 			return tokenInfo, err
 		}
 	}
