@@ -3,13 +3,16 @@ module redisplay
 go 1.16
 
 require (
+	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
-	github.com/fasthttp/router v1.3.13
+	github.com/fasthttp/router v1.3.14
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gomodule/redigo v1.8.4
+	github.com/klauspost/compress v1.12.3 // indirect
 	github.com/mailru/easyjson v0.7.7
 	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.8.1
 	github.com/streadway/amqp v1.0.0
-	github.com/valyala/fasthttp v1.25.0
+	github.com/valyala/fasthttp v1.26.0
+	golang.org/x/sys v0.0.0-20210601080250-7ecdf8ef093b // indirect
 )
