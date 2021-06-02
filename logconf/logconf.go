@@ -22,3 +22,12 @@ var BaseLogger = logrus.WithFields(logrus.Fields{
 	"app":    "redisplay",
 	"author": "Roger Bridge",
 })
+
+// 需要在设定的logger里面添加新的fields时使用
+// 例如: LogWithMethodName(logger, "hello") ==> logger.WithFields(logrus.Fields{"methodName": "hello"})
+func LogWithMethodName(baseLogger *logrus.Entry, methodName string) *logrus.Entry {
+	r := baseLogger.WithFields(logrus.Fields{
+		"methodName": methodName,
+	})
+	return r
+}
