@@ -1,8 +1,12 @@
+/*
+使用fasthttp制造http请求
+*/
 package pressuremaker
 
 import (
 	//"encoding/json"
 
+	"fmt"
 	"net"
 	"net/http"
 	"redisplay/pressuretest/jsonStruct"
@@ -22,7 +26,7 @@ var clientFastHttp = &fasthttp.Client{
 	ReadTimeout: 60 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
 }
 
-func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64, token string) (bool, error) {
+func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64, token string, errChan chan error) (bool, error) {
 	// 首先, 构造client
 	client := clientFastHttp
 	req := &fasthttp.Request{}
@@ -38,8 +42,7 @@ func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeS
 	}
 	reqBody, err := r.MarshalJSON()
 	if err != nil {
-		w.Done()
-		logger.Warnf("Marshal struct to []byte error message %v", err)
+		logger.Fatalf("Marshal struct to []byte error message %v", err)
 		return false, err
 	}
 	//req := fasthttp.AcquireRequest()
@@ -52,11 +55,13 @@ func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeS
 
 	err = client.Do(req, resp)
 	if err != nil {
+		errChan <- fmt.Errorf("send req error %v", err)
 		w.Done()
 		logger.Warnf("发送请求时: %v", err)
 		return false, err
 	}
 	if resp.StatusCode() != 200 {
+		errChan <- fmt.Errorf("服务器返回状态码不对")
 		w.Done()
 		return false, err
 	}

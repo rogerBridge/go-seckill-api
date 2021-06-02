@@ -24,12 +24,12 @@ func SingleRequest(userID string, productID string, w *sync.WaitGroup, timeStati
 	}
 	reqBody, err := json.Marshal(r)
 	if err != nil {
-		logger.Warnf("Marshal json error message %v", err)
+		logger.Fatalf("Marshal json error message %v", err)
 		return false, err
 	}
 	req, err := http.NewRequest(http.MethodPost, URL, bytes.NewBuffer(reqBody))
 	if err != nil {
-		logger.Warnf("send http request error message %v", err)
+		logger.Fatalf("make http request error message %v", err)
 		return false, err
 	}
 	req.Header.Set("Content-Type", "application/json")

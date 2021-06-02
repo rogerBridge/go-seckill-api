@@ -9,12 +9,8 @@ import (
 	"sync"
 )
 
-// 同时请求的client数量
-//var concurrentNum = 20000
-//var socket = "127.0.0.1:4000"
-//var URL = fmt.Sprintf("http://%s/buy", socket)
-
 // 这个包对已经写成的功能模块进行压力测试
+// 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
 	token, err := pressuremaker.GetToken()
 	if err != nil {
@@ -22,30 +18,18 @@ func main() {
 		os.Exit(-1)
 	}
 	var w sync.WaitGroup
-	// 时间统计队列
+	// 时间统计channel
 	timeStatistics := make(chan float64, pressuremaker.ConcurrentNum)
 
 	start := 0
 	end := start + pressuremaker.ConcurrentNum
-
-	//dialer := &net.Dialer{
-	//	LocalAddr: &net.TCPAddr{
-	//		IP:   []byte{127, 0, 0, 1},
-	//		Port: 5555,
-	//	},
-	//	Timeout: 30 * time.Second,
-	//}
-	//connLocal, err := dialer.Dial("tcp", "127.0.0.1:4000")
-	//if err != nil {
-	//	panic(err)
-	//}
 
 	//x 人同时抢购"10001"这件商品
 	errChan := make(chan error, pressuremaker.ConcurrentNum)
 	for i := start; i < end; i++ {
 		w.Add(1)
 		// 会将所有的error发送给errChan这个channel, 方便之后统计
-		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10004", &w, timeStatistics, token)
+		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10004", &w, timeStatistics, token, errChan)
 		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
 	}
 	close(errChan)
