@@ -12,3 +12,4 @@ main
 receive
 playground
 .vscode
+rabbitmq/receiver/mqttReceiver
