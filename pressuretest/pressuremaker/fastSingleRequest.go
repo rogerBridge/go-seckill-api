@@ -55,13 +55,13 @@ func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeS
 
 	err = client.Do(req, resp)
 	if err != nil {
-		errChan <- fmt.Errorf("send req error %v", err)
+		errChan <- fmt.Errorf("client do error %v", err)
 		w.Done()
 		logger.Warnf("发送请求时: %v", err)
 		return false, err
 	}
 	if resp.StatusCode() != 200 {
-		errChan <- fmt.Errorf("服务器返回状态码不对")
+		errChan <- fmt.Errorf("server response status code error")
 		w.Done()
 		return false, err
 	}
