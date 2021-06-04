@@ -31,6 +31,7 @@ func init() {
 	URL = Host + config.URL
 }
 
+// load config from config.json
 func loadConfig() *config {
 	fileBytes, err := ioutil.ReadFile("pressuremaker/config.json")
 	if err != nil {
