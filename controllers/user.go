@@ -20,6 +20,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 	user := new(structure.UserLogin)
 	err := json.Unmarshal(ctx.Request.Body(), &user)
 	if err != nil {
+		logger.Warnf("Login: Unmarshal []byte to struct error message %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  "bad params",
@@ -29,7 +30,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 	}
 	exist, err := users.VerifyUsers(user)
 	if err != nil {
-		logger.Warnf("While verify user: %s error message: %v", user.Username, err)
+		logger.Warnf("Login: While verify user: %s error message: %v", user.Username, err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  fmt.Sprintf("While verify user: %v error message: %v", user, err),
@@ -40,7 +41,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 	if exist == 1 {
 		token, err := auth.GenerateToken(user)
 		if err != nil {
-			logger.Warnf("While verify user: %v error message: %v", user, err)
+			logger.Warnf("Login: While verify user: %v error message: %v", user, err)
 			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 				Code: 8500,
 				Msg:  fmt.Sprintf("While verify user: %v error message: %v", user, err),
@@ -48,7 +49,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 			})
 			return
 		}
-		logger.Infof("User: %v login success", user)
+		logger.Infof("Login: User: %v login success", user)
 		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8001,
 			Msg:  "login success",
@@ -60,7 +61,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 			},
 		})
 	} else {
-		logger.Warnf("username or password error")
+		logger.Warnf("Login: username or password error")
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "用户名或密码错误",
@@ -76,7 +77,7 @@ func Logout(ctx *fasthttp.RequestCtx) {
 	//
 	tokenInfo, err := auth.ParseToken(tokenStr)
 	if err != nil {
-		logger.Warnf("user: %s logout error message: %v", tokenInfo.Username, err)
+		logger.Warnf("Register: user: %s logout error message: %v", tokenInfo.Username, err)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  fmt.Sprintf("user: %v logout error message: %v", tokenInfo, err),
@@ -90,7 +91,7 @@ func Logout(ctx *fasthttp.RequestCtx) {
 
 	_, err = redisconn.Do("del", "token:"+username)
 	if err != nil {
-		logger.Warnf("user: %s delete self token error message: %v", username, err)
+		logger.Warnf("Register: user: %s delete self token error message: %v", username, err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  fmt.Sprintf("user: %s delete self token error message: %v", username, err),
@@ -98,6 +99,7 @@ func Logout(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+	logger.Infof("Register: user %s login success", username)
 	utils.ResponseWithJson(ctx, 200, structure.UserLogout{Message: "logout successful"})
 }
 
@@ -106,7 +108,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 	user := new(structure.UserRegister)
 	err := json.Unmarshal(ctx.Request.Body(), user)
 	if err != nil {
-		logger.Warnf("user: %v register json unmarshal error message: %v", user, err)
+		logger.Warnf("Logout: user: %v register json unmarshal error message: %v", user, err)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "bad params",
@@ -120,7 +122,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 	}
 	err = users.InsertUsers(user)
 	if err != nil {
-		logger.Warnf("Insert user: %v error message: %v", user, err)
+		logger.Warnf("Logout: Insert user: %v error message: %v", user, err)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8401,
 			Msg:  fmt.Sprintf("Insert user: %v error message: %v", user, err),
@@ -128,7 +130,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	logger.Infof("User: %v register success", user)
+	logger.Infof("Logout: User: %v register success", user)
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8001,
 		Msg:  "register success",

@@ -18,4 +18,4 @@ var rabbitmqServerPassword = "12345678"
 var rabbitmqServerPort = "5672"
 var rabbitmqServerPath = "/root_vhost"
 
-var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "rabbitmq"})
+var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "rabbitmq-common"})

@@ -8,9 +8,7 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-/*
-	自定义route结构体
-*/
+//自定义route结构体
 type Route struct {
 	Method  string
 	Pattern string
@@ -18,7 +16,8 @@ type Route struct {
 	Middle  func(handler fasthttp.RequestHandler) fasthttp.RequestHandler
 }
 
-var routes = make([]Route, 0)
+// 提前分配好内存, 一般一个应用的话, 256个API是足够的
+var routes = make([]Route, 0, 256)
 
 // 路由中间件注册
 func register(method, pattern string, handler fasthttp.RequestHandler, middle func(handler fasthttp.RequestHandler) fasthttp.RequestHandler) {
@@ -26,11 +25,12 @@ func register(method, pattern string, handler fasthttp.RequestHandler, middle fu
 }
 
 func init() {
+	// server internel use, do not need auth
 	register(fasthttp.MethodPost, "/syncGoodsLimit", controllers.SyncGoodsLimit, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, nil)
 	register(fasthttp.MethodPost, "/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, nil)
 
-	// use those interface need auth :)
+	// use those API need auth :)
 	register(fasthttp.MethodGet, "/goodsList", controllers.GoodsList, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/addGood", controllers.AddGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/modifyGood", controllers.ModifyGood, auth.MiddleAuth)

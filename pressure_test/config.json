@@ -1,5 +1,0 @@
-{
-    "concurrentNum": 15000,
-    "schema": "http://127.0.0.1:4000",
-    "url": "/buy"
-}
