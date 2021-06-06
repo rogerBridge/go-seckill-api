@@ -8,6 +8,7 @@ echo "cp mysql_config.json to workdir success"
 cmdpath=../../cmd/seckill;
 cd $cmdpath && go build -o go-seckill main.go && cp $cmdpath/go-seckill $workdir ;
 cd $workdir;
+echo "cp go-seckill binary to workdir success"
 
 docker stop go-seckill-app && docker rm go-seckill-app;
 docker rmi $username/go-seckill:test;
