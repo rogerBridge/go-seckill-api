@@ -1,8 +1,8 @@
 package main
 
 import (
+	"go-seckill/pressuretest/pressuremaker"
 	"os"
-	"redisplay/pressuretest/pressuremaker"
 	"strconv"
 	"sync"
 )

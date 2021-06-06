@@ -7,9 +7,9 @@ import (
 	//"encoding/json"
 
 	"fmt"
+	"go-seckill/pressuretest/jsonStruct"
 	"net"
 	"net/http"
-	"redisplay/pressuretest/jsonStruct"
 	"sync"
 	"time"
 
