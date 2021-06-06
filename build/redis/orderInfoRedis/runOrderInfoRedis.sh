@@ -9,4 +9,5 @@ docker run -d \
   --name=orderInfoRedis  \
   --network=go-seckill  \
   --network-alias=orderInfoRedis \
+  --restart=unless-stopped \
   redis:latest redis-server /usr/local/etc/redis/redis.conf

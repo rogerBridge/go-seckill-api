@@ -9,4 +9,5 @@ docker run -d --hostname=rabbitmqServer \
     --network=go-seckill \
     --network-alias=rabbitmqServer \
     -p 127.0.0.1:15672:15672 \
+    --restart=unless-stopped \
     $username/rabbitmqserver:test ;

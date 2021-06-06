@@ -9,4 +9,5 @@ docker run -d \
   --name=tokenRedis  \
   --network=go-seckill  \
   --network-alias=tokenRedis \
+  --restart=unless-stopped \
   redis:latest redis-server /usr/local/etc/redis/redis.conf

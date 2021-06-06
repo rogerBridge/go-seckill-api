@@ -12,5 +12,5 @@ docker run -d \
   -v $PWD/initScripts:/docker-entrypoint-initdb.d \
   --network=go-seckill \
   --network-alias=mysql-go-seckill \
-  --restart=always \
+  --restart=unless-stopped \
   $username/mysql:test

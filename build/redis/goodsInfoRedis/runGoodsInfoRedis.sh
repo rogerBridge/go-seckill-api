@@ -8,4 +8,5 @@ docker run -d \
   --name goodsInfoRedis  \
   --network=go-seckill  \
   --network-alias=goodsInfoRedis \
+  --restart=unless-stopped \
   redis:latest redis-server /usr/local/etc/redis/redis.conf
