@@ -1,7 +1,7 @@
 package main
 
 import (
-	"go-seckill/logconf"
+	"go-seckill/internal/logconf"
 
 	"github.com/sirupsen/logrus"
 )

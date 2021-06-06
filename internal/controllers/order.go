@@ -543,6 +543,7 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 	// 首先, 从接口中获取good的info
 	g := new(structure.Goods)
 	err := json.Unmarshal(ctx.Request.Body(), g)
+	logger.Infof("解析后的货物属性是: %+v", g)
 	if err != nil {
 		logger.Warnf("AddGood: Unmarshal request body error message %v", err)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
@@ -553,7 +554,7 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// 查看待添加的商品是否存在
-	isExist, err := goods.IsExist(g.ProductId)
+	isExist, err := goods.IsExist(g)
 	if err != nil {
 		logger.Warnf("AddGood: 查找商品是否存在时出现错误: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
@@ -661,7 +662,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// 之后, 查找mysql中是否存在这个商品
-	isExist, err := goods.IsExist(g.ProductId)
+	isExist, err := goods.IsExist(g)
 	if err != nil {
 		logger.Warnf("ModifyGood: 查找商品是否存在时出现错误: %+v\n", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
@@ -752,7 +753,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 // DeleteGood ...
 // 删除单个商品信息, mysql: is_delete=1 and redis del store:{product_id}
 func DeleteGood(ctx *fasthttp.RequestCtx) {
-	g := new(structure.GoodDelete)
+	g := new(structure.Goods)
 	err := json.Unmarshal(ctx.Request.Body(), g)
 	if err != nil {
 		logger.Warnf("DeleteGood: Unmarshal req body error %v", err)
@@ -764,7 +765,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	// 查看要删除的商品是否存在
-	isExist, err := goods.IsExist(g.ProductId)
+	isExist, err := goods.IsExist(g)
 	if err != nil {
 		logger.Warnf("DeleteGood: 查看删除的商品: %v是否存在出现错误", g.ProductId)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{

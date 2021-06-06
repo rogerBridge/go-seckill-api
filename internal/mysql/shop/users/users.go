@@ -50,9 +50,19 @@ func VerifyUsers(u *structure.UserLogin) (int, error) {
 
 // 验证用户注册时, 用户名, 邮箱是否重复
 func VerifyIfUserExist(u *structure.UserRegister) (int, error) {
+	var count int
+	row := mysql.Conn.QueryRow("select count(*) from users")
+	err := row.Scan(&count)
+	if err != nil {
+		log.Printf("row scan error: %v\n", err)
+		return 0, err
+	}
+	if count == 0 {
+		return 0, nil
+	}
 	var ifUserExist int
-	row := mysql.Conn.QueryRow("select 1 from users where name=? or email=?", u.Username, u.Email)
-	err := row.Scan(&ifUserExist)
+	row = mysql.Conn.QueryRow("select count(*) from users where name=? or email=?", u.Username, u.Email)
+	err = row.Scan(&ifUserExist)
 	if err != nil {
 		log.Printf("row scan error :%v\n", err)
 		return 0, err

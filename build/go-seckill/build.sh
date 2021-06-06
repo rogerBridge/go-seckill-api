@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 username="roger";
+
 workdir=$(pwd);
 mysqlconfigpath=../../config/mysql/mysql_config.json;
 cp $mysqlconfigpath $workdir;
 echo "cp mysql_config.json to workdir success"
 cmdpath=../../cmd/seckill;
-cd $cmdpath && go build -o go-seckill *.go && cp go-seckill $workdir ;
+cd $cmdpath && go build -o go-seckill main.go && cp $cmdpath/go-seckill $workdir ;
 cd $workdir;
 
 docker stop go-seckill-app && docker rm go-seckill-app;

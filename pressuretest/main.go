@@ -27,7 +27,7 @@ func main() {
 	for i := start; i < end; i++ {
 		w.Add(1)
 		// 会将所有的error发送给errChan这个channel, 方便之后统计
-		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10004", &w, timeStatistics, token, errChan)
+		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics, token, errChan)
 		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
 	}
 

@@ -28,7 +28,7 @@ func GetToken() (string, error) {
 		Password string `json:"password"`
 	}
 	l := new(login)
-	l.Username = "fenrmen"
+	l.Username = "roger"
 	l.Password = "12345678"
 	reqBytes, _ := json.Marshal(l)
 	req.SetBody(reqBytes)
@@ -36,7 +36,7 @@ func GetToken() (string, error) {
 	resp := new(fasthttp.Response)
 	err := client.Do(req, resp)
 	if err != nil {
-		log.Println(err)
+		log.Fatalln(err)
 		return "", err
 	}
 	type Data struct {

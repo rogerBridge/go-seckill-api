@@ -116,6 +116,7 @@ func Register(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+	// 这里应该填写用户名, 密码, 邮箱的校验机制, 应该用正则表达式, 暂时偷懒
 	if user.Email == "" || user.Username == "" || user.Password == "" {
 		logger.Warnf("Register: user: %v must have username, password, email", user)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{

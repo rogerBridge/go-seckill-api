@@ -69,8 +69,9 @@ func QueryGoods() ([]*structure.Goods, error) {
 }
 
 // 查找某个值为productId的商品是否存在
-func IsExist(productId int) (int, error) {
-	row := mysql.Conn.QueryRow("select exists(select * from goods where product_id=? and is_delete=0)", productId)
+func IsExist(product *structure.Goods) (int, error) {
+	row := mysql.Conn.QueryRow("select count(*) from goods where product_id=? and product_name=? and is_delete=0", product.ProductId, product.ProductName)
+	// row := mysql.Conn.QueryRow("select exists(select * from goods where product_id=? and is_delete=0)", productId)
 	var isExist int
 	err := row.Scan(&isExist)
 	if err != nil {

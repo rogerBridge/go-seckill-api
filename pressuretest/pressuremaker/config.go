@@ -2,7 +2,7 @@ package pressuremaker
 
 import (
 	"encoding/json"
-	"go-seckill/logconf"
+	"go-seckill/internal/logconf"
 	"io/ioutil"
 	"log"
 	"sort"

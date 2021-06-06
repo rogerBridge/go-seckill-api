@@ -2,3 +2,4 @@ vendor/
 .idea/
 .vscode
 cmd/seckill/go-seckill
+cmd/seckill/mysql

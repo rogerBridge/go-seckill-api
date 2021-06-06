@@ -5,7 +5,3 @@ type Goods struct {
 	ProductName string
 	Inventory   int
 }
-
-type GoodDelete struct {
-	ProductId int
-}
