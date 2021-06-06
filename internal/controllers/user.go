@@ -53,7 +53,7 @@ func Login(ctx *fasthttp.RequestCtx) {
 		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8001,
 			Msg:  "login success",
-			Data: structure.Jwt{
+			Data: Jwt{
 				Username:     user.Username,
 				Jwt:          token,
 				GenerateTime: time.Now(),

@@ -110,11 +110,6 @@ func LoadLimit() error {
 	return nil
 }
 
-// User is a type to be exported
-type User struct {
-	userID string
-}
-
 // CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 	if _, ok := purchaseLimit[productID]; ok {
