@@ -6,12 +6,11 @@
     
 - 特征:
 
-    - [x] 支持多个商品库存初始化, 同时抢购
     - [x] 限制商品单个用户可购买数量, 可购买时间段
     - [x] 支持订单取消
-    - [x] 订单号使用ksuid, 类似于uuid
-    - [x] 生成订单后内容传输给队列, 如rabbitmq, 写入Mysql数据库
+    - [x] 生成订单后内容传输给rabbitmq, 写入Mysql数据库, 去峰
     - [x] 用户ID(JWT)校验
+    - [x] 一键docker-compose部署
     - [ ] vue单页应用 
 
 - 应用情景
@@ -20,19 +19,17 @@
     2. 卖出商品a 100件, 商品b 100件, 商品a限制每个人只能购买2件, 商品b限制每个人只能购买1件;
     3. 多件商品, 设置特定时间段, 例如: a商品限制在xxxx.xx.xx xx:xx:xx ~ yyyy:yy.yy yy:yy:yy时间段内进行购买,
     每个人限制购买2件, 商品b购买特定时间段, 每个人限制购买5件, 商品c不做限制;
+    4. 卖出商品x件, 靠延迟和运气抢;
     
-    
-- 流程
+- 结构图
     
 
 - 部署方法
-    - Docker部署:
-    1. 实验版:
-        - 两个Redis实例, 分别位于目录: redisDocker/runRedis.sh, redisDocker/orderInfoRedis/runRedis.sh;
-        - 一个MySQL实例, 位于目录: mysql/runMysql.sh
-        - 一个webapp实例, 位于: buils.sh
-        - 一键部署: `bash sharpRun.sh`
-        - 建议: 运行在本地, 搭配Nginx反向代理服务器, 配合TLS使用
+  - docker-compose部署:
+    ```bash
+    # 测试过的docker-compose版本为: 1.29.2
+    cd deploy && docker-compose up
+    ```
 
 - 性能测试
 
@@ -40,18 +37,6 @@
     
         系统: Ubuntu 20.04 LTS
     
-        实例gvm : Amazon Lightsail 2H4G $20/month
+        实例 : Amazon Lightsail 2H4G $20/month
         
-        go version: go1.14.4 linux/amd64
-        
-        内存占用(反复跑pressure_test后停在了这个地方, peak value 400MB):
-    ![pressure_test_memory](pressure_test/img/pressure.png)
-    1. 用户15000名, 请求: /buy, 购买商品, 商品ID: "10000", 购买数量: 1, 库存数量: 200件, 测试结果如下:
-    连续 5 次测试:
-    
-    ![1.1](pressure_test/img/1.1.png)
-    
-    2. 20000名用户, 其中10000名用户抢购商品"10000", 库存为200, 10000名用户抢购商品"10001", 数量为200, 测试结果如下:
-    连续 5 次测试:
-    
-    ![2.1](pressure_test/img/2.1.png)
+        go version: go1.16.5

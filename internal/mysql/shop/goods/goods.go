@@ -70,7 +70,8 @@ func QueryGoods() ([]*structure.Goods, error) {
 
 // 查找某个值为productId的商品是否存在
 func IsExist(product *structure.Goods) (int, error) {
-	row := mysql.Conn.QueryRow("select count(*) from goods where product_id=? and product_name=? and is_delete=0", product.ProductId, product.ProductName)
+	// 批次号和商品名称共同命名一件商品
+	row := mysql.Conn.QueryRow("select count(*) from goods where (product_id=? and product_name=?) and is_delete=0", product.ProductId, product.ProductName)
 	// row := mysql.Conn.QueryRow("select exists(select * from goods where product_id=? and is_delete=0)", productId)
 	var isExist int
 	err := row.Scan(&isExist)
@@ -78,7 +79,7 @@ func IsExist(product *structure.Goods) (int, error) {
 		log.Printf("row.Scan error: %+v\n", err)
 		return 0, err
 	}
-	if isExist == 1 {
+	if isExist > 0 {
 		return 1, nil
 	}
 	return 0, nil

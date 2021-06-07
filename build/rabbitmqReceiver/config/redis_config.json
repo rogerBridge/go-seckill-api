@@ -1,0 +1,17 @@
+{
+    "goodsInfoRedis": {
+        "networktype": "tcp",
+        "host": "goodsInfoRedis",
+        "port": 6379
+    },
+    "orderInfoRedis": {
+        "networktype": "tcp",
+        "host": "orderInfoRedis",
+        "port": 6379
+    },
+    "tokenRedis": {
+        "networktype": "tcp",
+        "host": "tokenRedis",
+        "port": 6379
+    }
+}

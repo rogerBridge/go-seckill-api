@@ -1,7 +1,9 @@
 {
+  "db": {
     "username": "root",
     "password": "12345678",
     "ip": "db",
     "port": "3306",
     "database": "shop"
+  }
 }

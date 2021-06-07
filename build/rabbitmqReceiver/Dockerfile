@@ -1,6 +1,6 @@
 FROM ubuntu:18.04
 
 WORKDIR /usr/local/app/mqttreceiver
-COPY mysql_config.json /usr/local/app/mqttreceiver/mysql/
+COPY  ./config/ /usr/local/app/mqttreceiver/config/
 COPY ./mqttReceiver $WORKDIR
 ENTRYPOINT [ "/usr/local/app/mqttreceiver/mqttReceiver" ]
