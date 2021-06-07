@@ -1,7 +1,7 @@
 {
     "username": "root",
     "password": "12345678",
-    "ip": "mysql-go-seckill",
+    "ip": "db",
     "port": "3306",
     "database": "shop"
 }

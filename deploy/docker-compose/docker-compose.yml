@@ -1,0 +1,79 @@
+services:
+    redis:
+        image: redis:6.2.4
+        hostname: redis
+        command: redis-server /usr/local/etc/redis/redis.conf
+        volumes: 
+            - redis:/data
+            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+        ports:
+            - "127.0.0.1:6379:6379"
+        restart: unless-stopped
+        networks:
+            - go-seckill
+
+    db:
+        image: mysql:8.0.25
+        hostname: mysql
+        command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+        environment: 
+            MYSQL_ROOT_PASSWORD: 12345678
+            TZ: Asia/Shanghai
+            MYSQL_DATABASE: shop
+        volumes:
+            - mysql-conf:/etc/mysql/conf.d
+            - mysql-data:/var/lib/mysql
+            - ./mysql/initScripts:/docker-entrypoint-initdb.d
+        ports:
+            - "127.0.0.1:3306:3306"
+        restart: unless-stopped
+        networks:
+            - go-seckill
+
+    rabbitmq-server:
+        image: rabbitmq:3-management
+        hostname: rabbitmq-server
+        environment: 
+            RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "2048MB"
+            RABBITMQ_DEFAULT_USER: "root"
+            RABBITMQ_DEFAULT_PASS: "12345678"
+            RABBITMQ_DEFAULT_VHOST: "root_vhost"
+        ports:
+            - "127.0.0.1:15672:15672"
+        restart: unless-stopped
+        networks:
+            - go-seckill
+    
+    rabbitmq-receiver:
+        image: rogerbridge/rabbitmq-receiver:test
+        hostname: rabbitmq-receiver
+        restart: unless-stopped
+        depends_on:
+            - rabbitmq-server
+            - db
+            - redis
+        networks:
+            - go-seckill
+    
+    go-seckill:
+        image: rogerbridge/go-seckill:test
+        hostname: go-seckill
+        restart: unless-stopped
+        depends_on:
+            - redis
+            - db
+            - rabbitmq-server
+            - rabbitmq-receiver
+        ports:
+            - "127.0.0.1:4000:4000"
+        networks:
+            - go-seckill
+        
+volumes:
+    redis:
+    mysql-conf:
+    mysql-data:
+
+networks:
+    go-seckill:
+        name: go-seckill-network

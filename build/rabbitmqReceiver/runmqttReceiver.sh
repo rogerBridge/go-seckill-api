@@ -1,5 +1,5 @@
 #!/bin/bash
-username="roger"
+username="rogerbridge"
 go build -o mqttReceiver *.go;
 docker stop mqttreceiver && docker rm mqttreceiver;
 docker rmi $username/mqttreceiver:test;

@@ -25,7 +25,7 @@ func InitStore() error {
 	defer conn.Close()
 
 	// orderInfoRedis
-	conn1 := redisconf.Pool1.Get()
+	conn1 := redisconf.Pool.Get()
 	defer conn1.Close()
 
 	// PING PONG
@@ -141,7 +141,7 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 	conn := redisconf.Pool.Get()
 	defer conn.Close()
 	// orderInfoRedis
-	conn1 := redisconf.Pool1.Get()
+	conn1 := redisconf.Pool.Get()
 	defer conn1.Close()
 	// 判断商品库存是否还充足?
 	inventory, err := redis.Int(conn.Do("hget", "store:"+productID, "storeNum"))
@@ -184,7 +184,7 @@ func (u *User) OrderGenerator(productID string, purchaseNum int) (string, error)
 	defer conn.Close()
 
 	// 存放用户订单信息的redis
-	conn1 := redisconf.Pool1.Get()
+	conn1 := redisconf.Pool.Get()
 	defer conn1.Close()
 	//// 只要list rpop之后的值不是nil就可以
 	//_, err := redisconf.Int(conn.Do("rpop", "store:"+productId+":have"))
@@ -249,7 +249,7 @@ func (u *User) OrderGenerator(productID string, purchaseNum int) (string, error)
 
 // Bought 用户成功生成订单信息后, 将已购买这个消息存在于数据库中, 下次还想购买的时候, 就会强制限制购买数量的规则哦
 func (u *User) Bought(productID string, purchaseNum int) error {
-	conn1 := redisconf.Pool1.Get()
+	conn1 := redisconf.Pool.Get()
 	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
 	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.userID+":bought", productID, purchaseNum))
@@ -273,7 +273,7 @@ func (u *User) CancelBuy(orderNum string) error {
 	conn := redisconf.Pool.Get()
 	defer conn.Close()
 
-	conn1 := redisconf.Pool1.Get()
+	conn1 := redisconf.Pool.Get()
 	defer conn1.Close()
 	// 查看订单号是否存在? && 状态是否是process
 	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.userID+":order:"+orderNum))

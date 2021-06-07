@@ -86,7 +86,7 @@ func Logout(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	username := tokenInfo.Username
-	redisconn := redisconf.Pool2.Get()
+	redisconn := redisconf.Pool.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("del", "token:"+username)
@@ -129,10 +129,10 @@ func Register(ctx *fasthttp.RequestCtx) {
 	// 首先查找数据库中是否存在这个用户
 	_, err = users.VerifyIfUserExist(user)
 	if err != nil {
-		logger.Warnf("User and Email is Exist!!!")
+		logger.Warnf("User or Email is Exist or Other Error")
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
-			Msg:  "username or email existed",
+			Msg:  "username or email existed or Other Error",
 			Data: nil,
 		})
 		return

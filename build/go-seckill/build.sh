@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-username="roger";
+username="rogerbridge";
 
 workdir=$(pwd);
 mysqlconfigpath=../../config/mysql/mysql_config.json;
@@ -14,11 +14,11 @@ docker stop go-seckill && docker rm go-seckill;
 docker rmi $username/go-seckill:test;
 docker build -t $username/go-seckill:test .;
 
-rm $workdir/mysql_config.json;
-rm $workdir/go-seckill;
+# rm $workdir/mysql_config.json;
+# rm $workdir/go-seckill;
 
 docker run -d \
   --name go-seckill \
   -p 127.0.0.1:4000:4000 \
-  --network=go-seckill \
+  --network=go-seckill-network \
   $username/go-seckill:test;
