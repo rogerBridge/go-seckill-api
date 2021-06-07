@@ -1,13 +1,37 @@
 services:
-    redis:
+    goodsInfoRedis:
         image: redis:6.2.4
-        hostname: redis
+        hostname: goodsInfoRedis
         command: redis-server /usr/local/etc/redis/redis.conf
         volumes: 
-            - redis:/data
-            - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+            - goodsInfoRedisData:/data
+            - ./redis/goodsInfoRedis/redis.conf:/usr/local/etc/redis/redis.conf
         ports:
             - "127.0.0.1:6379:6379"
+        restart: unless-stopped
+        networks:
+            - go-seckill
+    orderInfoRedis:
+        image: redis:6.2.4
+        hostname: orderInfoRedis
+        command: redis-server /usr/local/etc/redis/redis.conf
+        volumes: 
+            - orderInfoRedisData:/data
+            - ./redis/orderInfoRedis/redis.conf:/usr/local/etc/redis/redis.conf
+        ports:
+            - "127.0.0.1:6380:6379"
+        restart: unless-stopped
+        networks:
+            - go-seckill
+    tokenRedis:
+        image: redis:6.2.4
+        hostname: tokenRedis
+        command: redis-server /usr/local/etc/redis/redis.conf
+        volumes: 
+            - tokenRedisData:/data
+            - ./redis/tokenRedis/redis.conf:/usr/local/etc/redis/redis.conf
+        ports:
+            - "127.0.0.1:6381:6379"
         restart: unless-stopped
         networks:
             - go-seckill
@@ -51,7 +75,9 @@ services:
         depends_on:
             - rabbitmq-server
             - db
-            - redis
+            - goodsInfoRedis
+            - orderInfoRedis
+            - tokenRedis
         networks:
             - go-seckill
     
@@ -60,7 +86,9 @@ services:
         hostname: go-seckill
         restart: unless-stopped
         depends_on:
-            - redis
+            - goodsInfoRedis
+            - orderInfoRedis
+            - tokenRedis
             - db
             - rabbitmq-server
             - rabbitmq-receiver
@@ -70,7 +98,9 @@ services:
             - go-seckill
         
 volumes:
-    redis:
+    goodsInfoRedisData:
+    orderInfoRedisData:
+    tokenRedisData:
     mysql-conf:
     mysql-data:
 

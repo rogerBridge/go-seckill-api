@@ -28,7 +28,7 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 		logger.Fatalf("GenerateToken: crash when generate token: %v\n", err)
 	}
 	// 将生成的token放入tokenRedis
-	redisconn := redisconf.Pool.Get()
+	redisconn := redisconf.Pool2.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("set", "token:"+user.Username, tokenReturn)
@@ -58,7 +58,8 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			return
 		}
 		username := tokeninfo.Username
-		redisconn := redisconf.Pool.Get()
+		// tokenRedis
+		redisconn := redisconf.Pool2.Get()
 		defer redisconn.Close()
 
 		tokenFromRedis, err := redis.String(redisconn.Do("get", "token:"+username))

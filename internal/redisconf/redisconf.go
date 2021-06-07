@@ -54,11 +54,11 @@ import (
 // 实例: goodsInfoRedis的连接池
 var Pool = &redis.Pool{
 	MaxIdle:     20000,
-	IdleTimeout: 60 * time.Second,
+	IdleTimeout: 300 * time.Second,
 	Dial: func() (conn redis.Conn, err error) {
 		networkType := "tcp"
 		//host := "127.0.0.1"
-		host := "redis"
+		host := "goodsInfoRedis"
 		masterSocket := host + ":6379"
 		// 如果想要保证webapp在redis挂了的时候, 随着sentinel切换而变更socket
 		//c, err := redis_config.Dial("tcp", "127.0.0.1:6400")
@@ -81,38 +81,38 @@ var Pool = &redis.Pool{
 	},
 }
 
-// // 存储订单信息, 购买信息
-// // 实例: orderInfoRedis的连接池
-// var Pool1 = &redis.Pool{
-// 	MaxIdle:     20000,
-// 	IdleTimeout: 300 * time.Second,
-// 	Dial: func() (conn redis.Conn, err error) {
-// 		networkType := "tcp"
-// 		//host := "127.0.0.1"
-// 		host := "orderInfoRedis"
-// 		masterSocket := host + ":6379"
-// 		con, err := redis.Dial(networkType, masterSocket)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		return con, nil
-// 	},
-// }
+// 存储订单信息, 购买信息
+// 实例: orderInfoRedis的连接池
+var Pool1 = &redis.Pool{
+	MaxIdle:     20000,
+	IdleTimeout: 300 * time.Second,
+	Dial: func() (conn redis.Conn, err error) {
+		networkType := "tcp"
+		//host := "127.0.0.1"
+		host := "orderInfoRedis"
+		masterSocket := host + ":6379"
+		con, err := redis.Dial(networkType, masterSocket)
+		if err != nil {
+			return nil, err
+		}
+		return con, nil
+	},
+}
 
-// // 存储token信息
-// // 实例: tokenRedis的连接池
-// var Pool2 = &redis.Pool{
-// 	MaxIdle:     20000,
-// 	IdleTimeout: 300 * time.Second,
-// 	Dial: func() (conn redis.Conn, err error) {
-// 		networkType := "tcp"
-// 		//host := "127.0.0.1"
-// 		host := "tokenRedis"
-// 		masterSocket := host + ":6379"
-// 		con, err := redis.Dial(networkType, masterSocket)
-// 		if err != nil {
-// 			return nil, err
-// 		}
-// 		return con, nil
-// 	},
-// }
+// 存储token信息
+// 实例: tokenRedis的连接池
+var Pool2 = &redis.Pool{
+	MaxIdle:     20000,
+	IdleTimeout: 300 * time.Second,
+	Dial: func() (conn redis.Conn, err error) {
+		networkType := "tcp"
+		//host := "127.0.0.1"
+		host := "tokenRedis"
+		masterSocket := host + ":6379"
+		con, err := redis.Dial(networkType, masterSocket)
+		if err != nil {
+			return nil, err
+		}
+		return con, nil
+	},
+}

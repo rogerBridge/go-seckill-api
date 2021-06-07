@@ -86,7 +86,8 @@ func Logout(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	username := tokenInfo.Username
-	redisconn := redisconf.Pool.Get()
+	// tokenRedis
+	redisconn := redisconf.Pool2.Get()
 	defer redisconn.Close()
 
 	_, err = redisconn.Do("del", "token:"+username)
