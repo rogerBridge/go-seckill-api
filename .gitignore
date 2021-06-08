@@ -1,8 +1,7 @@
 vendor/
 .idea/
 .vscode
-cmd/seckill/go-seckill
-cmd/seckill/mysql
+cmd/go-seckill/go-seckill
 build/rabbitmqReceiver/mqttReceiver
 build/go-seckill/mysql_config.json
 build/go-seckill/go-seckill

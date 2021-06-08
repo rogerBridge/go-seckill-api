@@ -14,6 +14,13 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type Jwt struct {
+	Username     string    `json:"username"`
+	Jwt          string    `json:"token"` // JWT token
+	GenerateTime time.Time `json:"generateTime"`
+	ExpireTime   time.Time `json:"expireTime"`
+}
+
 // Login 登录, 生成token, 并放入tokenRedis中
 func Login(ctx *fasthttp.RequestCtx) {
 	//var user structure.UserLogin

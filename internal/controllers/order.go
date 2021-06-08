@@ -58,8 +58,8 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	}
 
 	// 一些数据校验部分, 校验用户id, productId, productNum
-	u := new(User)
-	u.userID = buyReqPointer.UserId
+	u := new(redisconf.User)
+	u.UserID = buyReqPointer.UserId
 	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 	if err != nil {
@@ -191,8 +191,8 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 	//	errorHandle(w, errors.New("reqBody解析到struct时出错!"), 500)
 	//	return
 	//}
-	u := new(User)
-	u.userID = cancelBuyReqPointer.UserId
+	u := new(redisconf.User)
+	u.UserID = cancelBuyReqPointer.UserId
 	err = u.CancelBuy(cancelBuyReqPointer.OrderNum)
 	if err != nil {
 		logger.Warnf("CancelBuy: 用户: %s 取消订单: %s 时出现错误", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum)
@@ -508,7 +508,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
 func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	// 加载limit限制计划
-	err := LoadLimit()
+	err := redisconf.LoadLimit()
 	if err != nil {
 		logger.Warnf("SyncGoodsLimit: 加载limit变量到全局变量purchaseLimit时出现错误 %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{

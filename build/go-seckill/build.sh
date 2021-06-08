@@ -2,7 +2,7 @@
 username="rogerbridge";
 
 workdir=$(pwd);
-cmdpath=../../cmd/seckill;
+cmdpath=../../cmd/go-seckill;
 cd $cmdpath && go build -o go-seckill main.go && cp $cmdpath/go-seckill $workdir ;
 cd $workdir;
 echo "cp go-seckill binary to workdir success"
