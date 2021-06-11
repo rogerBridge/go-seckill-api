@@ -35,7 +35,8 @@ func Login(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	exist, err := users.VerifyUsers(user)
+
+	exist, err := users.FindUserIfExist(user)
 	if err != nil {
 		logger.Warnf("Login: While verify user: %s error message: %v", user.Username, err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{

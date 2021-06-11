@@ -2,7 +2,6 @@ package main
 
 import (
 	"go-seckill/pressuretest/pressuremaker"
-	"os"
 	"strconv"
 	"sync"
 )
@@ -10,10 +9,10 @@ import (
 // 这个包对已经写成的功能模块进行压力测试
 // 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
+	pressuremaker.Start()
 	token, err := pressuremaker.GetToken()
 	if err != nil {
-		logger.Warnf("when generate token, error message %v", err)
-		os.Exit(-1)
+		logger.Fatalf("When get token, error message: %v", err)
 	}
 	var w sync.WaitGroup
 	// 时间统计channel

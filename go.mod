@@ -20,4 +20,6 @@ require (
 	github.com/valyala/fasthttp v1.26.0
 	github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77 // indirect
 	golang.org/x/sys v0.0.0-20210603125802-9665404d3644 // indirect
+	gorm.io/driver/sqlite v1.1.4
+	gorm.io/gorm v1.20.7 // indirect
 )

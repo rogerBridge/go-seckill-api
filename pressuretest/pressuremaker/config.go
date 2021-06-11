@@ -24,7 +24,7 @@ type config struct {
 	URL           string `json:"url"`
 }
 
-func init() {
+func Start() {
 	config := loadConfig()
 	ConcurrentNum = config.ConcurrentNum
 	Host = config.Host

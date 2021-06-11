@@ -27,22 +27,22 @@ func register(method, pattern string, handler fasthttp.RequestHandler, middle fu
 func init() {
 	// use this token needing permission
 	// 用户和管理员的权限是应该有区分的, 这里并没有做什么区分, 后面要修改的
-	register(fasthttp.MethodPost, "/syncGoodsLimit", controllers.SyncGoodsLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
-	register(fasthttp.MethodGet, "/goodsList", controllers.GoodsList, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/addGood", controllers.AddGood, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/modifyGood", controllers.ModifyGood, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/deleteGood", controllers.DeleteGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/syncGoodsLimit", controllers.SyncGoodsLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
+	register(fasthttp.MethodGet, "/admin/goodsList", controllers.GoodsList, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/addGood", controllers.AddGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/modifyGood", controllers.ModifyGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/deleteGood", controllers.DeleteGood, auth.MiddleAuth)
 
 	// use those API don't need auth :)
-	register(fasthttp.MethodPost, "/register", controllers.Register, nil)
-	register(fasthttp.MethodPost, "/login", controllers.Login, nil)
+	register(fasthttp.MethodPost, "/user/register", controllers.Register, nil)
+	register(fasthttp.MethodPost, "/user/login", controllers.Login, nil)
 
 	// use those API need auth :)
-	register(fasthttp.MethodPost, "/buy", controllers.Buy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/logout", controllers.Logout, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/buy", controllers.Buy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/logout", controllers.Logout, auth.MiddleAuth)
 }
 
 // ThisRouter 通过遍历[]Route, 将需要中间件处理的和不需要中间件处理的分开处置 :)

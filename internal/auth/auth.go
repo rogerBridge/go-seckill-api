@@ -47,6 +47,7 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
+		logger.Infof("request path is: %s", string(ctx.URI().RequestURI()))
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
 		if err != nil {
@@ -72,10 +73,6 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			})
 			return
 		}
-		// 这里存在小问题
-		// 显示: 帐号已经登录, 请在别处退出后, 再重新登录
-		// 应该是: 把之前的token替换掉, 并提示: 帐号在别处登录, 已经被踢出, 以新的登录为主
-		// 或者是可以存储多个token
 		if tokenFromRedis != tokeninfo.TokenString {
 			logger.Warnf("MiddleAuth: user: %v request token not equal to tokenRedis's token", tokeninfo.Username)
 			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{

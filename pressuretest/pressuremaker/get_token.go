@@ -2,7 +2,6 @@ package pressuremaker
 
 import (
 	"encoding/json"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -12,7 +11,7 @@ import (
 
 // 每次跑测试前, 找后台申请一个最新的token
 func GetToken() (string, error) {
-	url := "http://localhost:4000/login"
+	url := "http://localhost:4000/user/login"
 	client := &fasthttp.Client{
 		Dial: func(addr string) (conn net.Conn, err error) {
 			return fasthttp.DialTimeout(addr, 60*time.Second)
@@ -30,18 +29,23 @@ func GetToken() (string, error) {
 	l := new(login)
 	l.Username = "roger"
 	l.Password = "12345678"
-	reqBytes, _ := json.Marshal(l)
+	reqBytes, err := json.Marshal(l)
+	if err != nil {
+		logger.Warnln(reqBytes, err)
+	}
 	req.SetBody(reqBytes)
 
 	resp := new(fasthttp.Response)
-	err := client.Do(req, resp)
+	err = client.Do(req, resp)
 	if err != nil {
-		log.Fatalln(err)
+		logger.Fatalln(err)
 		return "", err
 	}
 	type Data struct {
-		Username string `json:"username"`
-		Token    string `json:"token"`
+		Username     string    `json:"username"`
+		Token        string    `json:"token"`
+		GenerateTime time.Time `json:"generateTime"`
+		ExpireTime   time.Time `json:"expireTime"`
 	}
 	type LoginInfo struct {
 		Code int    `json:"code"`
@@ -49,12 +53,15 @@ func GetToken() (string, error) {
 		Data Data   `json:"data"`
 	}
 	loginInfo := new(LoginInfo)
-	err = json.Unmarshal(resp.Body(), loginInfo)
 	if err != nil {
-		log.Println(err)
+		logger.Warnln(err)
 		return "", err
 	}
+	err = json.Unmarshal(resp.Body(), loginInfo)
+	if err != nil {
+		logger.Fatalln(err)
+	}
 	token := loginInfo.Data.Token
-	log.Println("get token this time: ", token)
+	logger.Infoln("get token this time: ", token)
 	return token, nil
 }

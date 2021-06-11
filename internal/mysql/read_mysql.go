@@ -56,7 +56,7 @@ func InitMysqlConn() *sql.DB {
 	ip := dbInstance["ip"]
 	port := dbInstance["port"]
 	database := dbInstance["database"]
-	dataSource := username + ":" + password + "@tcp(" + ip + ":" + port + ")/" + database + "?parseTime=true"
+	dataSource := username + ":" + password + "@tcp(" + ip + ":" + port + ")/" + database + "?charset=utf8mb4&parseTime=True&loc=Local"
 	log.Println("从viper读取到的mysql的配置是:", dataSource)
 	db, err := sql.Open("mysql", dataSource)
 	if err != nil {
@@ -66,5 +66,8 @@ func InitMysqlConn() *sql.DB {
 	if err != nil {
 		log.Fatalf("conn establish error: %v\n", err)
 	}
+	db.SetMaxIdleConns(10)
+	// db.SetMaxOpenConns(100)
+	// db.SetConnMaxLifetime(time.Hour)
 	return db
 }

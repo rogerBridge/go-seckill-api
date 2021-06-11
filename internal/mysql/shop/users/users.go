@@ -32,7 +32,7 @@ func UpdateUsers(u *structure.UserLogin) error {
 }
 
 // 验证登录用户名和密码是否存在
-func VerifyUsers(u *structure.UserLogin) (int, error) {
+func FindUserIfExist(u *structure.UserLogin) (int, error) {
 	var isExist int
 	row := mysql.Conn.QueryRow("select 1 from users where name=? and passwd=?", u.Username, GetSha256sum(u.Password))
 	err := row.Scan(&isExist)
