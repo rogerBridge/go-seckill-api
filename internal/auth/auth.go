@@ -47,6 +47,7 @@ func GenerateToken(user *structure.UserLogin) (string, error) {
 func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
+		// 这里可以根据path判断用户是否有访问这个API的权利
 		logger.Infof("request path is: %s", string(ctx.URI().RequestURI()))
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
@@ -82,6 +83,8 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			})
 			return
 		}
+		// 将从token处解析到的username加到request header上, 然后发往目标api
+		ctx.Request.Header.Set("username", username)
 		// 通过了上面的考验, 请求终于来到了handler的手上
 		handler(ctx)
 	}

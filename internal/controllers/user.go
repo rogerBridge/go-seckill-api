@@ -108,7 +108,7 @@ func Logout(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	logger.Infof("Logout: user %s login success", username)
+	logger.Infof("Logout: user %s logout success", username)
 	utils.ResponseWithJson(ctx, 200, structure.UserLogout{Message: "logout successful"})
 }
 

@@ -65,7 +65,7 @@ func InitStore() error {
 			return err
 		}
 	}
-	logger.Warn("load data from mysql.shop.goods to goodsInfoRedis successful ")
+	logger.Info("load data from mysql.shop.goods to goodsInfoRedis successful ")
 	//// 加载limit purchase数据, 比如: 这件商品什么时候可以购买, 一个人可以购买多少件?
 	//r, err := purchase_limits.QueryPurchaseLimits()
 	//if err!=nil {

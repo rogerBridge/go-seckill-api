@@ -30,6 +30,7 @@ import (
 // Buy ...
 // 购买商品的接口
 func Buy(ctx *fasthttp.RequestCtx) {
+	logger.Debugf("验证middleauth中间件的确将token中的信息加到了request header中%+v", ctx.Request.Header.String())
 	//// 请求方法限定为post
 	//if ctx.Request.Header.IsPost() == false {
 	//	ctx.Response.Header.Set("Allow", fasthttp.MethodPost)
