@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"time"
 
@@ -52,10 +51,9 @@ func start() {
 
 func main() {
 	start()
-	type u struct {
-		name string
-	}
-	fmt.Printf("%x\n", []byte("安瑞峰"))
+
 	// create()
 	// query()
+	update()
+	// delete()
 }

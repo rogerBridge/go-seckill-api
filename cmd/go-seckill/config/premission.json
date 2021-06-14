@@ -1,0 +1,13 @@
+{
+  "/user/buy": ["user"],
+  "/user/login": ["user"],
+  "/user/logout": ["user"],
+  "/user/cancelBuy": ["user"],
+  "/user/register": ["user"],
+
+  "/admin/goodList": ["admin"],
+  "/admin/goodAdd": ["admin"],
+  "/admin/goodModify": ["admin"],
+  "/admin/goodDelete": ["admin"],
+  "/admin/syncGoodsPurchaseLimit": ["admin"]
+}

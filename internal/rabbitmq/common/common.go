@@ -12,10 +12,11 @@ func Errlog(err error, msg string) {
 }
 
 // 作为客户端, 和rabbitmq server建立信道, 声明exchange, 声明queue, 绑定queue
-func GetChannel(rabbitmqServerName string) *amqp.Channel {
+func GetChannel() *amqp.Channel {
+	rabbitmqServerConfig := RabbitmqServerConn()
 	// 注意, rabbitmqServer的初始化, rabbitmqServer是docker容器在network之中的名称
-	URL := "amqp://" + rabbitmqServerUsername + ":" + rabbitmqServerPassword + "@" + rabbitmqServerName + ":" +
-		rabbitmqServerPort + rabbitmqServerPath
+	URL := "amqp://" + rabbitmqServerConfig.Username + ":" + rabbitmqServerConfig.Password + "@" + rabbitmqServerConfig.RabbitmqServerName +
+		":" + rabbitmqServerConfig.Port + rabbitmqServerConfig.Path
 	logger.Infof("mqtt server url is: %v", URL)
 
 	conn, err := amqp.Dial(URL)
@@ -49,7 +50,7 @@ func GetChannel(rabbitmqServerName string) *amqp.Channel {
 
 	err = ch.QueueBind(
 		q.Name,
-		"logsRecord", // receive only key match msg publish
+		"", // receive only key match msg publish
 		"logs",
 		false,
 		nil,

@@ -1,13 +1,13 @@
 package easyjsonprocess
 
 type BuyReq struct {
-	UserId      string `json:"userId"`
+	Username    string `json:"username"`
 	ProductId   string `json:"productId"`
 	PurchaseNum int    `json:"purchaseNum"`
 }
 
 type CancelBuyReq struct {
-	UserId   string `json:"userId"`
+	Username string `json:"username"`
 	OrderNum string `json:"orderNum"`
 }
 

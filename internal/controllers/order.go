@@ -9,7 +9,6 @@ import (
 	"go-seckill/internal/mysql/shop/structure"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
-	"strconv"
 
 	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
@@ -45,8 +44,8 @@ func Buy(ctx *fasthttp.RequestCtx) {
 
 	// 使用了easyjson, 据说可以提高marshal, unmarshal的效率
 	buyReqPointer := new(easyjsonprocess.BuyReq)
-	err := buyReqPointer.UnmarshalJSON(ctx.PostBody())
-	//err := json.Unmarshal(ctx.PostBody(), buyReqPointer)
+	// err := buyReqPointer.UnmarshalJSON(ctx.PostBody())
+	err := json.Unmarshal(ctx.PostBody(), buyReqPointer)
 	if err != nil {
 		logger.Warnf("Buy: Decode buy request error: %v", err)
 		utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, easyjsonprocess.CommonResponse{
@@ -60,11 +59,11 @@ func Buy(ctx *fasthttp.RequestCtx) {
 
 	// 一些数据校验部分, 校验用户id, productId, productNum
 	u := new(redisconf.User)
-	u.UserID = buyReqPointer.UserId
+	u.Username = buyReqPointer.Username
 	// 判断productId和productNum是否合法
 	ok, err := u.CanBuyIt(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 	if err != nil {
-		logger.Warnf("Buy: user: %+v CanBuyIt error: %v 您不满足购买商品条件", buyReqPointer.UserId, err)
+		logger.Warnf("Buy: user: %+v CanBuyIt error: %v 您不满足购买商品条件", buyReqPointer.Username, err)
 		//content, err := c.MarshalJSON()
 		//content, err := easyjsonprocess.CommonResp(c)
 		//if err != nil {
@@ -87,7 +86,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		// 生成订单信息
 		orderNum, err := u.OrderGenerator(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err != nil {
-			logger.Warnf("Buy: %v when generate order, error message: %v", buyReqPointer.UserId, err)
+			logger.Warnf("Buy: %v when generate order, error message: %v", buyReqPointer.Username, err)
 			utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 				Code: 8002,
 				Msg:  "生成订单过程中出现错误:" + err.Error(),
@@ -111,7 +110,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		// 给用户的已经购买的商品hash表里面的值添加数量
 		err = u.Bought(buyReqPointer.ProductId, buyReqPointer.PurchaseNum)
 		if err != nil {
-			logger.Warnf("Buy: 给用户:%v已经购买的商品表单productId添加数量时发生错误: %v", buyReqPointer.UserId, err)
+			logger.Warnf("Buy: 给用户:%v已经购买的商品表单productId添加数量时发生错误: %v", buyReqPointer.Username, err)
 			utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 				Code: 8004,
 				Msg:  "给用户的已经购买的商品hash表单productId添加数量时发生错误: " + err.Error(),
@@ -133,12 +132,12 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		}
 
 		//w.Header().Set("application/json", "json")
-		logger.Infof("Buy: %v 购买 %v 操作成功", buyReqPointer.UserId, buyReqPointer.ProductId)
+		logger.Infof("Buy: %v 购买 %v 操作成功", buyReqPointer.Username, buyReqPointer.ProductId)
 		utils.ResponseWithJson(ctx, fasthttp.StatusOK, easyjsonprocess.CommonResponse{
 			Code: 8001,
 			Msg:  "操作成功",
 			Data: easyjsonprocess.OrderResponse{
-				UserId:      buyReqPointer.UserId,
+				Username:    buyReqPointer.Username,
 				PurchaseNum: buyReqPointer.PurchaseNum,
 				ProductId:   buyReqPointer.ProductId,
 				OrderNum:    orderNum,
@@ -193,13 +192,13 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 	//	return
 	//}
 	u := new(redisconf.User)
-	u.UserID = cancelBuyReqPointer.UserId
+	u.Username = cancelBuyReqPointer.Username
 	err = u.CancelBuy(cancelBuyReqPointer.OrderNum)
 	if err != nil {
-		logger.Warnf("CancelBuy: 用户: %s 取消订单: %s 时出现错误", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum)
+		logger.Warnf("CancelBuy: 用户: %s 取消订单: %s 时出现错误", cancelBuyReqPointer.Username, cancelBuyReqPointer.OrderNum)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8006,
-			Msg:  fmt.Sprintf("用户: %s 取消订单: %s 时出现错误", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum),
+			Msg:  fmt.Sprintf("用户: %s 取消订单: %s 时出现错误", cancelBuyReqPointer.Username, cancelBuyReqPointer.OrderNum),
 			Data: nil,
 		})
 		//c := easyjsonprocess.CommonResponse{
@@ -219,10 +218,10 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 		////w.Write(content)
 		return
 	}
-	logger.Infof("CancelBuy: 用户: %s 取消订单: %s 成功", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum)
+	logger.Infof("CancelBuy: 用户: %s 取消订单: %s 成功", cancelBuyReqPointer.Username, cancelBuyReqPointer.OrderNum)
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8007,
-		Msg:  fmt.Sprintf("用户: %s 取消订单: %s 成功", cancelBuyReqPointer.UserId, cancelBuyReqPointer.OrderNum),
+		Msg:  fmt.Sprintf("用户: %s 取消订单: %s 成功", cancelBuyReqPointer.Username, cancelBuyReqPointer.OrderNum),
 		Data: nil,
 	})
 	//content, err := easyjsonprocess.CommonResp(c)
@@ -394,12 +393,12 @@ func SyncGoodsFromMysql2Redis(ctx *fasthttp.RequestCtx) {
 	}
 	// 如果从mysql中获取goodsList顺利, 那就通过比对的方式向redis中添加数据
 	for _, v := range goodsList {
-		_, ok := utils.FindElement(storeIDlist, strconv.Itoa(v.ProductId))
+		_, ok := utils.FindElement(storeIDlist, v.ProductID)
 		if !ok {
 			// 给redis中添加相关商品数据
-			err = redisconn.Send("hmset", "store:"+strconv.Itoa(v.ProductId), "productName", v.ProductName, "productId", v.ProductId, "storeNum", v.Inventory)
+			err = redisconn.Send("hmset", "store:"+v.ProductID, "productName", v.ProductName, "productId", v.ProductID, "storeNum", v.Inventory)
 			if err != nil {
-				logger.Warnf("SyncGoodsFromMysql2Redis: %+v 创建hash 'store:%d' 失败", err, v.ProductId)
+				logger.Warnf("SyncGoodsFromMysql2Redis: %+v 创建hash 'store:%s' 失败", err, v.ProductID)
 				// 这里有风险, 万一给redis添加信息的时候出现错误, 那就凉凉
 				// 比如说: 添加到一半, 出错了, redis又没有回滚机制
 				utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
@@ -509,7 +508,7 @@ func GoodsList(ctx *fasthttp.RequestCtx) {
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
 func SyncGoodsLimit(ctx *fasthttp.RequestCtx) {
 	// 加载limit限制计划
-	err := redisconf.LoadLimit()
+	err := redisconf.LoadLimits()
 	if err != nil {
 		logger.Warnf("SyncGoodsLimit: 加载limit变量到全局变量purchaseLimit时出现错误 %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
@@ -587,7 +586,7 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 	}
 
 	// exec mysql transaction
-	err = goods.InsertGoods(tx, g.ProductId, g.ProductName, g.Inventory)
+	err = goods.InsertGoods(tx, g.ProductID, g.ProductName, g.Inventory)
 	//_, err = tx.Exec("insert goods (product_id, product_name, inventory) values (?,?,?)", g.ProductId, g.ProductName, g.Inventory)
 	if err != nil {
 		logger.Warnf("AddGood: 插入商品信息到goods表格时出现错误 %v", err)
@@ -611,7 +610,7 @@ func AddGood(ctx *fasthttp.RequestCtx) {
 	// write data to redis, if err occur, call mysql tx.rollback
 	redisCoon := redisconf.Pool.Get()
 	defer redisCoon.Close()
-	_, err = redisCoon.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
+	_, err = redisCoon.Do("hmset", "store:"+g.ProductID, "productName", g.ProductName, "productId", g.ProductID, "storeNum", g.Inventory)
 	if err != nil {
 		// 把之前写入到mysql中的good信息也回滚了
 		err = tx.Rollback()
@@ -674,7 +673,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	if isExist != 1 {
-		logger.Warnf("ModifyGood: 更新的商品%v不存在", g.ProductId)
+		logger.Warnf("ModifyGood: 更新的商品%v不存在", g.ProductID)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "更新的商品不存在",
@@ -694,7 +693,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 
-	err = goods.UpdateGoods(tx, g.ProductId, g.ProductName, g.Inventory)
+	err = goods.UpdateGoods(tx, g.ProductID, g.ProductName, g.Inventory)
 	if err != nil {
 		logger.Warnf("ModifyGood: 添加mysql事务: UpdateGoods时出现错误 %v", err)
 		err = tx.Rollback()
@@ -715,7 +714,7 @@ func ModifyGood(ctx *fasthttp.RequestCtx) {
 
 	redisConn := redisconf.Pool.Get()
 	defer redisConn.Close()
-	_, err = redisConn.Do("hmset", "store:"+strconv.Itoa(g.ProductId), "productName", g.ProductName, "productId", g.ProductId, "storeNum", g.Inventory)
+	_, err = redisConn.Do("hmset", "store:"+g.ProductID, "productName", g.ProductName, "productId", g.ProductID, "storeNum", g.Inventory)
 	if err != nil {
 		logger.Warnf("ModifyGood: Redis hmset error %v", err)
 		// redis里面增加key时出现错误, 尝试回滚mysql
@@ -768,7 +767,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	// 查看要删除的商品是否存在
 	isExist, err := goods.IsExist(g)
 	if err != nil {
-		logger.Warnf("DeleteGood: 查看删除的商品: %v是否存在出现错误", g.ProductId)
+		logger.Warnf("DeleteGood: 查看删除的商品: %v是否存在出现错误", g.ProductID)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
 			Msg:  "查看删除的商品是否存在出现错误",
@@ -777,7 +776,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	if isExist != 1 {
-		logger.Warnf("DeleteGood: 商品: %v不存在", g.ProductId)
+		logger.Warnf("DeleteGood: 商品: %v不存在", g.ProductID)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
 			Msg:  "删除的商品不存在",
@@ -796,7 +795,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	err = goods.DeleteGoods(tx, g.ProductId)
+	err = goods.DeleteGoods(tx, g.ProductID)
 	if err != nil {
 		logger.Warnf("DeleteGood: 添加mysql事务DeleteGoods时出现错误 %v", err)
 		err = tx.Rollback()
@@ -816,9 +815,9 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 
 	redisConn := redisconf.Pool.Get()
 	defer redisConn.Close()
-	_, err = redisConn.Do("del", "store:"+strconv.Itoa(g.ProductId))
+	_, err = redisConn.Do("del", "store:"+g.ProductID)
 	if err != nil {
-		logger.Warnf("DeleteGood: Redis delete store:%v error message %v", g.ProductId, err)
+		logger.Warnf("DeleteGood: Redis delete store:%v error message %v", g.ProductID, err)
 		err = tx.Rollback()
 		if err != nil {
 			logger.Warnf("DeleteGood: mysql事务回滚失败 %v", err)

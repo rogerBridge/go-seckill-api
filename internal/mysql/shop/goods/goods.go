@@ -10,7 +10,7 @@ import (
 )
 
 // insert 一些数据
-func InsertGoods(tx *sql.Tx, productId int, productName string, inventory int) error {
+func InsertGoods(tx *sql.Tx, productId string, productName string, inventory int) error {
 	// 一般情况下, 所有的sql操作都应该开启事务
 	// 一般情况下, Exec方法执行不需要返回值
 	_, err := tx.Exec("insert goods (product_id, product_name, inventory) values (?, ?, ?)", productId, productName, inventory)
@@ -29,7 +29,7 @@ func InsertGoods(tx *sql.Tx, productId int, productName string, inventory int) e
 }
 
 // 根据商品的product_name删除商品
-func DeleteGoods(tx *sql.Tx, productId int) error {
+func DeleteGoods(tx *sql.Tx, productId string) error {
 	_, err := tx.Exec("update goods set is_delete=1 where product_id=?", productId)
 	if err != nil {
 		return err
@@ -37,7 +37,7 @@ func DeleteGoods(tx *sql.Tx, productId int) error {
 	return nil
 }
 
-func UpdateGoods(tx *sql.Tx, productId int, productName string, inventory int) error {
+func UpdateGoods(tx *sql.Tx, productId string, productName string, inventory int) error {
 	_, err := tx.Exec("update goods set product_name=?, inventory=? where product_id=?", productName, inventory, productId)
 	if err != nil {
 		log.Println(err)
@@ -58,7 +58,7 @@ func QueryGoods() ([]*structure.Goods, error) {
 	}
 	for rows.Next() {
 		r := new(structure.Goods)
-		err = rows.Scan(&r.ProductId, &r.ProductName, &r.Inventory)
+		err = rows.Scan(&r.ProductID, &r.ProductName, &r.Inventory)
 		if err != nil {
 			log.Println(err)
 			return goodsList, err
@@ -71,7 +71,7 @@ func QueryGoods() ([]*structure.Goods, error) {
 // 查找某个值为productId的商品是否存在
 func IsExist(product *structure.Goods) (int, error) {
 	// 批次号和商品名称共同命名一件商品
-	row := mysql.Conn.QueryRow("select count(*) from goods where (product_id=? and product_name=?) and is_delete=0", product.ProductId, product.ProductName)
+	row := mysql.Conn.QueryRow("select count(*) from goods where (product_id=? and product_name=?) and is_delete=0", product.ProductID, product.ProductName)
 	// row := mysql.Conn.QueryRow("select exists(select * from goods where product_id=? and is_delete=0)", productId)
 	var isExist int
 	err := row.Scan(&isExist)

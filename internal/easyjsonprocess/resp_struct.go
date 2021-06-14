@@ -24,7 +24,7 @@ func CommonResp(c CommonResponse) ([]byte, error) {
 
 // 正确生成订单后
 type OrderResponse struct {
-	UserId      string `json:"userId"`
+	Username    string `json:"username"`
 	PurchaseNum int    `json:"purchaseNum"`
 	ProductId   string `json:"productId"`
 	OrderNum    string `json:"orderNum"`

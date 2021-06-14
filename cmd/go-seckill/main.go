@@ -1,6 +1,7 @@
 package main
 
 import (
+	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/router"
 	"log"
@@ -22,20 +23,24 @@ func start() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := redisconf.InitStore()
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalf(err.Error())
 	}
 	// 加载MySQL中的limit到全局变量和redis中
-	err = redisconf.LoadLimit()
+	err = redisconf.LoadLimits()
 	if err != nil {
-		log.Println(err)
-		return
+		log.Fatalf(err.Error())
 	}
 }
 
-func main() {
-	start()
+// 执行一些测试性的操作
+func test() {
 
+}
+
+func main() {
+	test()
+	start()
+	shop_orm.Initial()
 	r := router.ThisRouter()
 	log.Println("Listen on :4000")
 	log.Fatalln(fasthttp.ListenAndServe(":4000", r.Handler))

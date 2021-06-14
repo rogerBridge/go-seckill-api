@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql/shop/structure"
+	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -17,12 +17,23 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type MyCustomClaims struct {
+	Group    string `json:"group"`
+	Username string `json:"username"`
+	jwt.StandardClaims
+}
+
 // 生成符合要求的JWT token
-func GenerateToken(user *structure.UserLogin) (string, error) {
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
-		ExpiresAt: time.Now().Add(ExpireDuration).Unix(),
-		Id:        user.Username,
-	})
+func GenerateToken(user *shop_orm.User) (string, error) {
+	// 自定义的token
+	claims := MyCustomClaims{
+		user.Group,
+		user.Username,
+		jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(ExpireDuration).Unix(),
+		},
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenReturn, err := token.SignedString([]byte(secret))
 	if err != nil {
 		logger.Fatalf("GenerateToken: crash when generate token: %v\n", err)
@@ -83,7 +94,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			})
 			return
 		}
-		// 将从token处解析到的username加到request header上, 然后发往目标api
+		// 将从token处解析到的username加到request header上, 然后发往目标api, 目标API可以直接拿到header上面的键值对
 		ctx.Request.Header.Set("username", username)
 		// 通过了上面的考验, 请求终于来到了handler的手上
 		handler(ctx)
@@ -97,6 +108,7 @@ type TokenInfo struct {
 	TokenString string `json:"tokenString"`
 	Username    string `json:"username"`
 	Expiration  int64  `json:"expiration"`
+	Group       string `json:"group"`
 }
 
 // Parsing token:string
@@ -106,25 +118,19 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 		return tokenInfo, errors.New("nil tokenStr")
 	} else {
 		// 验证token是否可以被解析
-		token, err := jwt.ParseWithClaims(tokenStr, &jwt.StandardClaims{}, func(token *jwt.Token) (i interface{}, err error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return
-			}
+
+		token, err := jwt.ParseWithClaims(tokenStr, &MyCustomClaims{}, func(token *jwt.Token) (i interface{}, err error) {
 			return []byte(secret), nil
 		})
-		// err 中包含错误
-		if err != nil {
-			logger.Warnf("ParseToken: Token parse error: %v", err)
-			return tokenInfo, err
-		}
-		// 如果可以顺利解析, 将解析后的值分配到 tokenInfo 结构体中
-		if claims, ok := token.Claims.(*jwt.StandardClaims); ok && token.Valid {
+		if claims, ok := token.Claims.(*MyCustomClaims); ok && token.Valid {
+			// logger.Infof("%v %v", claims.Username, claims.StandardClaims.ExpiresAt)
 			tokenInfo.TokenString = tokenStr
-			tokenInfo.Username = claims.Id
+			tokenInfo.Username = claims.Username
+			tokenInfo.Group = claims.Group
 			tokenInfo.Expiration = claims.ExpiresAt
-			return tokenInfo, nil
+			return tokenInfo, err
 		} else {
-			logger.Warnf("ParseToken: error happen when parse token to struct tokenInfo, error message: %v", err)
+			logger.Warnf("error: %v", err)
 			return tokenInfo, err
 		}
 	}

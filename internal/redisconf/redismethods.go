@@ -4,10 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"go-seckill/internal/mysql/shop/goods"
 	"go-seckill/internal/mysql/shop/orders"
-	"go-seckill/internal/mysql/shop/purchase_limits"
 	"go-seckill/internal/mysql/shop/structure"
+	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/rabbitmq/sender"
 	"log"
 	"strconv"
@@ -18,10 +17,10 @@ import (
 )
 
 type User struct {
-	UserID string
+	Username string
 }
 
-// InitStore 首先, 初始化goodsInfoRedis中待抢购的商品信息, 并且初始化orderInfoRedis实例
+// InitStore, 将mysql中现存的商品添加进redis的goodsInfoRedis实例中
 func InitStore() error {
 	// goodsInfoRedis
 	conn := Pool.Get()
@@ -53,13 +52,14 @@ func InitStore() error {
 		return err
 	}
 
-	goodsList, err := goods.QueryGoods()
+	g := &shop_orm.Good{}
+	goodsList, err := g.QueryGoods()
 	if err != nil {
 		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodsList)
 		return err
 	}
 	for i := 0; i < len(goodsList); i++ {
-		err = conn.Send("hmset", "store:"+strconv.Itoa(goodsList[i].ProductId), "productName", goodsList[i].ProductName, "productId", goodsList[i].ProductId, "storeNum", goodsList[i].Inventory)
+		err = conn.Send("hmset", "store:"+goodsList[i].ProductID, "productName", goodsList[i].ProductName, "productId", goodsList[i].ProductID, "storeNum", goodsList[i].Inventory)
 		if err != nil {
 			logger.Warnf("hmset store:%v goodsList error message: %v", goodsList[i], err)
 			return err
@@ -86,25 +86,27 @@ func InitStore() error {
 // LoadLimit ...
 // 加载mysql 中的limit到runtime中
 // 全局变量, 存储purchase_limits
-var purchaseLimit = make(map[string]*structure.PurchaseLimits)
+var purchaseLimit = make(map[string]*shop_orm.PurchaseLimit)
 
-func LoadLimit() error {
+func LoadLimits() error {
 	// 每次修改purchaseLimit变量之前, 先清空这个变量
 	for k := range purchaseLimit {
 		delete(purchaseLimit, k)
 	}
-	r, err := purchase_limits.QueryPurchaseLimits()
+	p := new(shop_orm.PurchaseLimit)
+	r, err := p.QueryPurchaseLimits()
+	// r, err := purchase_limits.QueryPurchaseLimits()
 	if err != nil {
 		logger.Warnf("While query purchaseLimit, error message: %v", err)
 		return err
 	}
 	for _, v := range r {
 		// make map本身就是一个指针型变量
-		purchaseLimit[strconv.Itoa(v.ProductId)] = v
+		purchaseLimit[v.ProductID] = v
 	}
 	log.Println("加载后的指针型变量purchaseLimit: ", purchaseLimit)
 	for _, v := range purchaseLimit {
-		logger.Info(v.ProductId, v.LimitNum, v.StartPurchaseDatetime, v.EndPurchaseDatetime)
+		logger.Infof("商品id: %v, 购买限制: %v, 开始购买时间: %v, 结束购买时间: %v", v.ProductID, v.LimitNum, v.StartPurchaseTimeStamp, v.StopPurchaseTimeStamp)
 		//err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
 		//if err != nil {
 		//	log.Println(err)
@@ -114,16 +116,35 @@ func LoadLimit() error {
 	return nil
 }
 
+// 检查是否通过时间段检测
+func IfPassTimeCheck(p *shop_orm.PurchaseLimit) bool {
+	t := time.Now().UnixNano() / 1e6
+	// 开始时间和结束时间任意一项等于0, 说明没有时间段的要求
+	if p.StartPurchaseTimeStamp == 0 || p.StopPurchaseTimeStamp == 0 {
+		return true
+	}
+	if t >= int64(p.StartPurchaseTimeStamp) && t <= int64(p.StopPurchaseTimeStamp) {
+		return true
+	}
+	return false
+}
+
 // CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (u *User) CanBuyIt(productID string, purchaseNum int) (bool, error) {
 	if _, ok := purchaseLimit[productID]; ok {
 		if purchaseNum < 1 || purchaseNum > purchaseLimit[productID].LimitNum {
 			return false, fmt.Errorf("用户: %v 购买时商品数量小于1或者超过限制", u)
 		}
-		now := time.Now()
-		if now.After(purchaseLimit[productID].EndPurchaseDatetime) || now.Before(purchaseLimit[productID].StartPurchaseDatetime) {
-			return false, fmt.Errorf("用户: %v 购买时间不符合要求", u)
+		if !IfPassTimeCheck(purchaseLimit[productID]) {
+			return false, fmt.Errorf("用户: %v 不满足商品购买要求", u)
 		}
+		// now := time.Now()
+		// if purchaseLimit[productID].StartPurchaseTimeStamp == 0 || purchaseLimit[productID].StopPurchaseTimeStamp == 0 {
+
+		// }
+		// if now.After(purchaseLimit[productID].StopPurchaseTimeStamp) || now.Before(purchaseLimit[productID].StartPurchaseDatetime) {
+		// 	return false, fmt.Errorf("用户: %v 购买时间不符合要求", u)
+		// }
 		if ok, _ := u.UserFilter(productID, purchaseNum, true); ok {
 			return true, nil
 		}
@@ -157,12 +178,13 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 		return false, nil
 	}
 	// hget 用户是否已经购买过了?
-	r, err := redis.Int(conn1.Do("hget", "user:"+u.UserID+":bought", productID))
+	r, err := redis.Int(conn1.Do("hget", "user:"+u.Username+":bought", productID))
 	// 如果用户没有购买过
 	if err == redis.ErrNil {
 		return true, nil
 	}
 	// 如果用户购买过了, 看一看是否存在购买限制
+	// 是否存在购买限制
 	if hasLimit {
 		// 用户: 已购买的数量+想要购买的数量<=限制购买的数量
 		if (r + purchaseNum) <= purchaseLimit[productID].LimitNum {
@@ -179,7 +201,7 @@ func (u *User) UserFilter(productID string, purchaseNum int, hasLimit bool) (boo
 // ksuid generate string, KSUID将这个作为订单编号
 // 订单号生成器的逻辑需要改变
 func orderNumberGenerator(u *User) string {
-	return fmt.Sprintf("%s-%s-%s", strconv.Itoa(int(time.Now().UnixNano())), u.UserID, ksuid.New().String())
+	return fmt.Sprintf("%s-%s-%s", strconv.Itoa(int(time.Now().UnixNano())), u.Username, ksuid.New().String())
 }
 
 // 生成订单信息, 首先存入redis缓存, 然后发送到mqtt broker
@@ -217,7 +239,7 @@ func (u *User) OrderGenerator(productID string, purchaseNum int) (string, error)
 	// 使用ksuid仅仅是偷懒罢了, 哈哈哈
 	orderNum := orderNumberGenerator(u)
 	now := time.Now()
-	ok, err := redis.String(conn1.Do("hmset", "user:"+u.UserID+":order:"+orderNum, "orderNum", orderNum, "userID", u.UserID, "productId", productID, "purchaseNum", purchaseNum, "orderDate", now.Format("2006-01-02 15:04:05"), "status", "process"))
+	ok, err := redis.String(conn1.Do("hmset", "user:"+u.Username+":order:"+orderNum, "orderNum", orderNum, "userID", u.Username, "productId", productID, "purchaseNum", purchaseNum, "orderDate", now.Format("2006-01-02 15:04:05"), "status", "process"))
 	if err != nil {
 		logger.Warnf("OrderGenerator: 用户 %v 生成订单过程中出现了错误: %+v\n", u, err)
 		return "", err
@@ -228,7 +250,7 @@ func (u *User) OrderGenerator(productID string, purchaseNum int) (string, error)
 	// 开始把生成的信息发送给mqtt exchange
 	order := new(structure.Orders)
 	order.OrderNum = orderNum
-	order.UserId = u.UserID
+	order.UserId = u.Username
 	order.ProductId, err = strconv.Atoi(productID)
 	if err != nil {
 		logger.Warnf("OrderGenerator: %v productID convert from string to int　%v", u, err)
@@ -242,7 +264,7 @@ func (u *User) OrderGenerator(productID string, purchaseNum int) (string, error)
 		logger.Warnf("OrderGenerator: %v json marshal error message: %v", u, err)
 		return "", err
 	}
-	//log.Printf("%s", jsonBytes)
+	// 将生成的订单信息发送给rabbitmq receiver
 	err = sender.Send(jsonBytes, ch)
 	if err != nil {
 		logger.Warnf("OrderGenerator: %v send msg: %v error message: %v", u, jsonBytes, err)
@@ -256,14 +278,14 @@ func (u *User) Bought(productID string, purchaseNum int) error {
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
-	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.UserID+":bought", productID, purchaseNum))
+	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+u.Username+":bought", productID, purchaseNum))
 	if err != nil {
 		logger.Warnf("Bought: add bought info to %v:bought error message: %v", u, err)
 		return err
 	}
 	// 如果想要购买的物品已经存在(之前购买过), setnx没办法添加, 那就再添加一遍吧~
 	if flag == 0 {
-		err = conn1.Send("hincrby", "user:"+u.UserID+":bought", productID, purchaseNum)
+		err = conn1.Send("hincrby", "user:"+u.Username+":bought", productID, purchaseNum)
 		if err != nil {
 			logger.Warnf("Bought: when %v buy it, already exist, error message: %v", u, err)
 			return err
@@ -280,18 +302,18 @@ func (u *User) CancelBuy(orderNum string) error {
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 	// 查看订单号是否存在? && 状态是否是process
-	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.UserID+":order:"+orderNum))
+	isOrderExist, err := redis.Int(conn1.Do("exists", "user:"+u.Username+":order:"+orderNum))
 	if err != nil {
-		logger.Warnf("CancelBuy: %+v 查询user:%s:order:%s 时出错!", u, u.UserID, orderNum)
+		logger.Warnf("CancelBuy: %+v 查询user:%s:order:%s 时出错!", u, u.Username, orderNum)
 		return err
 	}
 	if isOrderExist == 0 {
-		logger.Warnf("CancelBuy: %+v 查询user:%s:order:%s 时不存在!", u, u.UserID, orderNum)
+		logger.Warnf("CancelBuy: %+v 查询user:%s:order:%s 时不存在!", u, u.Username, orderNum)
 		return fmt.Errorf("%v: 系统中没有找到该订单: %v", u, orderNum)
 	}
-	status, err := redis.String(conn1.Do("hget", "user:"+u.UserID+":order:"+orderNum, "status"))
+	status, err := redis.String(conn1.Do("hget", "user:"+u.Username+":order:"+orderNum, "status"))
 	if err != nil {
-		logger.Warnf("CancelBuy: %v 获取用户:%s订单:%s合法性的时候出现了错误", u, u.UserID, orderNum)
+		logger.Warnf("CancelBuy: %v 获取用户:%s订单:%s合法性的时候出现了错误", u, u.Username, orderNum)
 		return err
 	}
 	if status != "process" {
@@ -299,20 +321,20 @@ func (u *User) CancelBuy(orderNum string) error {
 		return fmt.Errorf("%v 订单状态错误!只有process状态的订单才可以执行退订单操作", u)
 	}
 	// 根据订单号找出来商品的productId, purchaseNum
-	productID, err := redis.String(conn1.Do("hget", "user:"+u.UserID+":order:"+orderNum, "productId"))
+	productID, err := redis.String(conn1.Do("hget", "user:"+u.Username+":order:"+orderNum, "productId"))
 	if err != nil {
 		logger.Warnf("CancelBuy: hget user:%v:order:%v productID error", u, orderNum)
 		return err
 	}
-	purchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.UserID+":order:"+orderNum, "purchaseNum"))
+	purchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.Username+":order:"+orderNum, "purchaseNum"))
 	if err != nil {
-		logger.Warnf("CancelBuy: hget user:%s:order:%s purchaseNum error", u.UserID, orderNum)
+		logger.Warnf("CancelBuy: hget user:%s:order:%s purchaseNum error", u.Username, orderNum)
 		return err
 	}
 
-	isExist, err := redis.Int(conn1.Do("hexists", "user:"+u.UserID+":bought", productID))
+	isExist, err := redis.Int(conn1.Do("hexists", "user:"+u.Username+":bought", productID))
 	if err != nil {
-		logger.Warnf("CancelBuy: %v 查询user:%v:bought时出错!", u, u.UserID)
+		logger.Warnf("CancelBuy: %v 查询user:%v:bought时出错!", u, u.Username)
 		return err
 	}
 	if isExist == 0 {
@@ -321,7 +343,7 @@ func (u *User) CancelBuy(orderNum string) error {
 	}
 	// 如果人家用户真的购买过...
 	// 那就赶快处理呀, 嘿嘿
-	existPurchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.UserID+":bought", productID))
+	existPurchaseNum, err := redis.Int(conn1.Do("hget", "user:"+u.Username+":bought", productID))
 	if err != nil {
 		logger.Warnf("CancelBuy: %+v 获取已购买商品%s时出现错误! %+v", u, productID, err)
 		return err
@@ -332,7 +354,7 @@ func (u *User) CancelBuy(orderNum string) error {
 		return errors.New("取消购买的数量不能大于购买的数量")
 	}
 	// 给这个订单打个tag status:cancel
-	_, err = redis.Int(conn1.Do("hset", "user:"+u.UserID+":order:"+orderNum, "status", "cancel"))
+	_, err = redis.Int(conn1.Do("hset", "user:"+u.Username+":order:"+orderNum, "status", "cancel"))
 	if err != nil {
 		logger.Warnf("CancelBuy: %+v 尝试更改订单: %s 状态时出现错误, 错误原因是: %v\n", u, orderNum, err) // 这里应该将订单状态还原, 并且将错误日志记录在案
 		return fmt.Errorf("%+v 尝试更改订单: %s 状态时出现错误, 错误原因是: %v\n", u, orderNum, err)
@@ -345,10 +367,10 @@ func (u *User) CancelBuy(orderNum string) error {
 		return fmt.Errorf("%v 返还库存 %v 时出错 %v", u, productID, err)
 	}
 	// 然后, 改变: user:[userID]:bought 这个hash表里面key对应的value
-	err = conn1.Send("hincrby", "user:"+u.UserID+":bought", productID, "-"+incrString)
+	err = conn1.Send("hincrby", "user:"+u.Username+":bought", productID, "-"+incrString)
 	if err != nil {
-		logger.Warnf("CancelBuy: %+v 变更bought表: 'user:%s:bought'时出错%v", u, u.UserID, err)
-		return fmt.Errorf("%+v 变更bought表: 'user:%s:bought'时出错%v", u, u.UserID, err)
+		logger.Warnf("CancelBuy: %+v 变更bought表: 'user:%s:bought'时出错%v", u, u.Username, err)
+		return fmt.Errorf("%+v 变更bought表: 'user:%s:bought'时出错%v", u, u.Username, err)
 	}
 	// 最后, 将订单信息同步到mysql中, if订单号不唯一, 那就惨了
 	if err := orders.UpdateOrders("cancel", orderNum); err != nil {

@@ -7,6 +7,7 @@ import (
 	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/mysql/shop/structure"
 	"go-seckill/internal/mysql/shop/users"
+	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -47,7 +48,8 @@ func Login(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	if exist == 1 {
-		token, err := auth.GenerateToken(user)
+		u := new(shop_orm.User)
+		token, err := auth.GenerateToken(u)
 		if err != nil {
 			logger.Warnf("Login: While verify user: %v error message: %v", user, err)
 			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{

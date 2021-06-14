@@ -1,7 +1,7 @@
 package structure
 
 type Goods struct {
-	ProductId   int
+	ProductID   string
 	ProductName string
 	Inventory   int
 }
