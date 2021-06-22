@@ -39,8 +39,9 @@ func test() {
 
 func main() {
 	test()
-	start()
 	shop_orm.Initial()
+	start()
+
 	r := router.ThisRouter()
 	log.Println("Listen on :4000")
 	log.Fatalln(fasthttp.ListenAndServe(":4000", r.Handler))

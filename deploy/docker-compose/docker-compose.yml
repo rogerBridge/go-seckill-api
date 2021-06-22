@@ -44,6 +44,7 @@ services:
             MYSQL_ROOT_PASSWORD: 12345678
             TZ: Asia/Shanghai
             MYSQL_DATABASE: shop
+            MYSQL_DATABASE: seckill
         volumes:
             - mysql-conf:/etc/mysql/conf.d
             - mysql-data:/var/lib/mysql
@@ -62,6 +63,8 @@ services:
             RABBITMQ_DEFAULT_USER: "root"
             RABBITMQ_DEFAULT_PASS: "12345678"
             RABBITMQ_DEFAULT_VHOST: "root_vhost"
+        volumes:
+            - rabbitmq-server:/etc
         ports:
             - "127.0.0.1:15672:15672"
         restart: unless-stopped
@@ -72,6 +75,8 @@ services:
         image: rogerbridge/rabbitmq-receiver:test
         hostname: rabbitmq-receiver
         restart: unless-stopped
+        volumes:
+            - rabbitmq-receiver:/etc
         depends_on:
             - rabbitmq-server
             - db
@@ -85,6 +90,8 @@ services:
         image: rogerbridge/go-seckill:test
         hostname: go-seckill
         restart: unless-stopped
+        volumes:
+            - go-seckill:/etc
         depends_on:
             - goodsInfoRedis
             - orderInfoRedis
@@ -103,6 +110,9 @@ volumes:
     tokenRedisData:
     mysql-conf:
     mysql-data:
+    rabbitmq-server:
+    rabbitmq-receiver:
+    go-seckill:
 
 networks:
     go-seckill:

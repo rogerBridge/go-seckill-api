@@ -180,7 +180,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	}
 	// 如果存在, 开启mysql事务, 修改mysql和redis
 	tx := mysql.Conn2.Begin()
-	err = g.UpdateGoodInventory(tx)
+	err = g.UpdateGood(tx)
 	if err != nil {
 		logger.Warnf("UpdateGood: 添加mysql事务: UpdateGoods时出现错误 %v", err)
 		err := tx.Rollback().Error

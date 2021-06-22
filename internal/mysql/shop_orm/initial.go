@@ -10,8 +10,8 @@ import (
 // 初始化数据库 seckill
 func Initial() {
 	conn := mysql.Conn2
-	conn.Exec("CREATE DATABASE IF NOT EXISTS seckill")
-	log.Println("executed create database seckill command")
+	// conn.Exec("CREATE DATABASE IF NOT EXISTS seckill")
+	// log.Println("executed create database seckill command")
 
 	err := conn.AutoMigrate(&Good{})
 	if err != nil {

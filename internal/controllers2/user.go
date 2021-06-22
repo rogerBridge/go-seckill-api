@@ -16,16 +16,16 @@ import (
 )
 
 // 检查注册时传入的用户信息是否合格, 一个粗糙的实现, 后面必须改
-func CheckUserInfo(u *shop_orm.User) bool {
+func CheckUserInfo(u *shop_orm.User) error {
 	if u.Username == "" || u.Password == "" || u.Email == "" {
 		logger.Warnf("注册时, 用户名, 密码, 电子邮件地址三项必须不为空")
-		return false
+		return fmt.Errorf("注册时, 用户名, 密码, 电子邮件地址三项必须不为空")
 	}
 	if len(u.Password) < 8 {
 		logger.Warnf("密码长度不符合要求, 最小长度为8")
-		return false
+		return fmt.Errorf("密码长度不符合要求, 最小长度为8")
 	}
-	return true
+	return nil
 }
 
 // 用户注册
@@ -44,11 +44,11 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	logger.Infof("unmarshal []byte to struct successful")
 	// 这里应该填写用户名, 密码, 邮箱的校验机制, 应该用正则表达式, 暂时偷懒
 	// 写成一个单独的模块最好
-	if !CheckUserInfo(user) {
+	if err := CheckUserInfo(user); err != nil {
 		logger.Warnf("Register: user: %v must have username, password, email or other error", user)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
-			Msg:  "CheckUserInfo not pass",
+			Msg:  err.Error(),
 			Data: nil,
 		})
 		return
@@ -251,6 +251,16 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("unmarshal userInfo successful")
+	// check userinfo
+	if !p.IfUserExist() {
+		logger.Warnf(err.Error())
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+			Code: 8400,
+			Msg:  err.Error(),
+			Data: nil,
+		})
+		return
+	}
 
 	p.Username = username
 	tx := mysql.Conn2.Begin()

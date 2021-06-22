@@ -3,7 +3,9 @@ package shop_orm
 import (
 	"crypto/sha256"
 	"encoding/base64"
+	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"gorm.io/gorm"
@@ -40,12 +42,6 @@ func passwordEncrypt(password string) string {
 }
 
 func (u *User) CreateUser(tx *gorm.DB) error {
-	// tx.Raw("")
-	// tx.Raw("INSERT INTO users (username, password, birthday, email) VALUES (?, ?, ?, ?)", u.Username, u.Password, u.Birthday, u.Address)
-
-	// if err := tx.Raw("INSERT INTO users (username, password, birthday, email) VALUES (?, ?, ?, ?)", u.Username, u.Password, u.Birthday, u.Address).Error; err != nil {
-	// 	return err
-	// }
 	// 需要将密码切换为sha256sum+salt的形式
 	u.Password = passwordEncrypt(u.Password)
 	if err := tx.Create(u).Error; err != nil {
@@ -78,9 +74,31 @@ func (u *User) ProofCredential() (User, bool) {
 	return result, false
 }
 
+// 检查用户信息是否符合要求
+func CheckUserInfo(u *User) error {
+	var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
+	if len(u.Email) < 3 || len(u.Email) > 255 {
+		return fmt.Errorf("邮箱地址长度不符合要求")
+	}
+	if !emailRegex.MatchString(u.Email) {
+		return fmt.Errorf("邮箱地址格式不符合要求")
+	}
+	// 检查 邮箱是否唯一
+	var checkEmail User
+	if err := conn.Model(&User{}).Where("email=?", u.Email).First(&checkEmail).Error; err == nil {
+		if checkEmail.Email != "" {
+			return fmt.Errorf("想要更新的邮箱已存在")
+		}
+	}
+	return nil
+}
+
 // 更新用户信息(除密码之外)
 func (u *User) UpdateUserInfo(tx *gorm.DB) error {
-	if err := tx.Model(&User{}).Where("username=?", u.Username).Updates(User{Sex: u.Sex, Birthday: u.Birthday, Address: u.Address}).Error; err != nil {
+	if err := CheckUserInfo(u); err != nil {
+		return err
+	}
+	if err := tx.Model(&User{}).Where("username=?", u.Username).Updates(User{Email: u.Email, Sex: u.Sex, Birthday: u.Birthday, Address: u.Address}).Error; err != nil {
 		if err != nil {
 			log.Println("UpdateUserInfo error: ", err)
 			return err

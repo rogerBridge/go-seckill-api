@@ -38,23 +38,25 @@ func init() {
 	// syncGoodsFromMysql2Redis 在go-seckill初始化的时候就已经做到了, 不需要再做
 	// register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
 	// 这个之后还是用rabbitmq-receiver来做吧, 每次redis库存扣减成功之后都发送消息, 让mysql也扣减
+	// 还是写成定时同步吧, 每隔60s同步redis中goods数据到mysql.goods中
 	register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
+
 	// goods table
 	register(fasthttp.MethodGet, "/admin/goodList", controllers2.GoodsList, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)
 
-	// use those API don't need auth :)
+	// users table
 	register(fasthttp.MethodPost, "/user/register", controllers2.UserRegister, nil)
 	register(fasthttp.MethodPost, "/user/login", controllers2.UserLogin, nil)
-
-	// use those API need auth :)
-	register(fasthttp.MethodPost, "/user/buy", controllers.Buy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/user/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/user/logout", controllers2.UserLogout, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/user/updatePassword", controllers2.UserUpdatePassword, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/user/updateInfo", controllers2.UserUpdateInfo, auth.MiddleAuth)
+
+	// orders table
+	register(fasthttp.MethodPost, "/user/buy", controllers.Buy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
 }
 
 // ThisRouter 通过遍历[]Route, 将需要中间件处理的和不需要中间件处理的分开处置 :)
