@@ -102,11 +102,11 @@ func LoadLimits() error {
 	}
 	for _, v := range r {
 		// make map本身就是一个指针型变量
-		purchaseLimit[v.ProductID] = v
+		purchaseLimit[v.ProductName] = v
 	}
 	log.Println("加载后的指针型变量purchaseLimit: ", purchaseLimit)
 	for _, v := range purchaseLimit {
-		logger.Infof("商品id: %v, 购买限制: %v, 开始购买时间: %v, 结束购买时间: %v", v.ProductID, v.LimitNum, v.StartPurchaseTimeStamp, v.StopPurchaseTimeStamp)
+		logger.Infof("商品id: %v, 购买限制: %v, 开始购买时间: %v, 结束购买时间: %v", v.ProductName, v.LimitNum, v.StartPurchaseTimeStamp, v.StopPurchaseTimeStamp)
 		//err = conn.Send("hmset", "limit:"+strconv.Itoa(v.ProductId), "limitNum", v.LimitNum, "startPurchaseTime", v.StartPurchaseDatetime, "endPurchaseTime", v.EndPurchaseDatetime)
 		//if err != nil {
 		//	log.Println(err)

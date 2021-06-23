@@ -172,8 +172,8 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("unmarshal password successful")
-
 	p.Username = username
+
 	tx := mysql.Conn2.Begin()
 	err = p.UpdateUserPassword(tx)
 	if err != nil {

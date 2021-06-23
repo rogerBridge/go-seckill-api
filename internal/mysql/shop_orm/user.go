@@ -50,7 +50,7 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 		return err
 	}
 	// 检测系统中是否存在此用户
-	if u.IfUserExist() {
+	if u.CheckUsernameIsUnique() {
 		return fmt.Errorf("用户已存在, 无法新建")
 	}
 	// 需要将密码切换为sha256sum+salt的形式
@@ -61,6 +61,7 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 	return nil
 }
 
+// 管理员获取所有用户列表
 func (u *User) QueryUsers() ([]*User, error) {
 	users := make([]*User, 128)
 	if err := conn.Model(&User{}).Find(users).Error; err != nil {
@@ -97,10 +98,10 @@ func (u *User) UpdateUserPassword(tx *gorm.DB) error {
 
 // 传入的指定User是否存在于users table, 检测username是否存在, 注册user的时候使用
 // username和email都必须唯一
-func (u *User) IfUserExist() bool {
+func (u *User) CheckUsernameIsUnique() bool {
 	var result User
-	if err := conn.Model(&User{}).Where("username=? OR email=?", u.Username, u.Email).First(&result).Error; err == nil {
-		if result.Username != "" || result.Email != "" {
+	if err := conn.Model(&User{}).Where("username=?", u.Username).First(&result).Error; err == nil {
+		if result.Username != u.Username {
 			return true
 		}
 	}

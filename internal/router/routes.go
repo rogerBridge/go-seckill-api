@@ -32,6 +32,7 @@ func init() {
 	// purchase_limits table
 	register(fasthttp.MethodPost, "/admin/createPurchaseLimit", controllers2.CreatePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/queryPurchaseLimit", controllers2.QueryPurchaseLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/updatePurchaseLimit", controllers2.UpdatePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)

@@ -31,13 +31,6 @@ func (g *Good) CreateGood(tx *gorm.DB) error {
 	return nil
 }
 
-func (g *Good) CheckGoodParams() error {
-	if g.ProductCategory != "" && g.ProductName != "" && g.Inventory > 0 && g.Price > 0 {
-		return nil
-	}
-	return fmt.Errorf("创建商品时, 检查商品参数时出错")
-}
-
 // 查找记录 goods table
 // 把所有deleted_at=null的实例显示出来
 func (g *Good) QueryGoods() ([]*Good, error) {
@@ -94,4 +87,11 @@ func (g *Good) IfGoodExistByID() bool {
 		return true
 	}
 	return false
+}
+
+func (g *Good) CheckGoodParams() error {
+	if g.ProductCategory != "" && g.ProductName != "" && g.Inventory > 0 && g.Price > 0 {
+		return nil
+	}
+	return fmt.Errorf("创建商品时, 检查商品参数时出错")
 }

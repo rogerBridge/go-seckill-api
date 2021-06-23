@@ -27,15 +27,15 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	logger.Infof("解析后的PurchaseLimit是: %+v", p)
 
 	// 首先查看, PurchaseLimit的product_id是否存在于purchase_limits表格中
-	if p.IfPurchaseLimitExist() {
-		logger.Warnf("PurchaseLimit已有相同ID的在表格中")
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "欲添加的PurchaseLimit已经存在于数据库中",
-			Data: nil,
-		})
-		return
-	}
+	// if p.IfPurchaseLimitExist() {
+	// 	logger.Warnf("PurchaseLimit已有相同ID的在表格中")
+	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
+	// 		Code: 8404,
+	// 		Msg:  "欲添加的PurchaseLimit已经存在于数据库中",
+	// 		Data: nil,
+	// 	})
+	// 	return
+	// }
 	tx := mysql.Conn2.Begin()
 	err = p.CreatePurchaseLimit(tx)
 	if err != nil {
@@ -43,7 +43,7 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "当添加PurchaseLimit时, 出错",
+			Msg:  "当添加PurchaseLimit时, 出错: " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -82,17 +82,6 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("unmarshal request.body() success")
 
-	// 首先查看, request.body()是否存在于purchase_limits table中
-	if !p.IfPurchaseLimitExist() {
-		logger.Warnf("query PurchaseLimit is not exist in purchase_limits table")
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "query PurchaseLimit is not exist in purchase_limits table",
-			Data: nil,
-		})
-		return
-	}
-
 	// 如果存在的话, 返回Purchase_limit这个对象
 	var purchaseLimit *shop_orm.PurchaseLimit
 	purchaseLimit, err = p.QueryPurchaseLimit()
@@ -100,7 +89,7 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 		logger.Warnf("purchaseLimit query error: %v", err)
 		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
 			Code: 8404,
-			Msg:  "query purchaseLimit error",
+			Msg:  "query purchaseLimit error: " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -110,6 +99,28 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 		Code: 8200,
 		Msg:  "query PurchaseLimit successful",
 		Data: purchaseLimit,
+	})
+}
+
+// 获取所有商品的purchase_limit
+func QueryPurchaseLimits(ctx *fasthttp.RequestCtx) {
+	// 如果存在的话, 返回Purchase_limit这个对象
+	p := new(shop_orm.PurchaseLimit)
+	purchaseLimits, err := p.QueryPurchaseLimits()
+	if err != nil {
+		logger.Warnf("purchaseLimit query error: %v", err)
+		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
+			Code: 8404,
+			Msg:  "query purchaseLimit error: " + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	logger.Infof("purchaseLimit query succuesful")
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		Code: 8200,
+		Msg:  "query PurchaseLimit successful",
+		Data: purchaseLimits,
 	})
 }
 
@@ -127,17 +138,6 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("unmarshal request.body() success")
 
-	// 首先查看, request.body()是否存在于purchase_limits table中
-	if !p.IfPurchaseLimitExist() {
-		logger.Warnf("query PurchaseLimit is not exist in purchase_limits table")
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "query PurchaseLimit is not exist in purchase_limits table",
-			Data: nil,
-		})
-		return
-	}
-
 	// 如果存在的话, 返回Purchase_limit这个对象
 	tx := mysql.Conn2.Begin()
 	err = p.UpdatePurchaseLimit(tx)
@@ -146,7 +146,7 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "UpdatePurchaseLimit error",
+			Msg:  "UpdatePurchaseLimit error " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -184,17 +184,6 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("DeletePurchaseLimit success")
 
-	// 首先查看, request.body()是否存在于purchase_limits table中
-	if !p.IfPurchaseLimitExist() {
-		logger.Warnf("query PurchaseLimit is not exist in purchase_limits table")
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "query PurchaseLimit is not exist in purchase_limits table",
-			Data: nil,
-		})
-		return
-	}
-
 	// 如果存在的话, 返回Purchase_limit这个对象
 	tx := mysql.Conn2.Begin()
 	err = p.DeletePurchaseLimit(tx)
@@ -203,7 +192,7 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "DeletePurchaseLimit error",
+			Msg:  "DeletePurchaseLimit error " + err.Error(),
 			Data: nil,
 		})
 		return
