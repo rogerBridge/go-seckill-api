@@ -15,19 +15,6 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-// 检查注册时传入的用户信息是否合格, 一个粗糙的实现, 后面必须改
-func CheckUserInfo(u *shop_orm.User) error {
-	if u.Username == "" || u.Password == "" || u.Email == "" {
-		logger.Warnf("注册时, 用户名, 密码, 电子邮件地址三项必须不为空")
-		return fmt.Errorf("注册时, 用户名, 密码, 电子邮件地址三项必须不为空")
-	}
-	if len(u.Password) < 8 {
-		logger.Warnf("密码长度不符合要求, 最小长度为8")
-		return fmt.Errorf("密码长度不符合要求, 最小长度为8")
-	}
-	return nil
-}
-
 // 用户注册
 func UserRegister(ctx *fasthttp.RequestCtx) {
 	user := new(shop_orm.User)
@@ -42,35 +29,15 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("unmarshal []byte to struct successful")
-	// 这里应该填写用户名, 密码, 邮箱的校验机制, 应该用正则表达式, 暂时偷懒
-	// 写成一个单独的模块最好
-	if err := CheckUserInfo(user); err != nil {
-		logger.Warnf("Register: user: %v must have username, password, email or other error", user)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
-			Code: 8400,
-			Msg:  err.Error(),
-			Data: nil,
-		})
-		return
-	}
-	// 首先查找数据库中是否存在这个用户
-	if user.IfUserExist() {
-		logger.Warnf("User or Email exist")
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
-			Code: 8200,
-			Msg:  "username or email existed",
-			Data: nil,
-		})
-		return
-	}
+
 	tx := mysql.Conn2.Begin()
 	err = user.CreateUser(tx)
 	if err != nil {
-		logger.Warnf("Register transaction error: %v", err)
+		logger.Warnf("Register transaction error: %s", err.Error())
 		tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "Register transaction error",
+			Msg:  "注册失败: " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -252,17 +219,26 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("unmarshal userInfo successful")
 	// check userinfo
-	if !p.IfUserExist() {
-		logger.Warnf(err.Error())
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
-			Code: 8400,
-			Msg:  err.Error(),
-			Data: nil,
-		})
-		return
-	}
-
+	// if !p.IfUserExist() {
+	// 	logger.Warnf(err.Error())
+	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 		Code: 8400,
+	// 		Msg:  "用户不存在",
+	// 		Data: nil,
+	// 	})
+	// 	return
+	// }
 	p.Username = username
+
+	// if err := p.CheckEmail(); err != nil {
+	// 	logger.Warnf(err.Error())
+	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 		Code: 8400,
+	// 		Msg:  err.Error(),
+	// 		Data: nil,
+	// 	})
+	// }
+
 	tx := mysql.Conn2.Begin()
 	err = p.UpdateUserInfo(tx)
 	if err != nil {
@@ -270,7 +246,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 		tx.Rollback()
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "UpdateUserInfo error",
+			Msg:  err.Error(),
 			Data: nil,
 		})
 		return

@@ -42,7 +42,7 @@ func init() {
 	register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
 
 	// goods table
-	register(fasthttp.MethodGet, "/admin/goodList", controllers2.GoodsList, auth.MiddleAuth)
+	register(fasthttp.MethodGet, "/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)

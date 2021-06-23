@@ -1,9 +1,11 @@
 package shop_orm
 
 import (
+	"go-seckill/internal/logconf"
 	"go-seckill/internal/mysql"
 	"log"
 
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 )
 
@@ -41,3 +43,5 @@ type SelfDefine struct {
 }
 
 var conn = mysql.Conn2
+
+var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "shop_orm"})

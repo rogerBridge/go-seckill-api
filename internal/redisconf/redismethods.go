@@ -59,7 +59,7 @@ func InitStore() error {
 		return err
 	}
 	for i := 0; i < len(goodsList); i++ {
-		err = conn.Send("hmset", "store:"+goodsList[i].ProductID, "productName", goodsList[i].ProductName, "productId", goodsList[i].ProductID, "storeNum", goodsList[i].Inventory)
+		err = conn.Send("hmset", "store:"+goodsList[i].ProductName, "name", goodsList[i].ProductName, "category", goodsList[i].ProductCategory, "inventory", goodsList[i].Inventory, "price", goodsList[i].Price)
 		if err != nil {
 			logger.Warnf("hmset store:%v goodsList error message: %v", goodsList[i], err)
 			return err

@@ -42,9 +42,54 @@ func passwordEncrypt(password string) string {
 }
 
 func (u *User) CreateUser(tx *gorm.DB) error {
+	// 检测用户注册信息是否符合规范
+	if err := u.CheckEmailFormat(); err != nil {
+		return err
+	}
+	if err := u.CheckEmailIsUnique(); err != nil {
+		return err
+	}
+	// 检测系统中是否存在此用户
+	if u.IfUserExist() {
+		return fmt.Errorf("用户已存在, 无法新建")
+	}
 	// 需要将密码切换为sha256sum+salt的形式
 	u.Password = passwordEncrypt(u.Password)
 	if err := tx.Create(u).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *User) QueryUsers() ([]*User, error) {
+	users := make([]*User, 128)
+	if err := conn.Model(&User{}).Find(users).Error; err != nil {
+		return users, err
+	}
+	return users, nil
+}
+
+// 更新用户信息(除密码之外)
+func (u *User) UpdateUserInfo(tx *gorm.DB) error {
+	if err := u.CheckEmailFormat(); err != nil {
+		return err
+	}
+	if err := tx.Model(&User{}).Where("username=?", u.Username).Updates(User{Email: u.Email, Sex: u.Sex, Birthday: u.Birthday, Address: u.Address}).Error; err != nil {
+		if err != nil {
+			log.Println("UpdateUserInfo error: ", err)
+			return err
+		}
+	}
+	return nil
+}
+
+// 更新用户密码
+func (u *User) UpdateUserPassword(tx *gorm.DB) error {
+	if !u.CheckPasswordValid() {
+		return fmt.Errorf("密码不符合要求")
+	}
+	if err := tx.Model(&User{}).Where("username=?", u.Username).Update("password", passwordEncrypt(u.Password)).Error; err != nil {
+		log.Println("UpdateUserPassword error: ", err)
 		return err
 	}
 	return nil
@@ -75,7 +120,7 @@ func (u *User) ProofCredential() (User, bool) {
 }
 
 // 检查用户信息是否符合要求
-func CheckUserInfo(u *User) error {
+func (u *User) CheckEmailFormat() error {
 	var emailRegex = regexp.MustCompile("^[a-zA-Z0-9.!#$%&'*+\\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$")
 	if len(u.Email) < 3 || len(u.Email) > 255 {
 		return fmt.Errorf("邮箱地址长度不符合要求")
@@ -83,35 +128,19 @@ func CheckUserInfo(u *User) error {
 	if !emailRegex.MatchString(u.Email) {
 		return fmt.Errorf("邮箱地址格式不符合要求")
 	}
-	// 检查 邮箱是否唯一
-	var checkEmail User
-	if err := conn.Model(&User{}).Where("email=?", u.Email).First(&checkEmail).Error; err == nil {
-		if checkEmail.Email != "" {
-			return fmt.Errorf("想要更新的邮箱已存在")
+	return nil
+}
+
+func (u *User) CheckEmailIsUnique() error {
+	checkEmailIsUnique := new(User)
+	if err := conn.Model(&User{}).Where("email=?", u.Email).First(checkEmailIsUnique).Error; err == nil {
+		if checkEmailIsUnique.Email != "" {
+			return fmt.Errorf("邮箱已存在")
 		}
 	}
 	return nil
 }
 
-// 更新用户信息(除密码之外)
-func (u *User) UpdateUserInfo(tx *gorm.DB) error {
-	if err := CheckUserInfo(u); err != nil {
-		return err
-	}
-	if err := tx.Model(&User{}).Where("username=?", u.Username).Updates(User{Email: u.Email, Sex: u.Sex, Birthday: u.Birthday, Address: u.Address}).Error; err != nil {
-		if err != nil {
-			log.Println("UpdateUserInfo error: ", err)
-			return err
-		}
-	}
-	return nil
-}
-
-// 更新用户密码
-func (u *User) UpdateUserPassword(tx *gorm.DB) error {
-	if err := tx.Model(&User{}).Where("username=?", u.Username).Update("password", passwordEncrypt(u.Password)).Error; err != nil {
-		log.Println("UpdateUserPassword error: ", err)
-		return err
-	}
-	return nil
+func (u *User) CheckPasswordValid() bool {
+	return len(u.Password) >= 8
 }
