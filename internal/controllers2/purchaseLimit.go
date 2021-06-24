@@ -72,10 +72,10 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 	p := new(shop_orm.PurchaseLimit)
 	err := json.Unmarshal(ctx.Request.Body(), p)
 	if err != nil {
-		logger.Warnf("While unmarshal request.body(), error: %v", err)
+		logger.Warnf("传入的参数有误: %v", err)
 		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
 			Code: 8400,
-			Msg:  "While unmarshal request.body(), error",
+			Msg:  "传入的参数有误: " + err.Error(),
 			Data: nil,
 		})
 		return
@@ -156,7 +156,7 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		logger.Warnf("UpdatePurchaseLimit transaction commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
-			Msg:  "UpdatePurchaseLimit transaction commit error",
+			Msg:  "UpdatePurchaseLimit 事务提交失败",
 			Data: nil,
 		})
 		return
@@ -164,7 +164,7 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	logger.Infof("UpdatePurchaseLimit transaction commit successful")
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8200,
-		Msg:  "UpdatePurchaseLimit transaction commit successful",
+		Msg:  "UpdatePurchaseLimit 事务提交成功",
 		Data: nil,
 	})
 }

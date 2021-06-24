@@ -10,7 +10,7 @@ type Order struct {
 	SelfDefine
 	OrderNumber string `gorm:"order_number" json:"orderNumber"`
 	Username    string `gorm:"username" json:"username"`
-	ProductID   string `gorm:"product_id" json:"productID"`
+	ProductID   int    `gorm:"product_id" json:"productID"`
 	PurchaseNum int    `gorm:"purchase_num" json:"purchaseNum"`
 	Status      string `gorm:"status" json:"status"`
 	Price       int    `gorm:"price" json:"price"`
@@ -44,10 +44,22 @@ func (o *Order) QueryOrderByUsername(username string) ([]*Order, error) {
 	return orders, nil
 }
 
-// find specific order, by
-
 func (o *Order) UpdateOrderStatus(tx *gorm.DB) error {
 	if err := tx.Model(&Order{}).Where("order_number = ?", o.OrderNumber).Update("status", o.Status).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o *Order) UpdateOrder(tx *gorm.DB) error {
+	if err := tx.Model(&Order{}).Where("order_number=?", o.OrderNumber).Updates(Order{
+		OrderNumber: o.OrderNumber,
+		Username:    o.Username,
+		ProductID:   o.ProductID,
+		PurchaseNum: o.PurchaseNum,
+		Status:      o.Status,
+		Price:       0,
+	}).Error; err != nil {
 		return err
 	}
 	return nil

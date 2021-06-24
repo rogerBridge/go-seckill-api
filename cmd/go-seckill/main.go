@@ -25,6 +25,10 @@ func start() {
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	err = redisconf.LoadGoods()
+	if err != nil {
+		log.Fatalf(err.Error())
+	}
 	// 加载MySQL中的limit到全局变量和redis中
 	err = redisconf.LoadLimits()
 	if err != nil {

@@ -55,11 +55,12 @@ func GenerateToken(user *shop_orm.User) (string, error) {
 
 // MiddleAuth 是一个request前置处理器, 可以验证请求的合法性
 // 只有token值合格的时候才放行请求到下一个处理器
+// 这里可以做: 根据URI和group之间的关系, 做权限鉴定
 func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
 		// 这里可以根据path判断用户是否有访问这个API的权利
-		logger.Infof("request path is: %s", string(ctx.URI().RequestURI()))
+		thisURI := string(ctx.URI().RequestURI())
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
 		if err != nil {
@@ -70,6 +71,17 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 			})
 			return
 		}
+		group := tokeninfo.Group
+		if !URIauthorityManage(group, thisURI) {
+			logger.Warnf("MiddleAuth: 您没有访问此uri的权限")
+			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+				Code: 8400,
+				Msg:  "您没有访问此uri的权限",
+				Data: nil,
+			})
+			return
+		}
+
 		username := tokeninfo.Username
 		// tokenRedis
 		redisconn := redisconf.Pool2.Get()
@@ -118,7 +130,6 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 		return tokenInfo, errors.New("nil tokenStr")
 	} else {
 		// 验证token是否可以被解析
-
 		token, err := jwt.ParseWithClaims(tokenStr, &MyCustomClaims{}, func(token *jwt.Token) (i interface{}, err error) {
 			return []byte(secret), nil
 		})
@@ -134,4 +145,43 @@ func ParseToken(tokenStr string) (*TokenInfo, error) {
 			return tokenInfo, err
 		}
 	}
+}
+
+// URI权限管理
+func URIauthorityManage(group string, uri string) bool {
+	if group == "user" {
+		if _, ok := userURI[uri]; ok {
+			return true
+		}
+		return false
+	}
+	if group == "admin" {
+		if _, ok := adminURI[uri]; ok {
+			return true
+		}
+		return false
+	}
+	return false
+}
+
+var userURI = map[string]struct{}{
+	"/user/logout":          {},
+	"/user/updatePassword":  {},
+	"/user/updateInfo":      {},
+	"/user/order/buy":       {},
+	"/user/order/cancelBuy": {},
+}
+
+var adminURI = map[string]struct{}{
+	"/admin/createPurchaseLimit":   {},
+	"/admin/queryPurchaseLimit":    {},
+	"/admin/queryPurchaseLimits":   {},
+	"/admin/updatePurchaseLimit":   {},
+	"/admin/deletePurchaseLimit":   {},
+	"/admin/loadGoodPurchaseLimit": {},
+
+	"/admin/goodList":   {},
+	"/admin/goodCreate": {},
+	"/admin/goodUpdate": {},
+	"/admin/goodDelete": {},
 }

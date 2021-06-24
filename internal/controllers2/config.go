@@ -6,4 +6,4 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "controllers"})
+var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "controllers-bak"})

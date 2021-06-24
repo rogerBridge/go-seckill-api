@@ -49,19 +49,18 @@ func (g *Good) UpdateGood(tx *gorm.DB) error {
 	if !g.IfGoodExistByID() {
 		return fmt.Errorf("更新商品信息不存在")
 	}
-	logger.Infoln(g.ID)
 	if err := tx.Model(&Good{}).Where("id=?", g.ID).Updates(Good{ProductCategory: g.ProductCategory, ProductName: g.ProductName, Inventory: g.Inventory, Price: g.Price}).Error; err != nil {
 		return fmt.Errorf("更新商品时, 出现错误 %s", err.Error())
 	}
 	return nil
 }
 
-// 根据product_id AND product_name确定唯一的一个商品, 然后删除它
+// 根据product_id确定唯一的一个商品, 然后删除它
 func (g *Good) DeleteGood(tx *gorm.DB) error {
-	if !g.IfGoodExist() {
+	if !g.IfGoodExistByID() {
 		return fmt.Errorf("删除的商品不存在")
 	}
-	if err := tx.Model(&Good{}).Where("product_category=? AND product_name=?", g.ProductCategory, g.ProductName).Update("deleted_at", time.Now()).Error; err != nil {
+	if err := tx.Model(&Good{}).Where("id=?", g.ID).Update("deleted_at", time.Now()).Error; err != nil {
 		return err
 	}
 	return nil
@@ -71,7 +70,7 @@ func (g *Good) DeleteGood(tx *gorm.DB) error {
 // productID 和 productName 都必须唯一
 func (g *Good) IfGoodExist() bool {
 	var result Good
-	conn.Model(&Good{}).Where("product_category=? AND product_name=?", g.ID, g.ProductCategory, g.ProductName).First(&result)
+	conn.Model(&Good{}).Where("product_category=? AND product_name=?", g.ProductCategory, g.ProductName).First(&result)
 	if result.ProductName != "" || result.ProductCategory != "" {
 		logger.Warning("商品信息已存在")
 		return true

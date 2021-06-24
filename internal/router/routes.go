@@ -2,7 +2,6 @@ package router
 
 import (
 	"go-seckill/internal/auth"
-	"go-seckill/internal/controllers"
 	"go-seckill/internal/controllers2"
 
 	"github.com/fasthttp/router"
@@ -37,10 +36,10 @@ func init() {
 	register(fasthttp.MethodPost, "/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)
 	// syncGoodsFromMysql2Redis 在go-seckill初始化的时候就已经做到了, 不需要再做
-	// register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
+	// register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers-bak.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
 	// 这个之后还是用rabbitmq-receiver来做吧, 每次redis库存扣减成功之后都发送消息, 让mysql也扣减
 	// 还是写成定时同步吧, 每隔60s同步redis中goods数据到mysql.goods中
-	register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
+	//register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers_bak.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
 
 	// goods table
 	register(fasthttp.MethodGet, "/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
@@ -56,8 +55,8 @@ func init() {
 	register(fasthttp.MethodPost, "/user/updateInfo", controllers2.UserUpdateInfo, auth.MiddleAuth)
 
 	// orders table
-	register(fasthttp.MethodPost, "/user/buy", controllers.Buy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/user/cancelBuy", controllers.CancelBuy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/order/buy", controllers2.Buy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, "/user/order/cancelBuy", controllers2.CancelBuy, auth.MiddleAuth)
 }
 
 // ThisRouter 通过遍历[]Route, 将需要中间件处理的和不需要中间件处理的分开处置 :)
