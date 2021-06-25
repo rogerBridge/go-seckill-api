@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 
@@ -68,14 +67,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		utils.ResponseWithJson(ctx, fasthttp.StatusOK, easyjsonprocess.CommonResponse{
 			Code: 8001,
 			Msg:  "操作成功",
-			Data: shop_orm.Order{
-				OrderNumber: order.OrderNumber,
-				Username:    order.Username,
-				ProductID:   order.ProductID,
-				PurchaseNum: order.PurchaseNum,
-				Status:      order.Status,
-				Price:       order.Price,
-			},
+			Data: order,
 		})
 		return
 	}

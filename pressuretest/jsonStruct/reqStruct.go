@@ -4,7 +4,6 @@
 package jsonStruct
 
 type ReqBuy struct {
-	UserId      string `json:"userId"`
-	ProductId   string `json:"productId"`
-	PurchaseNum int    `json:"purchaseNum"`
+	ProductId   int `json:"productID"`
+	PurchaseNum int `json:"purchaseNum"`
 }

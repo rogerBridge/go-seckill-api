@@ -29,13 +29,14 @@ import (
 // 	})
 // 	return r
 // }
+
 func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 		ForceColors:   true,
 	})
 	logrus.SetReportCaller(true)
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 }
 
 var BaseLogger = logrus.WithFields(logrus.Fields{

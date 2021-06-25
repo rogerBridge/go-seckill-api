@@ -6,6 +6,7 @@ package pressuremaker
 import (
 	//"encoding/json"
 
+	"encoding/json"
 	"fmt"
 	"go-seckill/pressuretest/jsonStruct"
 	"net"
@@ -17,7 +18,7 @@ import (
 )
 
 //
-var clientFastHttp = &fasthttp.Client{
+var FastHttpClient = &fasthttp.Client{
 	MaxConnsPerHost: 50000, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就不会报错
 	Dial: func(addr string) (conn net.Conn, err error) {
 		//return connLocal, err
@@ -26,26 +27,32 @@ var clientFastHttp = &fasthttp.Client{
 	ReadTimeout: 60 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
 }
 
-func FastSingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64, token string, errChan chan error) (bool, error) {
+type Order struct {
+	Token       string
+	ProductID   int
+	PurchaseNum int
+}
+
+func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errChan chan error) (bool, error) {
 	// 首先, 构造client
-	client := clientFastHttp
+	client := FastHttpClient
+	var URL = "http://127.0.0.1:4000/user/order/buy"
+
 	req := &fasthttp.Request{}
-	req.Header.Set("Authorization", token)
+	req.Header.Set("Authorization", o.Token)
 	req.Header.SetContentType("application/json")
 	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURI(URL)
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
-		UserId:      userID,
-		ProductId:   productID,
-		PurchaseNum: 1,
+		ProductId:   o.ProductID,
+		PurchaseNum: o.PurchaseNum,
 	}
-	reqBody, err := r.MarshalJSON()
+	reqBody, err := json.Marshal(r)
 	if err != nil {
 		logger.Fatalf("Marshal struct to []byte error message %v", err)
 		return false, err
 	}
-	//req := fasthttp.AcquireRequest()
 	req.SetBody(reqBody)
 
 	resp := &fasthttp.Response{}

@@ -1,9 +1,7 @@
 package pressuremaker
 
 import (
-	"encoding/json"
 	"go-seckill/internal/logconf"
-	"io/ioutil"
 	"log"
 	"sort"
 
@@ -12,40 +10,7 @@ import (
 
 var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "pressuremaker"})
 
-var (
-	ConcurrentNum int
-	Host          string
-	URL           string
-)
-
-type config struct {
-	ConcurrentNum int    `json:"concurrentNum"`
-	Host          string `json:"host"`
-	URL           string `json:"url"`
-}
-
-func Start() {
-	config := loadConfig()
-	ConcurrentNum = config.ConcurrentNum
-	Host = config.Host
-	URL = Host + config.URL
-}
-
-// load config from config.json
-func loadConfig() *config {
-	fileBytes, err := ioutil.ReadFile("pressuremaker/config.json")
-	if err != nil {
-		log.Printf("加载配置文件失败: %v\n", err)
-		panic(err)
-	}
-	c := new(config)
-	err = json.Unmarshal(fileBytes, c)
-	if err != nil {
-		log.Printf("read json config from file to struct error \n")
-		panic(err)
-	}
-	return c
-}
+var ConcurrentNum = 10000
 
 func PlayTimeStatisticsList(timeStatisticsList []float64) {
 	// 请求未完成, 中途夭折的请求的数量

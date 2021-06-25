@@ -51,9 +51,19 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	err = tx.Commit().Error
 	if err != nil {
 		logger.Infof("CreatePurchaseLimit tx commit error: %v", err)
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
-			Code: 8200,
-			Msg:  "添加PurchaseLimit成功",
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			Code: 8500,
+			Msg:  "添加PurchaseLimit, 执行事务时失败",
+			Data: nil,
+		})
+		return
+	}
+	// 更新runtime中的PurchaseLimitMap
+	err = LoadGoodPurchaseLimit()
+	if err != nil {
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			Code: 8500,
+			Msg:  "更新PurchaseLimitMap变量时失败",
 			Data: nil,
 		})
 		return
@@ -161,6 +171,16 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
+	// 更新runtime中的PurchaseLimitMap
+	err = LoadGoodPurchaseLimit()
+	if err != nil {
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			Code: 8500,
+			Msg:  "更新PurchaseLimitMap变量时失败",
+			Data: nil,
+		})
+		return
+	}
 	logger.Infof("UpdatePurchaseLimit transaction commit successful")
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8200,
@@ -218,23 +238,13 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 // SyncGoodsLimit ...
 // 更新商品限制计划
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
-func LoadGoodPurchaseLimit(ctx *fasthttp.RequestCtx) {
+func LoadGoodPurchaseLimit() error {
 	// 加载limit限制计划
 	err := redisconf.LoadLimits()
 	if err != nil {
-		logger.Warnf("SyncGoodsLimit: 加载limit变量到全局变量purchaseLimit时出现错误 %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
-			Code: 8500,
-			Msg:  "加载mysql中限制购买的数据到全局变量purchaseLimit时出现错误",
-			Data: nil,
-		})
-		return
-		//ctx.Error(err.Error(), fasthttp.StatusInternalServerError)
+		logger.Warnf("SyncGoodsLimit: 加载limit变量到全局变量purchaseLimitMap时出现错误 %v", err)
+		return err
 	}
 	logger.Infof("SyncGoodsLimit: 加载limit变量到全局变量purchaseLimit成功")
-	utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
-		Code: 8001,
-		Msg:  "加载mysql中限制购买的数据到全局变量purchaseLimit",
-		Data: nil,
-	})
+	return nil
 }

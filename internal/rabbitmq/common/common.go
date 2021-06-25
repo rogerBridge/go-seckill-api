@@ -28,8 +28,8 @@ func GetChannel() *amqp.Channel {
 	//defer ch.Close()
 
 	err = ch.ExchangeDeclare(
-		"logs", // 这个exchange负责将订单消息发送给处理写mysql.shop.orders的应用
-		"direct",
+		"order-process", // 这个exchange负责将订单消息发送给处理写mysql.shop.orders的应用
+		"direct",        // exchange 的类型
 		true,
 		false,
 		false,
@@ -39,7 +39,7 @@ func GetChannel() *amqp.Channel {
 	Errlog(err, "declare exchange fail")
 
 	q, err := ch.QueueDeclare(
-		"sendToMysql", //queue name
+		"order", //queue name
 		true,
 		false,
 		false,
@@ -51,7 +51,7 @@ func GetChannel() *amqp.Channel {
 	err = ch.QueueBind(
 		q.Name,
 		"", // receive only key match msg publish
-		"logs",
+		"order-process",
 		false,
 		nil,
 	)

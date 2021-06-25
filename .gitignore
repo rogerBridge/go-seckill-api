@@ -5,3 +5,4 @@ cmd/go-seckill/go-seckill
 build/rabbitmqReceiver/mqttReceiver
 build/go-seckill/mysql_config.json
 build/go-seckill/go-seckill
+pressuretest/pressuremaker/token.db

@@ -34,7 +34,7 @@ func init() {
 	register(fasthttp.MethodPost, "/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/updatePurchaseLimit", controllers2.UpdatePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, "/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)
+	//register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)
 	// syncGoodsFromMysql2Redis 在go-seckill初始化的时候就已经做到了, 不需要再做
 	// register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers-bak.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
 	// 这个之后还是用rabbitmq-receiver来做吧, 每次redis库存扣减成功之后都发送消息, 让mysql也扣减

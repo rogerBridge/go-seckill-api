@@ -1,6 +1,7 @@
 package shop_orm
 
 import (
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -19,7 +20,10 @@ type Order struct {
 // 这里应该选择严格模式吗? 只选择需要创建的东西
 // check params in http request maybe is best :)
 func (o *Order) CreateOrder(tx *gorm.DB) error {
-	if err := tx.Create(o).Error; err != nil {
+	if !o.CheckOrderParams() {
+		return fmt.Errorf("Order参数检查没有通过")
+	}
+	if err := tx.Model(&Order{}).Select("OrderNumber", "Username", "ProductID", "PurchaseNum", "Status", "Price").Create(o).Error; err != nil {
 		return err
 	}
 	return nil
@@ -52,13 +56,16 @@ func (o *Order) UpdateOrderStatus(tx *gorm.DB) error {
 }
 
 func (o *Order) UpdateOrder(tx *gorm.DB) error {
+	if !o.CheckOrderParams() {
+		return fmt.Errorf("Order参数检查没有通过")
+	}
 	if err := tx.Model(&Order{}).Where("order_number=?", o.OrderNumber).Updates(Order{
 		OrderNumber: o.OrderNumber,
 		Username:    o.Username,
 		ProductID:   o.ProductID,
 		PurchaseNum: o.PurchaseNum,
 		Status:      o.Status,
-		Price:       0,
+		Price:       o.Price,
 	}).Error; err != nil {
 		return err
 	}
@@ -70,4 +77,11 @@ func (o *Order) DeleteOrder(tx *gorm.DB) error {
 		return err
 	}
 	return nil
+}
+
+func (o *Order) CheckOrderParams() bool {
+	if o.OrderNumber == "" || o.Username == "" || o.ProductID == 0 || o.PurchaseNum <= 0 || o.Status == "" {
+		return false
+	}
+	return true
 }

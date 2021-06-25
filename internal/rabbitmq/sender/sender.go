@@ -8,7 +8,7 @@ import (
 
 func Send(msg []byte, ch *amqp.Channel) error {
 	err := ch.Publish(
-		"logs",
+		"order-process",
 		"", // message's routing key
 		false,
 		false,

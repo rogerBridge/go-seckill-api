@@ -41,7 +41,7 @@ func passwordEncrypt(password string) string {
 	return base64.StdEncoding.EncodeToString(ss)
 }
 
-// 区分不同权限的用户, 使用一个256bit信息的密钥, 在注册的时候的组信息里面填写
+// 区分不同权限的用户, 使用组名称
 func (u *User) CreateUser(tx *gorm.DB) error {
 	// 检测用户注册信息是否符合规范
 	if err := u.CheckEmailFormat(); err != nil {

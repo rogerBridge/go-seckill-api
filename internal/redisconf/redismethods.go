@@ -23,25 +23,39 @@ func InitStore() error {
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 
+	// tokenInfoRedis
+	conn2 := Pool2.Get()
+	defer conn2.Close()
+
 	// PING PONG
 	err := conn.Send("ping")
 	if err != nil {
-		logger.Warnf("connect to goodsInfoRedis error message: %v", err)
+		logger.Fatalf("connect to goodsInfoRedis error message: %v", err)
 		return err
 	}
 	err = conn1.Send("ping")
 	if err != nil {
-		logger.Warnf("connect to orderInfoRedis error message: %v", err)
+		logger.Fatalf("connect to orderInfoRedis error message: %v", err)
+		return err
+	}
+	err = conn2.Send("ping")
+	if err != nil {
+		logger.Fatalf("connect to tokenInfoRedis error message: %v", err)
 		return err
 	}
 	err = conn.Send("flushdb")
 	if err != nil {
-		logger.Warnf("flushdb goodsInfoRedis error message: %v", err)
+		logger.Fatalf("flushdb goodsInfoRedis error message: %v", err)
 		return err
 	}
 	err = conn1.Send("flushdb")
 	if err != nil {
-		logger.Warnf("flushdb orderInfoRedis error message: %v", err)
+		logger.Fatalf("flushdb orderInfoRedis error message: %v", err)
+		return err
+	}
+	err = conn2.Send("flushdb")
+	if err != nil {
+		logger.Fatalf("flushdb tokenInfoRedis error message: %v", err)
 		return err
 	}
 	return nil
@@ -254,7 +268,7 @@ func (o *Order) OrderGenerator() error {
 	}
 	// 开始把生成的信息发送给mqtt exchange
 
-	logger.Debugln(o.ProductID, goodMap[o.ProductID])
+	//logger.Debugln(o.ProductID, goodMap[o.ProductID])
 	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		logger.Warnf("OrderGenerator: json marshal error message: %v", err)
@@ -262,8 +276,9 @@ func (o *Order) OrderGenerator() error {
 	}
 	// 将生成的订单信息发送给rabbitmq receiver
 	err = sender.Send(jsonBytes, ch)
+	logger.Infof("生成的订单信息发送给mqtt exchange: %v", jsonBytes)
 	if err != nil {
-		logger.Warnf("OrderGenerator: %s send msg: %v error: %v", o.Username, jsonBytes, err)
+		logger.Warnf("User: %s send msg: %v error: %v", o.Username, jsonBytes, err)
 		return err
 	}
 	return nil
@@ -338,18 +353,6 @@ func (o *Order) CancelBuy() error {
 			logger.Warnf("CancelBuy: user:%v 没有购买过的东东:%v, 不可以取消哦~", o.Username, productID)
 			return fmt.Errorf("user:%s 没有购买过的东东:%v, 不可以取消哦~", o.Username, productID)
 		}
-		// 如果人家用户真的购买过...
-		// 那就赶快处理呀, 嘿嘿
-		//existPurchaseNum, err := redis.Int(conn1.Do("hget", "user:"+o.Username+":bought", productID))
-		//if err != nil {
-		//	logger.Warnf("CancelBuy: %+v 获取已购买商品%s时出现错误! %+v", o, productID, err)
-		//	return err
-		//}
-		//// 如果顾客购买了1件, 却要取消两件, 那就拒绝
-		//if !(existPurchaseNum >= purchaseNum) {
-		//	logger.Warnf("CancelBuy: %+v 取消购买的数量不能大于购买的数量", o)
-		//	return fmt.Errorf("取消购买的数量不能大于购买的数量")
-		//}
 		// 给这个订单打个tag status:cancel
 		_, err = redis.Int(conn1.Do("hset", "user:"+o.Username+":order:"+o.OrderNumber, "status", "cancel"))
 		if err != nil {
@@ -378,10 +381,6 @@ func (o *Order) CancelBuy() error {
 		}
 		logger.Warnf("用户%s取消订单%s成功", o.Username, o.OrderNumber)
 		return nil
-		//if err := orders.UpdateOrders("cancel", o.OrderNumber); err != nil {
-		//	logger.Warnf("CancelBuy: mysql处理更新orders表的时候出错 %v", err)
-		//	return err
-		//}
 	}
 	return fmt.Errorf("未知错误, 哇啦啦")
 }

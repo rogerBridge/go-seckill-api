@@ -14,11 +14,11 @@ var clientHttp = &http.Client{
 	Timeout:   30 * time.Second,
 }
 
-func SingleRequest(userID string, productID string, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
+func SingleRequest(token string, productID int, w *sync.WaitGroup, timeStatistics chan float64) (bool, error) {
 	client := clientHttp
+	var URL = "http://127.0.0.1:4000/user/buy"
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{
-		UserId:      userID,
 		ProductId:   productID,
 		PurchaseNum: 1,
 	}
@@ -33,6 +33,7 @@ func SingleRequest(userID string, productID string, w *sync.WaitGroup, timeStati
 		return false, err
 	}
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", token)
 
 	// 开始发送请求
 	t0 := time.Now() // 客户端开始发起请求的时间

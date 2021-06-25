@@ -1,42 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"go-seckill/pressuretest/pressuremaker"
-	"strconv"
 	"sync"
 )
 
 // 这个包对已经写成的功能模块进行压力测试
 // 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
-	pressuremaker.Start()
-	token, err := pressuremaker.GetToken()
-	if err != nil {
-		logger.Fatalf("When get token, error message: %v", err)
-	}
+	//pressuremaker.GetTokenListSingle()
+	fmt.Printf("Start test \n")
+	test()
+}
+
+func test() {
+	tokenList := pressuremaker.GetTokenListFromSqlite()
+
 	var w sync.WaitGroup
 	// 时间统计channel
 	timeStatistics := make(chan float64, pressuremaker.ConcurrentNum)
+	errChan := make(chan error, pressuremaker.ConcurrentNum)
 
 	start := 0
 	end := start + pressuremaker.ConcurrentNum
-
-	//x 人同时抢购"10001"这件商品
-	errChan := make(chan error, pressuremaker.ConcurrentNum)
 	for i := start; i < end; i++ {
+		o := pressuremaker.Order{
+			Token:       tokenList[i],
+			ProductID:   3,
+			PurchaseNum: 1,
+		}
 		w.Add(1)
-		// 会将所有的error发送给errChan这个channel, 方便之后统计
-		go pressuremaker.FastSingleRequest(strconv.Itoa(i), "10001", &w, timeStatistics, token, errChan)
-		//go singleRequest(client1, strconv.Itoa(i), "10001", &w, timeStatistics)
+		// 会将所有的error发送给errChan这个channel, 方便之后统计 }
+		// every time duration send to timeStatistics
+		go o.CreateOrder(&w, timeStatistics, errChan)
 	}
-
-	//for i:=start; i<end-10000; i++ {
-	//	w.Add(2)
-	//	// userId 范围10000~20000的同时抢购"10000"和"10001"
-	//	go fastSingleRequest(client2, strconv.Itoa(i), "10001", &w, timeStatistics)
-	//	go fastSingleRequest(client2, strconv.Itoa(i+10000), "10002", &w, timeStatistics)
-	//}
-
 	w.Wait()
 	// 关闭时间统计channel, 开始我们的计算!
 	close(timeStatistics)
@@ -48,6 +46,7 @@ func main() {
 	for t := range timeStatistics {
 		timeStatisticsList = append(timeStatisticsList, t)
 	}
+	// logger.Infoln(timeStatisticsList, len(timeStatisticsList))
 	pressuremaker.PlayTimeStatisticsList(timeStatisticsList)
 
 	// 把统计到的错误信息放置到一个slice中, 写出自己需要的函数方法
