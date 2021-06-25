@@ -15,11 +15,11 @@ import (
 
 // InitStore, 将mysql中现存的商品添加进redis的goodsInfoRedis实例中
 func InitStore() error {
-	// goodsInfoRedis
+	// goodRedis
 	conn := Pool.Get()
 	defer conn.Close()
 
-	// orderInfoRedis
+	// orderRedis
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 
@@ -30,12 +30,12 @@ func InitStore() error {
 	// PING PONG
 	err := conn.Send("ping")
 	if err != nil {
-		logger.Fatalf("connect to goodsInfoRedis error message: %v", err)
+		logger.Fatalf("connect to goodRedis error message: %v", err)
 		return err
 	}
 	err = conn1.Send("ping")
 	if err != nil {
-		logger.Fatalf("connect to orderInfoRedis error message: %v", err)
+		logger.Fatalf("connect to orderRedis error message: %v", err)
 		return err
 	}
 	err = conn2.Send("ping")
@@ -45,12 +45,12 @@ func InitStore() error {
 	}
 	err = conn.Send("flushdb")
 	if err != nil {
-		logger.Fatalf("flushdb goodsInfoRedis error message: %v", err)
+		logger.Fatalf("flushdb goodRedis error message: %v", err)
 		return err
 	}
 	err = conn1.Send("flushdb")
 	if err != nil {
-		logger.Fatalf("flushdb orderInfoRedis error message: %v", err)
+		logger.Fatalf("flushdb orderRedis error message: %v", err)
 		return err
 	}
 	err = conn2.Send("flushdb")
@@ -123,7 +123,7 @@ func LoadGoods() error {
 			return err
 		}
 	}
-	logger.Info("load data from mysql.shop.goods to goodsInfoRedis successful ")
+	logger.Info("load data from mysql.shop.goods to goodRedis successful ")
 	return nil
 }
 
@@ -177,10 +177,10 @@ func (o *Order) CanBuyIt() (bool, error) {
 
 // UserFilter 检查用户是否满足购买某种商品的权限
 func (o *Order) CanBuyIt2(hasLimit bool) (bool, error) {
-	// goodsInfoRedis
+	// goodRedis
 	conn := Pool.Get()
 	defer conn.Close()
-	// orderInfoRedis
+	// orderRedis
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 	// 判断商品库存是否还充足?
@@ -226,7 +226,7 @@ func (o *Order) OrderGenerator() error {
 	conn := Pool.Get()
 	defer conn.Close()
 
-	// orderInfoRedis
+	// orderRedis
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 	//// 只要list rpop之后的值不是nil就可以

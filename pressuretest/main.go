@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"go-seckill/pressuretest/pressuremaker"
 	"sync"
 )
@@ -9,9 +8,11 @@ import (
 // 这个包对已经写成的功能模块进行压力测试
 // 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
-	//pressuremaker.GetTokenListSingle()
-	fmt.Printf("Start test \n")
-	test()
+	pressuremaker.InitSqlite()
+	pressuremaker.CreateToken()
+
+	//fmt.Printf("Start test \n")
+	//test()
 }
 
 func test() {

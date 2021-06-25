@@ -1,23 +1,23 @@
 services:
-    goodsInfoRedis:
+    goodRedis:
         image: redis:6.2.4
-        hostname: goodsInfoRedis
+        hostname: goodRedis
         command: redis-server /usr/local/etc/redis/redis.conf
         volumes: 
-            - goodsInfoRedisData:/data
-            - ./redis/goodsInfoRedis/redis.conf:/usr/local/etc/redis/redis.conf
+            - goodRedisData:/data
+            - ./redis/goodRedis/redis.conf:/usr/local/etc/redis/redis.conf
         ports:
             - "127.0.0.1:6379:6379"
         restart: unless-stopped
         networks:
             - go-seckill
-    orderInfoRedis:
+    orderRedis:
         image: redis:6.2.4
-        hostname: orderInfoRedis
+        hostname: orderRedis
         command: redis-server /usr/local/etc/redis/redis.conf
         volumes: 
-            - orderInfoRedisData:/data
-            - ./redis/orderInfoRedis/redis.conf:/usr/local/etc/redis/redis.conf
+            - orderRedisData:/data
+            - ./redis/orderRedis/redis.conf:/usr/local/etc/redis/redis.conf
         ports:
             - "127.0.0.1:6380:6379"
         restart: unless-stopped
@@ -43,12 +43,10 @@ services:
         environment: 
             MYSQL_ROOT_PASSWORD: 12345678
             TZ: Asia/Shanghai
-            MYSQL_DATABASE: shop
             MYSQL_DATABASE: seckill
         volumes:
             - mysql-conf:/etc/mysql/conf.d
             - mysql-data:/var/lib/mysql
-            - ./mysql/initScripts:/docker-entrypoint-initdb.d
         ports:
             - "127.0.0.1:3306:3306"
         restart: unless-stopped
@@ -75,13 +73,11 @@ services:
         image: rogerbridge/rabbitmq-receiver:test
         hostname: rabbitmq-receiver
         restart: unless-stopped
-        volumes:
-            - rabbitmq-receiver:/etc
         depends_on:
             - rabbitmq-server
             - db
-            - goodsInfoRedis
-            - orderInfoRedis
+            - goodRedis
+            - orderRedis
             - tokenRedis
         networks:
             - go-seckill
@@ -90,11 +86,9 @@ services:
         image: rogerbridge/go-seckill:test
         hostname: go-seckill
         restart: unless-stopped
-        volumes:
-            - go-seckill:/etc
         depends_on:
-            - goodsInfoRedis
-            - orderInfoRedis
+            - goodRedis
+            - orderRedis
             - tokenRedis
             - db
             - rabbitmq-server
@@ -105,14 +99,12 @@ services:
             - go-seckill
         
 volumes:
-    goodsInfoRedisData:
-    orderInfoRedisData:
+    goodRedisData:
+    orderRedisData:
     tokenRedisData:
     mysql-conf:
     mysql-data:
     rabbitmq-server:
-    rabbitmq-receiver:
-    go-seckill:
 
 networks:
     go-seckill:

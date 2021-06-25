@@ -1,12 +1,12 @@
 {
-    "goodsInfoRedis": {
+    "goodRedis": {
         "networktype": "tcp",
-        "host": "goodsInfoRedis",
+        "host": "goodRedis",
         "port": 6379
     },
-    "orderInfoRedis": {
+    "orderRedis": {
         "networktype": "tcp",
-        "host": "orderInfoRedis",
+        "host": "orderRedis",
         "port": 6379
     },
     "tokenRedis": {

@@ -51,8 +51,9 @@ import (
 //}
 //
 //var pool = newSentinelPool()
-var Pool = RedisConn("goodsInfoRedis")
-var Pool1 = RedisConn("orderInfoRedis")
+
+var Pool = RedisConn("goodRedis")
+var Pool1 = RedisConn("orderRedis")
 var Pool2 = RedisConn("tokenRedis")
 
 // redisName 指定redis实例的名称,
