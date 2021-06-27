@@ -48,6 +48,7 @@ func (u *UserLogin) GetLoginInfo(w *sync.WaitGroup, tokenChan chan string) (*log
 	req.SetRequestURI(url)
 	req.Header.SetContentType("application/json")
 	req.Header.SetMethod(http.MethodPost)
+	logger.Println(u.Username, u.Password)
 
 	reqBytes, err := json.Marshal(u)
 	if err != nil {
@@ -56,15 +57,18 @@ func (u *UserLogin) GetLoginInfo(w *sync.WaitGroup, tokenChan chan string) (*log
 	req.SetBody(reqBytes)
 
 	resp := new(fasthttp.Response)
+	loginInfo := new(loginInfo)
 	err = client.Do(req, resp)
 	if err != nil {
-		logger.Fatalln(err)
-		return &loginInfo{}, err
+		logger.Warnln(err)
+		//logger.Fatalln(err)
+		return loginInfo, err
 	}
-	loginInfo := new(loginInfo)
 	err = json.Unmarshal(resp.Body(), loginInfo)
 	if err != nil {
-		logger.Fatalln(err)
+		logger.Warnln(err)
+		//logger.Fatalln(err)
+		return loginInfo, err
 	}
 	logger.Debugln(string(resp.Body()))
 	tokenChan <- loginInfo.Data.Token
@@ -105,8 +109,8 @@ func (u *UserLogin) GetLoginInfoSingle() (*loginInfo, error) {
 
 // single goroutine 获取用户token
 func GetTokenListSingle() ([]tokenInfo, error) {
-	users := make([]*UserLogin, 10000)
-	for i := 0; i < 10000; i++ {
+	users := make([]*UserLogin, ConcurrentNum)
+	for i := 0; i < ConcurrentNum; i++ {
 		users[i] = &UserLogin{
 			Username: "test" + strconv.Itoa(i),
 			Password: "12345678",
@@ -116,7 +120,7 @@ func GetTokenListSingle() ([]tokenInfo, error) {
 	var loginInfo *loginInfo
 	var err error
 	//tokenList := make([]string, 0, 10000)
-	tokenList := make([]tokenInfo, 0, 10000)
+	tokenList := make([]tokenInfo, 0, ConcurrentNum)
 	for i := 0; i < 10000; i++ {
 		loginInfo, err = users[i].GetLoginInfoSingle()
 		if err != nil {
@@ -136,31 +140,37 @@ func GetTokenListSingle() ([]tokenInfo, error) {
 
 // 得到 []*loginInfo
 func GetTokenList() {
-	users := make([]*UserLogin, 10000)
-	var w sync.WaitGroup
-	tokenChan := make(chan string, 10000)
-
-	for i := 0; i < 10000; i++ {
+	users := make([]*UserLogin, ConcurrentNum)
+	for i := 0; i < ConcurrentNum; i++ {
 		users[i] = &UserLogin{
 			Username: "test" + strconv.Itoa(i),
 			Password: "12345678",
 		}
 	}
-	for i := 0; i < 10000; i++ {
+
+	var w sync.WaitGroup
+	tokenChan := make(chan string, ConcurrentNum)
+
+	for i := 0; i < ConcurrentNum; i++ {
 		w.Add(1)
 		go users[i].GetLoginInfo(&w, tokenChan)
 	}
 
 	w.Wait()
 	close(tokenChan)
-	tokenList := make([]string, 0, 10000)
+
+	countNull := 0
+	tokenList := make([]string, 0, ConcurrentNum)
 	for v := range tokenChan {
+		if v == "" {
+			countNull += 1
+		}
 		tokenList = append(tokenList, v)
 	}
-	for i, v := range tokenList {
-		fmt.Println(i, v)
-	}
-	fmt.Println("生成的tokenList的长度是: ", len(tokenList))
+	//for i, v := range tokenList {
+	//
+	//}
+	fmt.Println(countNull)
 }
 
 func (u *User) Register() error {
@@ -189,8 +199,8 @@ func (u *User) Register() error {
 }
 
 func RegisterUsers() error {
-	users := make([]*User, 10000)
-	for i := 0; i < 10000; i++ {
+	users := make([]*User, ConcurrentNum)
+	for i := 0; i < ConcurrentNum; i++ {
 		users[i] = &User{
 			Username: "test" + strconv.Itoa(i),
 			Password: "12345678",
