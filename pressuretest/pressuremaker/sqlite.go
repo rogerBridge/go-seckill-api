@@ -39,29 +39,32 @@ func CreateToken() {
 	if err != nil {
 		logger.Fatalf("当获取token时出错: %s", err)
 	}
-	tokens := make([]Token, 0, 10000)
+	tokens := make([]Token, 0, ConcurrentNum)
 	for i := range tokenList {
 		tokens = append(tokens, Token{
 			Username: tokenList[i].Username,
 			Token:    tokenList[i].Token,
 		})
 	}
-	logger.Infoln("%+v", tokens[0])
-	for i := range tokens {
-		db.Create(&tokens[i])
-	}
+	logger.Debugf("%v", tokens[0])
+
+	//for i := range tokens {
+	//	db.Select("Username", "Token").Create(&tokens[i])
+	//}
+
+	db.CreateInBatches(tokens, 1000)
 	//db.Create(&tokens)
 	//db.Model(&Token{}).Create(&tokens)
 }
 
 func QueryToken() []Token {
-	tokens := make([]Token, 10000)
+	tokens := make([]Token, ConcurrentNum)
 	db.Find(&tokens)
 	return tokens
 }
 
 func GetTokenListFromSqlite() []string {
-	tokenList := make([]string, 0, 10000)
+	tokenList := make([]string, 0, ConcurrentNum)
 	tokens := QueryToken()
 	for i := range tokens {
 		tokenList = append(tokenList, tokens[i].Token)
