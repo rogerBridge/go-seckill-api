@@ -22,7 +22,7 @@
   - docker-compose部署:
     ```bash
     # 测试过的docker-compose版本为: 1.29.2
-    cd deploy && docker-compose up
+    cd deploy && docker-compose up -d
     ```
 
 - 性能测试
