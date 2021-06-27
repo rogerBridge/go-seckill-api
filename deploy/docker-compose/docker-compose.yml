@@ -1,111 +1,123 @@
+version: '3'
+
 services:
-    goodRedis:
-        image: redis:6.2.4
-        hostname: goodRedis
-        command: redis-server /usr/local/etc/redis/redis.conf
-        volumes: 
-            - goodRedisData:/data
-            - ./redis/goodRedis/redis.conf:/usr/local/etc/redis/redis.conf
-        ports:
-            - "127.0.0.1:6379:6379"
-        restart: unless-stopped
-        networks:
-            - go-seckill
-    orderRedis:
-        image: redis:6.2.4
-        hostname: orderRedis
-        command: redis-server /usr/local/etc/redis/redis.conf
-        volumes: 
-            - orderRedisData:/data
-            - ./redis/orderRedis/redis.conf:/usr/local/etc/redis/redis.conf
-        ports:
-            - "127.0.0.1:6380:6379"
-        restart: unless-stopped
-        networks:
-            - go-seckill
-    tokenRedis:
-        image: redis:6.2.4
-        hostname: tokenRedis
-        command: redis-server /usr/local/etc/redis/redis.conf
-        volumes: 
-            - tokenRedisData:/data
-            - ./redis/tokenRedis/redis.conf:/usr/local/etc/redis/redis.conf
-        ports:
-            - "127.0.0.1:6381:6379"
-        restart: unless-stopped
-        networks:
-            - go-seckill
+  goodRedis:
+    image: redis:6.2.4
+    hostname: goodRedis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - goodRedisData:/data
+      - ./redis/goodRedis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "127.0.0.1:6379:6379"
+    restart: unless-stopped
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.2
+  orderRedis:
+    image: redis:6.2.4
+    hostname: orderRedis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - orderRedisData:/data
+      - ./redis/orderRedis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "127.0.0.1:6380:6379"
+    restart: unless-stopped
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.3
+  tokenRedis:
+    image: redis:6.2.4
+    hostname: tokenRedis
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - tokenRedisData:/data
+      - ./redis/tokenRedis/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "127.0.0.1:6381:6379"
+    restart: unless-stopped
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.4
 
-    db:
-        image: mysql:8.0.25
-        hostname: mysql
-        command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
-        environment: 
-            MYSQL_ROOT_PASSWORD: 12345678
-            TZ: Asia/Shanghai
-            MYSQL_DATABASE: seckill
-        volumes:
-            - mysql-conf:/etc/mysql/conf.d
-            - mysql-data:/var/lib/mysql
-        ports:
-            - "127.0.0.1:3306:3306"
-        restart: unless-stopped
-        networks:
-            - go-seckill
+  db:
+    image: mysql:8.0.25
+    hostname: mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      TZ: Asia/Shanghai
+      MYSQL_DATABASE: seckill
+    volumes:
+      - mysql-conf:/etc/mysql/conf.d
+      - mysql-data:/var/lib/mysql
+    ports:
+      - "127.0.0.1:3306:3306"
+    restart: unless-stopped
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.5
 
-    rabbitmq-server:
-        image: rabbitmq:3-management
-        hostname: rabbitmq-server
-        environment: 
-            RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "2048MB"
-            RABBITMQ_DEFAULT_USER: "root"
-            RABBITMQ_DEFAULT_PASS: "12345678"
-            RABBITMQ_DEFAULT_VHOST: "root_vhost"
-        volumes:
-            - rabbitmq-server:/etc
-        ports:
-            - "127.0.0.1:15672:15672"
-        restart: unless-stopped
-        networks:
-            - go-seckill
-    
-    rabbitmq-receiver:
-        image: rogerbridge/rabbitmq-receiver:test
-        hostname: rabbitmq-receiver
-        restart: unless-stopped
-        depends_on:
-            - rabbitmq-server
-            - db
-            - goodRedis
-            - orderRedis
-            - tokenRedis
-        networks:
-            - go-seckill
-    
-    go-seckill:
-        image: rogerbridge/go-seckill:test
-        hostname: go-seckill
-        restart: unless-stopped
-        depends_on:
-            - goodRedis
-            - orderRedis
-            - tokenRedis
-            - db
-            - rabbitmq-server
-            - rabbitmq-receiver
-        ports:
-            - "127.0.0.1:4000:4000"
-        networks:
-            - go-seckill
-        
+  rabbitmq-server:
+    image: rabbitmq:3-management
+    hostname: rabbitmq-server
+    environment:
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "2048MB"
+      RABBITMQ_DEFAULT_USER: "root"
+      RABBITMQ_DEFAULT_PASS: "12345678"
+      RABBITMQ_DEFAULT_VHOST: "root_vhost"
+    volumes:
+      - rabbitmq-server:/etc
+    ports:
+      - "127.0.0.1:15672:15672"
+    restart: unless-stopped
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.6
+
+  rabbitmq-receiver:
+    image: rogerbridge/rabbitmq-receiver:test
+    hostname: rabbitmq-receiver
+    restart: unless-stopped
+    depends_on:
+      - rabbitmq-server
+      - db
+      - goodRedis
+      - orderRedis
+      - tokenRedis
+    networks:
+      - go-seckill
+
+  go-seckill:
+    image: rogerbridge/go-seckill:test
+    hostname: go-seckill
+    restart: unless-stopped
+    depends_on:
+      - goodRedis
+      - orderRedis
+      - tokenRedis
+      - db
+      - rabbitmq-server
+      - rabbitmq-receiver
+    ports:
+      - "127.0.0.1:4000:4000"
+    networks:
+      - go-seckill
+
 volumes:
-    goodRedisData:
-    orderRedisData:
-    tokenRedisData:
-    mysql-conf:
-    mysql-data:
-    rabbitmq-server:
+  goodRedisData:
+  orderRedisData:
+  tokenRedisData:
+  mysql-conf:
+  mysql-data:
+  rabbitmq-server:
 
 networks:
-    go-seckill:
-        name: go-seckill-network
+  go-seckill:
+    name: go-seckill-network
+    ipam:
+      driver: default
+      config:
+        - gateway: 172.20.0.1
+          subnet: 172.20.0.0/24
