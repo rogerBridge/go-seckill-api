@@ -6,7 +6,6 @@ import (
 	"go-seckill/internal/auth"
 	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop/structure"
 	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
@@ -147,7 +146,11 @@ func UserLogout(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("Logout: user %s logout success", username)
-	utils.ResponseWithJson(ctx, 200, structure.UserLogout{Message: "logout successful"})
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		Code: 8200,
+		Msg:  "logout successful",
+		Data: nil,
+	})
 }
 
 func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
