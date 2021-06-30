@@ -36,7 +36,7 @@ func init() {
 		ForceColors:   true,
 	})
 	logrus.SetReportCaller(true)
-	logrus.SetLevel(logrus.InfoLevel)
+	logrus.SetLevel(logrus.DebugLevel)
 }
 
 var BaseLogger = logrus.WithFields(logrus.Fields{

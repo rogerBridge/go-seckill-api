@@ -53,11 +53,11 @@ func InitStore() error {
 		logger.Fatalf("flushdb orderRedis error message: %v", err)
 		return err
 	}
-	err = conn2.Send("flushdb")
-	if err != nil {
-		logger.Fatalf("flushdb tokenInfoRedis error message: %v", err)
-		return err
-	}
+	//err = conn2.Send("flushdb")
+	//if err != nil {
+	//	logger.Fatalf("flushdb tokenInfoRedis error message: %v", err)
+	//	return err
+	//}
 	return nil
 }
 
@@ -190,7 +190,7 @@ func (o *Order) CanBuyIt2(hasLimit bool) (bool, error) {
 		return false, err
 	}
 	if inventory < 1 {
-		return false, nil
+		return false, fmt.Errorf("商品库存不足")
 	}
 	if !hasLimit {
 		return true, nil
