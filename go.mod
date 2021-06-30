@@ -9,7 +9,6 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/gomodule/redigo v1.8.4
 	github.com/klauspost/compress v1.13.0 // indirect
-	github.com/mailru/easyjson v0.7.7
 	github.com/segmentio/ksuid v1.0.3
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.7.1
