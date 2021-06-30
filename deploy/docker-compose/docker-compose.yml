@@ -10,7 +10,7 @@ services:
       - ./redis/goodRedis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - "127.0.0.1:6379:6379"
-    restart: unless-stopped
+    restart: "unless-stopped"
     networks:
       go-seckill:
         ipv4_address: 172.20.0.2
@@ -23,7 +23,7 @@ services:
       - ./redis/orderRedis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - "127.0.0.1:6380:6379"
-    restart: unless-stopped
+    restart: "unless-stopped"
     networks:
       go-seckill:
         ipv4_address: 172.20.0.3
@@ -36,7 +36,7 @@ services:
       - ./redis/tokenRedis/redis.conf:/usr/local/etc/redis/redis.conf
     ports:
       - "127.0.0.1:6381:6379"
-    restart: unless-stopped
+    restart: "unless-stopped"
     networks:
       go-seckill:
         ipv4_address: 172.20.0.4
@@ -54,7 +54,7 @@ services:
       - mysql-data:/var/lib/mysql
     ports:
       - "127.0.0.1:3306:3306"
-    restart: unless-stopped
+    restart: "unless-stopped"
     networks:
       go-seckill:
         ipv4_address: 172.20.0.5
@@ -71,7 +71,7 @@ services:
       - rabbitmq-server:/etc
     ports:
       - "127.0.0.1:15672:15672"
-    restart: unless-stopped
+    restart: "unless-stopped"
     networks:
       go-seckill:
         ipv4_address: 172.20.0.6
@@ -79,20 +79,21 @@ services:
   rabbitmq-receiver:
     image: rogerbridge/rabbitmq-receiver:test
     hostname: rabbitmq-receiver
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       - rabbitmq-server
       - db
       - goodRedis
       - orderRedis
       - tokenRedis
+    restart: "unless-stopped"
     networks:
       - go-seckill
 
   go-seckill:
     image: rogerbridge/go-seckill:test
     hostname: go-seckill
-    restart: unless-stopped
+    restart: "no"
     depends_on:
       - goodRedis
       - orderRedis
@@ -102,6 +103,7 @@ services:
       - rabbitmq-receiver
     ports:
       - "127.0.0.1:4000:4000"
+    restart: "unless-stopped"
     networks:
       - go-seckill
 
