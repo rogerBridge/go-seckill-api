@@ -164,24 +164,26 @@ func URIauthorityManage(group string, uri string) bool {
 	return false
 }
 
+const ApiVersion string = "/api/v0"
+
 var userURI = map[string]struct{}{
-	"/user/logout":          {},
-	"/user/updatePassword":  {},
-	"/user/updateInfo":      {},
-	"/user/order/buy":       {},
-	"/user/order/cancelBuy": {},
+	ApiVersion + "/user/logout":          {},
+	ApiVersion + "/user/updatePassword":  {},
+	ApiVersion + "/user/updateInfo":      {},
+	ApiVersion + "/user/order/buy":       {},
+	ApiVersion + "/user/order/cancelBuy": {},
 }
 
 var adminURI = map[string]struct{}{
-	"/admin/createPurchaseLimit":   {},
-	"/admin/queryPurchaseLimit":    {},
-	"/admin/queryPurchaseLimits":   {},
-	"/admin/updatePurchaseLimit":   {},
-	"/admin/deletePurchaseLimit":   {},
-	"/admin/loadGoodPurchaseLimit": {},
+	ApiVersion + "/admin/createPurchaseLimit":   {},
+	ApiVersion + "/admin/queryPurchaseLimit":    {},
+	ApiVersion + "/admin/queryPurchaseLimits":   {},
+	ApiVersion + "/admin/updatePurchaseLimit":   {},
+	ApiVersion + "/admin/deletePurchaseLimit":   {},
+	ApiVersion + "/admin/loadGoodPurchaseLimit": {},
 
-	"/admin/goodList":   {},
-	"/admin/goodCreate": {},
-	"/admin/goodUpdate": {},
-	"/admin/goodDelete": {},
+	ApiVersion + "/admin/goodList":   {},
+	ApiVersion + "/admin/goodCreate": {},
+	ApiVersion + "/admin/goodUpdate": {},
+	ApiVersion + "/admin/goodDelete": {},
 }
