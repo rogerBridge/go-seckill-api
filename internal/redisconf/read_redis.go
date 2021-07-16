@@ -70,7 +70,7 @@ func RedisConn(redisName string) *redis.Pool {
 	log.Println("viper读取到的redis配置信息是: ", redisName, networkType, host, port)
 	return &redis.Pool{
 		IdleTimeout: 300 * time.Second,
-		MaxIdle:     30000,
+		MaxIdle:     10240,
 		Dial: func() (conn redis.Conn, err error) {
 			networkType := networkType
 			host := host

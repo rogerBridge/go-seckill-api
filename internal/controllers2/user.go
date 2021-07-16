@@ -75,6 +75,7 @@ func UserLogin(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("Login: unmarshal []byte to struct error: %v", err)
 
+	// for http response
 	type JWT struct {
 		Username     string    `json:"username"`
 		Token        string    `json:"token"`

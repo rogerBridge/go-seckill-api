@@ -17,9 +17,9 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
-//
+// fasthttp client construct
 var FastHttpClient = &fasthttp.Client{
-	MaxConnsPerHost: 50000, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就不会报错
+	MaxConnsPerHost: 40960, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就不会报错
 	Dial: func(addr string) (conn net.Conn, err error) {
 		//return connLocal, err
 		return fasthttp.DialTimeout(addr, 30*time.Second) // tcp 层
@@ -36,7 +36,7 @@ type Order struct {
 func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errChan chan error) (bool, error) {
 	// 首先, 构造client
 	client := FastHttpClient
-	var URL = "http://127.0.0.1:4000/user/order/buy"
+	var URL = "http://127.0.0.1:4000/api/v0/user/order/buy"
 
 	req := &fasthttp.Request{}
 	req.Header.Set("Authorization", o.Token)

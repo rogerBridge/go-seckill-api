@@ -142,7 +142,7 @@ func IfPassTimeCheck(p *shop_orm.PurchaseLimit) bool {
 
 type Order shop_orm.Order
 
-// CanBuyIt 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
+// 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (o *Order) CanBuyIt() (bool, error) {
 	if _, ok := purchaseLimitMap[o.ProductID]; ok {
 		logger.Debugf("进入CanBuyIt > purchaseLimitMap")

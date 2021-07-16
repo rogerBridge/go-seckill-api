@@ -16,24 +16,26 @@ type Route struct {
 	Middleware func(handler fasthttp.RequestHandler) fasthttp.RequestHandler
 }
 
-// 提前分配好内存, 一般一个应用的话, 256个API是足够的
-var routes = make([]Route, 0, 256)
+// 提前分配好内存, 一般一个应用的话, 1024个API是足够的
+var routes = make([]Route, 0, 1024)
 
 // 路由中间件注册
 func register(method, pattern string, handler fasthttp.RequestHandler, middle func(handler fasthttp.RequestHandler) fasthttp.RequestHandler) {
 	routes = append(routes, Route{method, pattern, handler, middle})
 }
 
+const ApiVersion string = "/api/v0"
+
 func init() {
 	// use this token needing permission
 	// 用户和管理员的权限是应该有区分的, 这里并没有做什么区分, 后面要修改的
 
 	// purchase_limits table
-	register(fasthttp.MethodPost, "/admin/createPurchaseLimit", controllers2.CreatePurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/queryPurchaseLimit", controllers2.QueryPurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/updatePurchaseLimit", controllers2.UpdatePurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/createPurchaseLimit", controllers2.CreatePurchaseLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/queryPurchaseLimit", controllers2.QueryPurchaseLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/updatePurchaseLimit", controllers2.UpdatePurchaseLimit, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
 	//register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)
 	// syncGoodsFromMysql2Redis 在go-seckill初始化的时候就已经做到了, 不需要再做
 	// register(fasthttp.MethodPost, "/admin/syncGoodsFromMysql2Redis", controllers-bak.SyncGoodsFromMysql2Redis, auth.MiddleAuth)
@@ -42,21 +44,21 @@ func init() {
 	//register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers_bak.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
 
 	// goods table
-	register(fasthttp.MethodGet, "/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)
+	register(fasthttp.MethodGet, ApiVersion+"/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)
 
 	// users table
-	register(fasthttp.MethodPost, "/user/register", controllers2.UserRegister, nil)
-	register(fasthttp.MethodPost, "/user/login", controllers2.UserLogin, nil)
-	register(fasthttp.MethodPost, "/user/logout", controllers2.UserLogout, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/user/updatePassword", controllers2.UserUpdatePassword, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/user/updateInfo", controllers2.UserUpdateInfo, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/user/register", controllers2.UserRegister, nil)
+	register(fasthttp.MethodPost, ApiVersion+"/user/login", controllers2.UserLogin, nil)
+	register(fasthttp.MethodPost, ApiVersion+"/user/logout", controllers2.UserLogout, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/user/updatePassword", controllers2.UserUpdatePassword, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/user/updateInfo", controllers2.UserUpdateInfo, auth.MiddleAuth)
 
 	// orders table
-	register(fasthttp.MethodPost, "/user/order/buy", controllers2.Buy, auth.MiddleAuth)
-	register(fasthttp.MethodPost, "/user/order/cancelBuy", controllers2.CancelBuy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/user/order/buy", controllers2.Buy, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/user/order/cancelBuy", controllers2.CancelBuy, auth.MiddleAuth)
 }
 
 // ThisRouter 通过遍历[]Route, 将需要中间件处理的和不需要中间件处理的分开处置 :)
