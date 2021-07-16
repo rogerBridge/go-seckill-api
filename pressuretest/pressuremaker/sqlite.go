@@ -33,7 +33,7 @@ func InitSqlite() {
 	}
 }
 
-// 创建10000个用户的token, 并写入sqlite, 便于本地使用
+// 创建ConcurrentNum个用户的token, 并写入sqlite, 便于本地使用
 func CreateToken() {
 	tokenList, err := GetTokenListSingle()
 	if err != nil {

@@ -42,7 +42,7 @@ type UserLogin struct {
 
 // 每次跑测试前, 找后台申请一个最新的token
 func (u *UserLogin) GetLoginInfo(w *sync.WaitGroup, tokenChan chan string) (*loginInfo, error) {
-	url := "http://127.0.0.1:4000/user/login"
+	url := "http://127.0.0.1:4000/api/v0/user/login"
 	client := FastHttpClient
 	req := new(fasthttp.Request)
 	req.SetRequestURI(url)
@@ -77,9 +77,8 @@ func (u *UserLogin) GetLoginInfo(w *sync.WaitGroup, tokenChan chan string) (*log
 }
 
 // 每次跑测试前, 找后台申请一个最新的token, 单个goroutine
-
 func (u *UserLogin) GetLoginInfoSingle() (*loginInfo, error) {
-	url := "http://127.0.0.1:4000/user/login"
+	url := "http://127.0.0.1:4000/api/v0/user/login"
 	client := FastHttpClient
 	req := new(fasthttp.Request)
 	req.SetRequestURI(url)
@@ -121,7 +120,7 @@ func GetTokenListSingle() ([]tokenInfo, error) {
 	var err error
 	//tokenList := make([]string, 0, 10000)
 	tokenList := make([]tokenInfo, 0, ConcurrentNum)
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < ConcurrentNum; i++ {
 		loginInfo, err = users[i].GetLoginInfoSingle()
 		if err != nil {
 			logger.Fatalf("While get user token, error: %s", err)
@@ -167,14 +166,12 @@ func GetTokenList() {
 		}
 		tokenList = append(tokenList, v)
 	}
-	//for i, v := range tokenList {
-	//
-	//}
 	fmt.Println(countNull)
 }
 
+// Register single user register
 func (u *User) Register() error {
-	url := "http://127.0.0.1:4000/user/register"
+	url := "http://127.0.0.1:4000/api/v0/user/register"
 	client := FastHttpClient
 
 	req := new(fasthttp.Request)
@@ -198,6 +195,7 @@ func (u *User) Register() error {
 	return nil
 }
 
+// RegisterUsers batch users register
 func RegisterUsers() error {
 	users := make([]*User, ConcurrentNum)
 	for i := 0; i < ConcurrentNum; i++ {
