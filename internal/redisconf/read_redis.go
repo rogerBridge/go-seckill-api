@@ -1,6 +1,8 @@
 package redisconf
 
 import (
+	"bytes"
+	"go-seckill/internal/config"
 	"log"
 	"time"
 
@@ -58,8 +60,10 @@ var Pool2 = RedisConn("tokenRedis")
 
 // redisName 指定redis实例的名称,
 func RedisConn(redisName string) *redis.Pool {
-	viper.SetConfigFile("./config/redis_config.json")
-	err := viper.ReadInConfig()
+	viper.SetConfigType("json")
+	err := viper.ReadConfig(bytes.NewBuffer(config.ReadConfig("redis_config.json")))
+	//viper.SetConfigFile("./config/redis_config.json")
+	//err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatalf("当使用viper读取redis配置的时候出现错误, 程序崩溃, error: %v\n", err)
 	}

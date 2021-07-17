@@ -5,6 +5,8 @@
 package common
 
 import (
+	"bytes"
+	"go-seckill/internal/config"
 	"go-seckill/internal/logconf"
 	"log"
 
@@ -34,8 +36,10 @@ type RabbitmqServerConfig struct {
 
 // 使用viper从rabbitmq_server_config.json文件中读取键值对
 func RabbitmqServerConn() *RabbitmqServerConfig {
-	viper.SetConfigFile("./config/rabbitmq_server_config.json")
-	err := viper.ReadInConfig()
+	viper.SetConfigType("json")
+	err := viper.ReadConfig(bytes.NewBuffer(config.ReadConfig("rabbitmq_server_config.json")))
+	//viper.SetConfigFile("./config/rabbitmq_server_config.json")
+	//err := viper.ReadInConfig()
 	if err != nil {
 		log.Fatalf("当使用viper读取rabbitmq server的配置时, 出现错误: %v", err)
 	}

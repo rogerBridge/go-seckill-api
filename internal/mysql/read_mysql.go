@@ -1,14 +1,14 @@
 package mysql
 
 import (
+	"bytes"
 	"database/sql"
-	"log"
-	"os"
-
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
+	"go-seckill/internal/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
+	"log"
 )
 
 // Conn 定义mysql连接为全局变量
@@ -51,14 +51,15 @@ type MysqlConn struct {
 }
 
 func DataSourceMysqlConn(databaseName string) string {
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("找不到当前工作路径, %s", err)
-	}
-	log.Printf("当前工作路径是: %s\n", pwd)
+	//pwd, err := os.Getwd()
+	//if err != nil {
+	//	log.Fatalf("找不到当前工作路径, %s", err)
+	//}
+	//log.Printf("当前工作路径是: %s\n", pwd)
 
-	viper.SetConfigFile("./config/mysql_config.json")
-	err = viper.ReadInConfig()
+	//viper.SetConfigFile("./config/mysql_config.json")
+	viper.SetConfigType("json")
+	err := viper.ReadConfig(bytes.NewBuffer(config.ReadConfig("mysql_config.json")))
 	if err != nil {
 		log.Fatalf("当使用viper读取mysql配置的时候出错, 程序崩溃, 错误信息: %v", err)
 	}

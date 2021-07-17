@@ -39,9 +39,9 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	var URL = "http://127.0.0.1:4000/api/v0/user/order/buy"
 
 	req := &fasthttp.Request{}
+	req.Header.SetMethod(http.MethodPost)
 	req.Header.Set("Authorization", o.Token)
 	req.Header.SetContentType("application/json")
-	req.Header.SetMethod(http.MethodPost)
 	req.SetRequestURI(URL)
 	// 构造request body里面的值
 	r := jsonStruct.ReqBuy{

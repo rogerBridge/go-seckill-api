@@ -1,6 +1,14 @@
 version: '3'
 
 services:
+  config-server:
+    image: rogerbridge/go-seckill-config:test
+    hostname: configServer
+    command: /app/serve
+    restart: "unless-stopped"
+    networks:
+      go-seckill:
+        ipv4_address: 172.20.0.103
   goodRedis:
     image: redis:6.2.4
     hostname: goodRedis
@@ -70,6 +78,7 @@ services:
     image: rogerbridge/rabbitmq-receiver:test
     hostname: rabbitmq-receiver
     depends_on:
+      - config-server
       - rabbitmq-server
       - db
       - goodRedis
@@ -83,6 +92,7 @@ services:
     image: rogerbridge/go-seckill:test
     hostname: go-seckill
     depends_on:
+      - config-server
       - goodRedis
       - orderRedis
       - tokenRedis

@@ -7,3 +7,5 @@ import (
 )
 
 var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "utils"})
+
+const API_VERSION string = "/api/v0"

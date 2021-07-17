@@ -98,13 +98,14 @@ func LoadLimits() error {
 		// make map本身就是一个指针型变量
 		purchaseLimitMap[v.ProductID] = v
 	}
-	logger.Printf("加载后的指针型变量purchaseLimitMap: %+v", purchaseLimitMap)
+	fmt.Printf("加载后的指针型变量purchaseLimitMap: %+v\n", purchaseLimitMap)
 	for _, v := range purchaseLimitMap {
 		logger.Infof("商品id: %v, 购买限制: %v, 开始购买时间: %v, 结束购买时间: %v", v.ProductID, v.LimitNum, v.StartPurchaseTimeStamp, v.StopPurchaseTimeStamp)
 	}
 	return nil
 }
 
+// load good info from mysql to redis
 func LoadGoods() error {
 	// goodInfoRedis
 	conn := Pool.Get()

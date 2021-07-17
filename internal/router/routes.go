@@ -3,6 +3,7 @@ package router
 import (
 	"go-seckill/internal/auth"
 	"go-seckill/internal/controllers2"
+	"go-seckill/internal/utils"
 
 	"github.com/fasthttp/router"
 	"github.com/valyala/fasthttp"
@@ -24,7 +25,7 @@ func register(method, pattern string, handler fasthttp.RequestHandler, middle fu
 	routes = append(routes, Route{method, pattern, handler, middle})
 }
 
-const ApiVersion string = "/api/v0"
+const ApiVersion = utils.API_VERSION
 
 func init() {
 	// use this token needing permission

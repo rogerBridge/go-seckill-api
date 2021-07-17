@@ -164,7 +164,7 @@ func URIauthorityManage(group string, uri string) bool {
 	return false
 }
 
-const ApiVersion string = "/api/v0"
+const ApiVersion = utils.API_VERSION
 
 var userURI = map[string]struct{}{
 	ApiVersion + "/user/logout":          {},
