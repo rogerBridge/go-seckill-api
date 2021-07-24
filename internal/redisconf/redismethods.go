@@ -68,16 +68,18 @@ func InitStore() error {
 var purchaseLimitMap = make(map[int]*shop_orm.PurchaseLimit)
 var goodMap = GoodMap()
 
+// 将mysql中的商品信息加载到runtime中
 func GoodMap() map[int]*shop_orm.Good {
-	// 将mysql中的商品信息加载到redis中
 	g := new(shop_orm.Good)
 	goodList, err := g.QueryGoods()
-	if err != nil {
-		logger.Fatalf("load goods data from mysql.shop.goods error message: %v", goodList)
-	}
 	goodListMap := make(map[int]*shop_orm.Good)
+
+	if err != nil {
+		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodList)
+		return goodListMap
+	}
 	for _, v := range goodList {
-		goodListMap[int((v.ID))] = v
+		goodListMap[int((v.ID))] = v // convert uint to int
 	}
 	return goodListMap
 }

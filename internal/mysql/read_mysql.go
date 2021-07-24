@@ -12,7 +12,7 @@ import (
 )
 
 // Conn 定义mysql连接为全局变量
-var Conn = InitMysqlConn()
+//var Conn = InitMysqlConn()
 
 // Conn2 定义gorm连接mysql的全局变量
 var Conn2 = InitMysqlConn2()
@@ -90,7 +90,7 @@ func InitMysqlConn() *sql.DB {
 	if err != nil {
 		log.Fatalf("conn establish error: %v\n", err)
 	}
-	db.SetMaxIdleConns(10)
+	db.SetMaxIdleConns(8)
 	log.Println("mysql go-libray connect to mysql: ", dataSource)
 	// db.SetMaxOpenConns(100)
 	// db.SetConnMaxLifetime(time.Hour)
