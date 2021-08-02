@@ -51,7 +51,7 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 		return err
 	}
 	// 检测系统中是否存在此用户
-	if u.CheckUsernameIsUnique() {
+	if !u.CheckUsernameIsUnique() {
 		return fmt.Errorf("用户已存在, 无法新建")
 	}
 	// 需要将密码切换为sha256sum+salt的形式
@@ -66,12 +66,10 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 }
 
 // 管理员获取所有用户列表
-func (u *User) QueryUsers() ([]*User, error) {
+func (u *User) QueryUsers() []*User {
 	users := make([]*User, 128)
-	if err := conn.Model(&User{}).Find(users).Error; err != nil {
-		return users, err
-	}
-	return users, nil
+	conn.Model(&User{}).Find(users)
+	return users
 }
 
 // 更新用户信息(除密码之外)
@@ -103,23 +101,18 @@ func (u *User) UpdateUserPassword(tx *gorm.DB) error {
 // 传入的指定User是否存在于users table, 检测username是否存在, 注册user的时候使用
 // username和email都必须唯一
 func (u *User) CheckUsernameIsUnique() bool {
-	var result User
-	if err := conn.Model(&User{}).Where("username=?", u.Username).First(&result).Error; err == nil {
-		if result.Username != u.Username {
-			return true
-		}
-	}
-	return false
+	result := new(User)
+	conn.Model(&User{}).Where("username=?", u.Username).First(result)
+	return result.Username != u.Username
 }
 
 // 检查用户名和密码是否符合
 // 如果符合, 返回对应行的数据
 func (u *User) ProofCredential() (User, bool) {
 	var result User
-	if err := conn.Model(&User{}).Where("username=? AND password=?", u.Username, passwordEncrypt(u.Password)).First(&result).Error; err == nil {
-		if result.Username != "" && result.Password != "" {
-			return result, true
-		}
+	conn.Model(&User{}).Where("username=? AND password=?", u.Username, passwordEncrypt(u.Password)).First(&result)
+	if result.Username != "" && result.Password != "" {
+		return result, true
 	}
 	return result, false
 }
@@ -138,10 +131,9 @@ func (u *User) CheckEmailFormat() error {
 
 func (u *User) CheckEmailIsUnique() error {
 	checkEmailIsUnique := new(User)
-	if err := conn.Model(&User{}).Where("email=?", u.Email).First(checkEmailIsUnique).Error; err == nil {
-		if checkEmailIsUnique.Email != "" {
-			return fmt.Errorf("邮箱已存在")
-		}
+	conn.Model(&User{}).Where("email=?", u.Email).First(checkEmailIsUnique)
+	if checkEmailIsUnique.Email != "" {
+		return fmt.Errorf("邮箱已存在")
 	}
 	return nil
 }
