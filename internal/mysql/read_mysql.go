@@ -100,10 +100,28 @@ func InitMysqlConn() *sql.DB {
 // 这里是通过gorm的方式连接数据库
 func InitMysqlConn2() *gorm.DB {
 	dataSource := DataSourceMysqlConn("db2")
-	db, err := gorm.Open(mysql.Open(dataSource), &gorm.Config{})
+	sqlDB, err := sql.Open("mysql", dataSource)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
+	sqlDB.SetMaxIdleConns(8)
+
+	// SetMaxOpenConns sets the maximum number of open connections to the database.
+	//sqlDB.SetMaxOpenConns(100)
+
+	// SetConnMaxLifetime sets the maximum amount of time a connection may be reused.
+	//sqlDB.SetConnMaxLifetime(time.Hour)
+
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn: sqlDB,
+	}), &gorm.Config{})
+	// open mysql: sql.DB
+
+	//gorm, err := gorm.Open(mysql.Open(dataSource), &gorm.Config{})
 	if err != nil {
 		log.Fatal(err)
 	}
 	log.Println("gorm connect to mysql: ", dataSource)
-	return db
+	return gormDB
 }
