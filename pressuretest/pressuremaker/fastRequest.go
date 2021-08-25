@@ -24,7 +24,6 @@ var FastHttpClient = &fasthttp.Client{
 		//return connLocal, err
 		return fasthttp.DialTimeout(addr, 30*time.Second) // tcp 层
 	},
-	ReadTimeout: 60 * time.Second, // http 应用层, 如果tcp建立起来, 但是服务器不给你回应||回应的时间太久, 难道你要一直耗着吗?  当然是关闭http链接啊
 }
 
 type Order struct {
@@ -38,7 +37,10 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	client := FastHttpClient
 	var URL = "http://127.0.0.1:4000/api/v0/user/order/buy"
 
-	req := &fasthttp.Request{}
+	//req := &fasthttp.Request{}
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
 	req.Header.SetMethod(http.MethodPost)
 	req.Header.Set("Authorization", o.Token)
 	req.Header.SetContentType("application/json")
@@ -55,7 +57,10 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	}
 	req.SetBody(reqBody)
 
-	resp := &fasthttp.Response{}
+	//resp := &fasthttp.Response{}
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
 	//resp := fasthttp.AcquireResponse()
 	// 开始发送请求
 	t0 := time.Now() // 客户端开始发起请求的时间
@@ -67,6 +72,7 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 		logger.Warnf("发送请求时: %v", err)
 		return false, err
 	}
+	// if resp.StatusCode() != 200 || len(resp.Body()) == 0
 	if resp.StatusCode() != 200 {
 		errChan <- fmt.Errorf("server response status code error")
 		w.Done()
@@ -75,6 +81,7 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	t1 := time.Since(t0)           // 客户端结束请求的时间
 	timeStatistics <- t1.Seconds() // 将客户端整个请求的时间段发送给timeStatistics
 	// 请求结束了
+	// see this: [fasthttp resp.Body not use any io.Reader](https://github.com/valyala/fasthttp/issues/411#issuecomment-420857389)
 	w.Done()
 	return true, nil
 }

@@ -123,7 +123,8 @@ func GetTokenListSingle() ([]tokenInfo, error) {
 	for i := 0; i < ConcurrentNum; i++ {
 		loginInfo, err = users[i].GetLoginInfoSingle()
 		if err != nil {
-			logger.Fatalf("While get user token, error: %s", err)
+			logger.Printf("While get user token, error: %s", err)
+			return tokenList, err
 		}
 		if loginInfo.Data.Token != "" {
 			tokenList = append(tokenList, tokenInfo{
