@@ -27,6 +27,7 @@ func InitSqlite() {
 	if errConnectToSqlite != nil {
 		logger.Fatalf("While connect to sqlite, error: %s", errConnectToSqlite)
 	}
+
 	err := db.AutoMigrate(&Token{})
 	if err != nil {
 		logger.Fatalf("While Migrate sqlite, error: %s", err)

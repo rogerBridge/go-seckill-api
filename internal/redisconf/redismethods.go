@@ -79,7 +79,7 @@ func GoodMap() map[int]*shop_orm.Good {
 		return goodListMap
 	}
 	for _, v := range goodList {
-		goodListMap[int((v.ID))] = v // convert uint to int
+		goodListMap[int(v.ID)] = v // convert uint to int
 	}
 	return goodListMap
 }
@@ -257,6 +257,12 @@ func (o *Order) OrderGenerator() error {
 	// 生成订单信息可以使用rabbitmqtt, 将订单信息存储到MySQL上面
 	// 生成订单信息, 感觉这里如果用: 时间戳+用户ID 的话, 更好
 	// 使用ksuid仅仅是偷懒罢了, 哈哈哈
+
+	// 或许将Bought放在这里比较好, 可以防止单用户concurrent购买
+	// 加锁, single routine 再次验证单用户bought 是否合格? 如果不合格, 返回失败, 并返回相应库存
+	// sync.Mutex.Lock()
+
+
 	o.orderNumberGenerator()
 	now := time.Now()
 	o.Status = "process"
@@ -269,9 +275,11 @@ func (o *Order) OrderGenerator() error {
 	if ok == "OK" {
 		logger.Infof("OrderGenerator: %s 购买 %d %d件成功", o.Username, o.ProductID, o.PurchaseNum)
 	}
-	// 开始把生成的信息发送给mqtt exchange
 
-	//logger.Debugln(o.ProductID, goodMap[o.ProductID])
+	// 开始把生成的信息发送给mqtt exchange
+	// logger.Debugln(o.ProductID, goodMap[o.ProductID])
+	// 或者这里http返回成功, 订单交给mqtt处理, mqtt一个队列发现问题, 中止订单, 返回库存, 并中止用户交易权限
+
 	jsonBytes, err := json.Marshal(o)
 	if err != nil {
 		logger.Warnf("OrderGenerator: json marshal error message: %v", err)
@@ -292,13 +300,13 @@ func (o *Order) Bought() error {
 	conn1 := Pool1.Get()
 	defer conn1.Close()
 	// 首先看用户的已购买的商品信息里面, 是否存在productId这种货物, 如不存在, 则初始化, 若存在, 则增加
-	flag, err := redis.Int(conn1.Do("hsetnx", "user:"+o.Username+":bought", o.ProductID, o.PurchaseNum))
+	isExec, err := redis.Int(conn1.Do("hsetnx", "user:"+o.Username+":bought", o.ProductID, o.PurchaseNum))
 	if err != nil {
 		logger.Warnf("Bought: add bought info to %s:bought error message: %v", o.Username, err)
 		return err
 	}
-	// 如果想要购买的物品已经存在(之前购买过), setnx没办法添加, 那就再添加一遍吧~
-	if flag == 0 {
+	// 如果想要购买的物品已经存在(之前购买过), 那就增加bought的数量
+	if isExec == 0 {
 		err = conn1.Send("hincrby", "user:"+o.Username+":bought", o.ProductID, o.PurchaseNum)
 		if err != nil {
 			logger.Warnf("Bought: when %s buy it, already exist, error: %v", o.Username, err)

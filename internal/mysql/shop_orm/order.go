@@ -17,7 +17,6 @@ type Order struct {
 	Price       int    `gorm:"price" json:"price"`
 }
 
-// 这里应该选择严格模式吗? 只选择需要创建的东西
 // check params in http request maybe is best :)
 func (o *Order) CreateOrder(tx *gorm.DB) error {
 	if !o.CheckOrderParams() {

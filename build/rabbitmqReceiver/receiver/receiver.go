@@ -10,7 +10,7 @@ import (
 	"github.com/streadway/amqp"
 )
 
-// 从特定的channel里面接收信息, 然后处理
+// receive msg from channel, then process
 func Receive(ch *amqp.Channel) {
 	msgs, err := ch.Consume(
 		"order", // queue name
