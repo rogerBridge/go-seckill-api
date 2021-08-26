@@ -12,7 +12,7 @@ import (
 	"go-seckill/internal/utils"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/gomodule/redigo/redis"
 	"github.com/valyala/fasthttp"
 )
