@@ -2,16 +2,22 @@ package main
 
 import (
 	"log"
-	"net/http"
+
+	"github.com/valyala/fasthttp"
 )
 
 func main() {
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fs)
+	fs := fasthttp.FSHandler("./static", 0)
+	log.Println("fasthttp file server running on port 3000 :)")
+	log.Println(fasthttp.ListenAndServe(":3000", fs))
 
-	log.Println("Listening on :3000...")
-	err := http.ListenAndServe(":3000", nil)
-	if err != nil {
-		log.Fatal(err)
-	}
+	// fs := http.FileServer(http.Dir("./static"))
+	// http.Handle("/", fs)
+
+	// log.Println("Listening on :3000...")
+	// log.Println(http.ListenAndServe(":3000", nil))
+	// err := http.ListenAndServe(":3000", nil)
+	// if err != nil {
+	// 	log.Fatal(err)
+	// }
 }
