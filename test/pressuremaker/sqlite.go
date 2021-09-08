@@ -21,6 +21,7 @@ type Token struct {
 
 var db, errConnectToSqlite = gorm.Open(sqlite.Open("./pressuremaker/token.db"), &gorm.Config{})
 
+// refresh tokens get from users
 func InitSqlite() {
 	db.Exec("DELETE FROM tokens")
 

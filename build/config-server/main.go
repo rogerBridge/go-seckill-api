@@ -8,9 +8,10 @@ import (
 
 func main() {
 	fs := fasthttp.FSHandler("./static", 0)
+	// r := router.New()
+	// r.Handle(fasthttp.MethodGet, "/", fs)
 	log.Println("fasthttp file server running on port 3000 :)")
 	log.Println(fasthttp.ListenAndServe(":3000", fs))
-
 	// fs := http.FileServer(http.Dir("./static"))
 	// http.Handle("/", fs)
 

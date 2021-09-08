@@ -45,10 +45,12 @@ func init() {
 	//register(fasthttp.MethodPost, "/admin/syncGoodsFromRedis2Mysql", controllers_bak.SyncGoodsFromRedis2Mysql, auth.MiddleAuth)
 
 	// goods table
+
 	register(fasthttp.MethodGet, ApiVersion+"/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/register", controllers2.AdminRegister, nil)
 
 	// users table
 	register(fasthttp.MethodPost, ApiVersion+"/user/register", controllers2.UserRegister, nil)

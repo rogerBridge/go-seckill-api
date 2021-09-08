@@ -166,6 +166,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	})
 }
 
+// great mysql transaction example
 func UpdateGood(ctx *fasthttp.RequestCtx) {
 	// 首先, 校验格式对不对
 	g := new(shop_orm.Good)

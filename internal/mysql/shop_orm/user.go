@@ -13,13 +13,13 @@ import (
 
 type User struct {
 	SelfDefine
-	Username string    `gorm:"username" json:"username"`
-	Password string    `gorm:"password" json:"password"`
+	Username string    `gorm:"index:," json:"username"`
+	Password string    `gorm:"" json:"password"`
 	Group    string    `gorm:"default:user" json:"group"`
-	Sex      string    `gorm:"sex" json:"sex"`
-	Birthday time.Time `gorm:"birthday" json:"birthday"`
-	Address  string    `gorm:"address" json:"address"`
-	Email    string    `gorm:"email" json:"email"`
+	Sex      string    `gorm:"" json:"sex"`
+	Birthday time.Time `gorm:"" json:"birthday"`
+	Address  string    `gorm:"" json:"address"`
+	Email    string    `gorm:"index:," json:"email"`
 }
 
 //type UserJson struct {
@@ -57,6 +57,32 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 	// 需要将密码切换为sha256sum+salt的形式
 	u.Password = passwordEncrypt(u.Password)
 	if err := tx.Select("Username", "Password", "Email", "Birthday").Create(u).Error; err != nil {
+		return err
+	}
+	//if err := tx.Create(u).Error; err != nil {
+	//	return err
+	//}
+	return nil
+}
+
+// 区分不同权限的用户, 使用组名称
+func (u *User) CreateAdmin(tx *gorm.DB) error {
+	// 检测用户注册信息是否符合规范
+	if err := u.CheckEmailFormat(); err != nil {
+		return err
+	}
+	if err := u.CheckEmailIsUnique(); err != nil {
+		return err
+	}
+	// 检测系统中是否存在此用户
+	if !u.CheckUsernameIsUnique() {
+		return fmt.Errorf("用户已存在, 无法新建")
+	}
+	// important, specify this user into admin group
+	u.Group = "admin"
+	// 需要将密码切换为sha256sum+salt的形式
+	u.Password = passwordEncrypt(u.Password)
+	if err := tx.Select("Username", "Password", "Email", "Birthday", "Group").Create(u).Error; err != nil {
 		return err
 	}
 	//if err := tx.Create(u).Error; err != nil {

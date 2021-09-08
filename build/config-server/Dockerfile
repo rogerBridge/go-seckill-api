@@ -4,6 +4,6 @@ WORKDIR /app
 
 COPY ./serve /app
 
-COPY ./static/* /app/static/
+COPY ./static/ /app/static/
 
-ENTRYPOINT ["/app/serve"]
+CMD ["/app/serve"]

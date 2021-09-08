@@ -9,10 +9,10 @@ import (
 
 type Good struct {
 	SelfDefine
-	ProductCategory string `gorm:"product_category" json:"productCategory"`
-	ProductName     string `gorm:"product_name" json:"productName"`
-	Inventory       int    `gorm:"inventory" json:"inventory"`
-	Price           int    `gorm:"price" json:"price"`
+	ProductCategory string `gorm:"" json:"productCategory"`
+	ProductName     string `gorm:"" json:"productName"`
+	Inventory       int    `gorm:"" json:"inventory"`
+	Price           int    `gorm:"" json:"price"`
 }
 
 // 添加记录到goods table

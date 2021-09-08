@@ -1,20 +1,29 @@
 package main
 
 import (
-	"go-seckill/pressuretest/pressuremaker"
+	"go-seckill/test/pressuremaker"
 	"sync"
 )
 
-// 这个包对已经写成的功能模块进行压力测试
+// 这个包对已经写成的功能模块进行压力测试和功能测试
 // 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
-	pressuremaker.InitSqlite()
-	pressuremaker.CreateToken()
+	logger.Infoln("Register Users")
+	pressuremaker.RegisterUsers()
 
-	//fmt.Printf("Start test \n")
+	// generate token and store in token.db
+	// logger.Println("Start generate Token")
+	// pressuremaker.InitSqlite()
+	// pressuremaker.CreateToken()
+
+	// logger.Println("concurrent generate Token")
+	// pressuremaker.GetTokenListConcurrent()
+
+	//fmt.Println("Start test")
 	//test()
 }
 
+// concurrent run CreateOrder() method, then run statistics
 func test() {
 	tokenList := pressuremaker.GetTokenListFromSqlite()
 
@@ -28,7 +37,7 @@ func test() {
 	for i := start; i < end; i++ {
 		o := pressuremaker.Order{
 			Token:       tokenList[i],
-			ProductID:   3,
+			ProductID:   4,
 			PurchaseNum: 1,
 		}
 		w.Add(1)
@@ -36,6 +45,7 @@ func test() {
 		// every time duration send to timeStatistics
 		go o.CreateOrder(&w, timeStatistics, errChan)
 	}
+
 	w.Wait()
 	// 关闭时间统计channel, 开始我们的计算!
 	close(timeStatistics)
@@ -56,5 +66,5 @@ func test() {
 		errStatisticsList = append(errStatisticsList, e)
 	}
 	// 正式运行的情况下, 把下面的这个替换为你自己写的错误统计函数
-	logger.Println("errChan info: ", errStatisticsList)
+	logger.Infoln("errChan info: ", errStatisticsList)
 }

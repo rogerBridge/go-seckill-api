@@ -63,7 +63,6 @@ services:
     image: rabbitmq:3-management
     hostname: rabbitmq-server
     environment:
-      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "2048MB"
       RABBITMQ_DEFAULT_USER: "root"
       RABBITMQ_DEFAULT_PASS: "12345678"
       RABBITMQ_DEFAULT_VHOST: "root_vhost"
@@ -100,6 +99,8 @@ services:
       - db
       - rabbitmq-server
       - rabbitmq-receiver
+    ports: 
+      - "127.0.0.1:4000:4000"
     restart: "unless-stopped"
     networks:
       go-seckill:

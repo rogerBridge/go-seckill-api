@@ -3,7 +3,7 @@ package pressuremaker
 import (
 	"bytes"
 	"encoding/json"
-	"go-seckill/pressuretest/jsonStruct"
+	"go-seckill/test/jsonStruct"
 	"net/http"
 	"sync"
 	"time"

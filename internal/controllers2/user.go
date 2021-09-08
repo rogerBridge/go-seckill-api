@@ -272,3 +272,50 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 		Data: nil,
 	})
 }
+
+// Admin register
+// 用户注册
+func AdminRegister(ctx *fasthttp.RequestCtx) {
+	user := new(shop_orm.User)
+	err := json.Unmarshal(ctx.Request.Body(), user)
+	if err != nil {
+		logger.Warnf("Register: user: %+v register json unmarshal error message: %v", user, err)
+		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+			Code: 8400,
+			Msg:  "bad params",
+			Data: nil,
+		})
+		return
+	}
+	logger.Infof("unmarshal []byte to struct successful")
+
+	tx := mysql.Conn2.Begin()
+	err = user.CreateAdmin(tx)
+	if err != nil {
+		logger.Warnf("Register transaction error: %s", err.Error())
+		tx.Rollback()
+		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			Code: 8500,
+			Msg:  "注册失败: " + err.Error(),
+			Data: nil,
+		})
+		return
+	}
+	err = tx.Commit().Error
+	if err != nil {
+		logger.Warnf("Register: CreateUser: %v error: %v", user, err)
+		tx.Rollback()
+		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+			Code: 8200,
+			Msg:  fmt.Sprintf("CreateUser: %v error: %v", user, err),
+			Data: nil,
+		})
+		return
+	}
+	logger.Infof("CreateUser: %+v register success", user)
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		Code: 8200,
+		Msg:  "register success",
+		Data: nil,
+	})
+}

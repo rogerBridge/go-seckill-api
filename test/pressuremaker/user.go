@@ -139,7 +139,7 @@ func GetTokenListSingle() ([]tokenInfo, error) {
 }
 
 // 得到 []*loginInfo
-func GetTokenList() {
+func GetTokenListConcurrent() ([]string, error) {
 	users := make([]*UserLogin, ConcurrentNum)
 	for i := 0; i < ConcurrentNum; i++ {
 		users[i] = &UserLogin{
@@ -153,6 +153,12 @@ func GetTokenList() {
 
 	for i := 0; i < ConcurrentNum; i++ {
 		w.Add(1)
+		// go func () {
+		// 	err := users[i].GetLoginInfo(&w, tokenChan)
+		// 	if err!=nil {
+
+		// 	}
+		// }()
 		go users[i].GetLoginInfo(&w, tokenChan)
 	}
 
@@ -168,6 +174,11 @@ func GetTokenList() {
 		tokenList = append(tokenList, v)
 	}
 	fmt.Println(countNull)
+	if countNull == 0 {
+		return tokenList, nil
+	} else {
+		return []string{}, fmt.Errorf("countNull is not 0, so error happend")
+	}
 }
 
 // Register single user register
@@ -197,7 +208,7 @@ func (u *User) Register() error {
 }
 
 // RegisterUsers batch users register
-func RegisterUsers() error {
+func RegisterUsers() {
 	users := make([]*User, ConcurrentNum)
 	for i := 0; i < ConcurrentNum; i++ {
 		users[i] = &User{
@@ -209,8 +220,6 @@ func RegisterUsers() error {
 		err := users[i].Register()
 		if err != nil {
 			logger.Fatalln(err)
-			return err
 		}
 	}
-	return nil
 }

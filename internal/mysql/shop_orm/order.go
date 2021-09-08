@@ -9,12 +9,12 @@ import (
 
 type Order struct {
 	SelfDefine
-	OrderNumber string `gorm:"order_number" json:"orderNumber"`
-	Username    string `gorm:"username" json:"username"`
-	ProductID   int    `gorm:"product_id" json:"productID"`
-	PurchaseNum int    `gorm:"purchase_num" json:"purchaseNum"`
-	Status      string `gorm:"status" json:"status"`
-	Price       int    `gorm:"price" json:"price"`
+	OrderNumber string `gorm:"" json:"orderNumber"`
+	Username    string `gorm:"" json:"username"`
+	ProductID   int    `gorm:"" json:"productID"`
+	PurchaseNum int    `gorm:"" json:"purchaseNum"`
+	Status      string `gorm:"" json:"status"`
+	Price       int    `gorm:"" json:"price"`
 }
 
 // check params in http request maybe is best :)
