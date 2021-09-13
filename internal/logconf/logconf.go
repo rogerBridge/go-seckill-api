@@ -39,6 +39,8 @@ func init() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer file.Close()
+
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 		ForceColors:   true,
