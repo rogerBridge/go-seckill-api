@@ -50,6 +50,7 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Infof("CreatePurchaseLimit tx commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
@@ -163,6 +164,7 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("UpdatePurchaseLimit transaction commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
@@ -219,6 +221,7 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	}
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("DeletePurchaseLimit transaction commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,

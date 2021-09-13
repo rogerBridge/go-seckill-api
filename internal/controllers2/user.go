@@ -44,7 +44,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	err = tx.Commit().Error
 	if err != nil {
 		logger.Warnf("Register: CreateUser: %v error: %v", user, err)
-		tx.Rollback()
+		// tx.Rollback()
 		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8200,
 			Msg:  fmt.Sprintf("CreateUser: %v error: %v", user, err),
@@ -192,6 +192,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 	}
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("UpdateUserPassword transaction commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
@@ -257,6 +258,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	}
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("UpdateUserInfo transaction commit error: %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
@@ -304,7 +306,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 	err = tx.Commit().Error
 	if err != nil {
 		logger.Warnf("Register: CreateUser: %v error: %v", user, err)
-		tx.Rollback()
+		// tx.Rollback()
 		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8200,
 			Msg:  fmt.Sprintf("CreateUser: %v error: %v", user, err),

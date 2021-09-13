@@ -151,6 +151,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	// 如果添加进redis的时候没有问题, 那就统一执行mysql事务
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("CreateGood: commit mysql事务失败 %v", err)
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
 			Code: 8500,
@@ -299,6 +300,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 
 	err = tx.Commit().Error
 	if err != nil {
+		// tx.Rollback()
 		logger.Warnf("DeleteGood: mysql tx commit error %v", err)
 		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 			Code: 8500,

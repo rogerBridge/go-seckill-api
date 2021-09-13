@@ -3,7 +3,6 @@ package shop_orm
 import (
 	"fmt"
 	"log"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -80,8 +79,7 @@ func (p *PurchaseLimit) DeletePurchaseLimit(tx *gorm.DB) error {
 	if !p.IfPurchaseLimitExist() {
 		return fmt.Errorf("删除时发现商品不存在")
 	}
-	t := time.Now()
-	if err := tx.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Update("deleted_at", t).Error; err != nil {
+	if err := tx.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Delete(p).Error; err != nil {
 		logger.Println("DeletePurchaseLimit error: ", err)
 		return err
 	}
@@ -91,12 +89,12 @@ func (p *PurchaseLimit) DeletePurchaseLimit(tx *gorm.DB) error {
 // 检查PurchaseLimit.ProductID是否已经存在于table中
 func (p *PurchaseLimit) IfPurchaseLimitExist() bool {
 	var result PurchaseLimit
-	if err := conn.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).First(&result).Error; err == nil {
-		if p.ProductID == result.ProductID {
-			return true
-		}
+	conn.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).First(&result)
+	if p.ProductID == result.ProductID {
+		return true
+	} else {
+		return false
 	}
-	return false
 }
 
 func (p *PurchaseLimit) CheckPurchaseLimitParams() error {

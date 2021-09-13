@@ -8,10 +8,11 @@ import (
 // 这个包对已经写成的功能模块进行压力测试和功能测试
 // 如果对err信息感兴趣的话, 可以单独写一个分析error信息的函数
 func main() {
-	logger.Infoln("Register Users")
-	pressuremaker.RegisterUsers()
+	// logger.Infoln("Register Users")
+	// pressuremaker.RegisterUsers()
 
 	// generate token and store in token.db
+
 	// logger.Println("Start generate Token")
 	// pressuremaker.InitSqlite()
 	// pressuremaker.CreateToken()
@@ -19,8 +20,11 @@ func main() {
 	// logger.Println("concurrent generate Token")
 	// pressuremaker.GetTokenListConcurrent()
 
-	//fmt.Println("Start test")
-	//test()
+	// add test Product
+	// pressuremaker.AddProducts()
+
+	// log.Println("Start test")
+	test()
 }
 
 // concurrent run CreateOrder() method, then run statistics

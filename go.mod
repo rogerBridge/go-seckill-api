@@ -13,6 +13,7 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/viper v1.8.1
 	github.com/streadway/amqp v1.0.0
+	github.com/stretchr/testify v1.7.0 // indirect
 	github.com/valyala/fasthttp v1.29.0
 	golang.org/x/sys v0.0.0-20210903071746-97244b99971b // indirect
 	gorm.io/driver/mysql v1.1.2

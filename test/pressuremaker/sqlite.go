@@ -55,6 +55,7 @@ func CreateToken() {
 	//}
 
 	db.CreateInBatches(tokens, 1000)
+	// direct db.Create(&tokens) will not work, because 10k one time is too big
 	//db.Create(&tokens)
 	//db.Model(&Token{}).Create(&tokens)
 }

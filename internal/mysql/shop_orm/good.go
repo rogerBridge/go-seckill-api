@@ -2,7 +2,6 @@ package shop_orm
 
 import (
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -46,9 +45,9 @@ func (g *Good) UpdateGood(tx *gorm.DB) error {
 	if err := g.CheckGoodParams(); err != nil {
 		return fmt.Errorf("更新商品信息时, 传入的参数有误")
 	}
-	if !g.IfGoodExistByID() {
-		return fmt.Errorf("更新商品信息不存在")
-	}
+	// if !g.IfGoodExistByID() {
+	// 	return fmt.Errorf("更新商品信息不存在")
+	// }
 	if err := tx.Model(&Good{}).Where("id=?", g.ID).Updates(Good{ProductCategory: g.ProductCategory, ProductName: g.ProductName, Inventory: g.Inventory, Price: g.Price}).Error; err != nil {
 		return fmt.Errorf("更新商品时, 出现错误 %s", err.Error())
 	}
@@ -60,7 +59,10 @@ func (g *Good) DeleteGood(tx *gorm.DB) error {
 	if !g.IfGoodExistByID() {
 		return fmt.Errorf("删除的商品不存在")
 	}
-	if err := tx.Model(&Good{}).Where("id=?", g.ID).Update("deleted_at", time.Now()).Error; err != nil {
+	// if err := tx.Model(&Good{}).Where("id=?", g.ID).Update("deleted_at", time.Now()).Error; err != nil {
+	// 	return err
+	// }
+	if err := tx.Model(&Good{}).Delete(g).Error; err != nil {
 		return err
 	}
 	return nil
@@ -72,6 +74,7 @@ func (g *Good) IfGoodExist() bool {
 	var result Good
 	conn.Model(&Good{}).Where("product_category=? AND product_name=?", g.ProductCategory, g.ProductName).First(&result)
 	if result.ProductName != "" || result.ProductCategory != "" {
+		// if result.ProductName == g.ProductName || result.ProductCategory == g.ProductCategory
 		logger.Warning("商品信息已存在")
 		return true
 	}

@@ -9,22 +9,12 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-seckill/test/jsonStruct"
-	"net"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/valyala/fasthttp"
 )
-
-// fasthttp client construct
-var FastHttpClient = &fasthttp.Client{
-	MaxConnsPerHost: 40960, // 一个fasthttp.Client客户端的最大TCP数量, 一般达不到65535就不会报错
-	Dial: func(addr string) (conn net.Conn, err error) {
-		//return connLocal, err
-		return fasthttp.DialTimeout(addr, 30*time.Second) // tcp 层
-	},
-}
 
 type Order struct {
 	Token       string
@@ -35,11 +25,13 @@ type Order struct {
 func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errChan chan error) (bool, error) {
 	// 首先, 构造client
 	client := FastHttpClient
-	var URL = "http://127.0.0.1:4000/api/v0/user/order/buy"
+	host := "http://go-seckill:4000"
+	var URL = host + "/api/v0/user/order/buy"
 
-	//req := &fasthttp.Request{}
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
+	req := &fasthttp.Request{}
+
+	// req := fasthttp.AcquireRequest()
+	// defer fasthttp.ReleaseRequest(req)
 
 	req.Header.SetMethod(http.MethodPost)
 	req.Header.Set("Authorization", o.Token)
@@ -57,9 +49,10 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	}
 	req.SetBody(reqBody)
 
-	//resp := &fasthttp.Response{}
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
+	resp := &fasthttp.Response{}
+
+	// resp := fasthttp.AcquireResponse()
+	// defer fasthttp.ReleaseResponse(resp)
 
 	//resp := fasthttp.AcquireResponse()
 	// 开始发送请求

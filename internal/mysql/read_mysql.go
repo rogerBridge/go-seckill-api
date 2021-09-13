@@ -3,12 +3,13 @@ package mysql
 import (
 	"bytes"
 	"database/sql"
+	"go-seckill/internal/config"
+	"log"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/spf13/viper"
-	"go-seckill/internal/config"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"log"
 )
 
 // Conn 定义mysql连接为全局变量
@@ -106,6 +107,7 @@ func InitMysqlConn2() *gorm.DB {
 	}
 	// SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
 	sqlDB.SetMaxIdleConns(8)
+	sqlDB.SetMaxOpenConns(32)
 
 	// SetMaxOpenConns sets the maximum number of open connections to the database.
 	//sqlDB.SetMaxOpenConns(100)

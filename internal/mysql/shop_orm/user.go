@@ -13,13 +13,13 @@ import (
 
 type User struct {
 	SelfDefine
-	Username string    `gorm:"index:," json:"username"`
+	Username string    `gorm:"index;index:user" json:"username"`
 	Password string    `gorm:"" json:"password"`
 	Group    string    `gorm:"default:user" json:"group"`
 	Sex      string    `gorm:"" json:"sex"`
 	Birthday time.Time `gorm:"" json:"birthday"`
 	Address  string    `gorm:"" json:"address"`
-	Email    string    `gorm:"index:," json:"email"`
+	Email    string    `gorm:"index;index:user" json:"email"`
 }
 
 //type UserJson struct {

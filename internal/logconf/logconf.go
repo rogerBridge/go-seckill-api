@@ -1,6 +1,10 @@
 package logconf
 
 import (
+	"io"
+	"log"
+	"os"
+
 	"github.com/sirupsen/logrus"
 )
 
@@ -31,12 +35,18 @@ import (
 // }
 
 func init() {
+	file, err := os.OpenFile("logs.txt", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0666)
+	if err != nil {
+		log.Fatal(err)
+	}
 	logrus.SetFormatter(&logrus.TextFormatter{
 		FullTimestamp: true,
 		ForceColors:   true,
 	})
 	logrus.SetReportCaller(true)
 	logrus.SetLevel(logrus.WarnLevel)
+	mw := io.MultiWriter(os.Stdout, file)
+	logrus.SetOutput(mw)
 }
 
 var BaseLogger = logrus.WithFields(logrus.Fields{
