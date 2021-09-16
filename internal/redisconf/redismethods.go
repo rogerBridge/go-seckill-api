@@ -90,12 +90,12 @@ func LoadLimits() error {
 		delete(purchaseLimitMap, k)
 	}
 	p := new(shop_orm.PurchaseLimit)
-	r, err := p.QueryPurchaseLimits()
+	r := p.QueryPurchaseLimits()
 	// r, err := purchase_limits.QueryPurchaseLimits()
-	if err != nil {
-		logger.Warnf("While query purchaseLimit, error message: %v", err)
-		return err
-	}
+	// if err != nil {
+	// 	logger.Warnf("While query purchaseLimit, error message: %v", err)
+	// 	return err
+	// }
 	for _, v := range r {
 		// make map本身就是一个指针型变量
 		purchaseLimitMap[v.ProductID] = v

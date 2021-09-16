@@ -13,7 +13,7 @@ var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "redismeth
 var ch = common.Ch
 
 // 初始化goodsRedisInfo和orderInfoRedis实例
-func InitialRedis() {
+func InitialRedis() error {
 	// 搞一些闲置的redis连接
 	//var wg sync.WaitGroup
 	//for i := 0; i < 5000; i++ {
@@ -26,15 +26,19 @@ func InitialRedis() {
 	//runtime.GOMAXPROCS(runtime.NumCPU())
 	err := InitStore()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Println(err)
+		return err
 	}
 	err = LoadGoods()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Println(err)
+		return err
 	}
 	// 加载MySQL中的limit到全局变量purchaseLimit中
 	err = LoadLimits()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Println(err)
+		return err
 	}
+	return nil
 }
