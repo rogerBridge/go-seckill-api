@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -75,7 +75,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		if !URIauthorityManage(group, thisURI) {
 			logger.Warnf("MiddleAuth: 您没有访问此uri的权限")
 			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
-				Code: 8400,
+				Code: 8401,
 				Msg:  "您没有访问此uri的权限",
 				Data: nil,
 			})

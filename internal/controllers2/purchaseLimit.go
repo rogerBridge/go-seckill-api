@@ -3,8 +3,8 @@ package controllers2
 import (
 	"encoding/json"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 
@@ -36,7 +36,7 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	// 	})
 	// 	return
 	// }
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = p.CreatePurchaseLimit(tx)
 	if err != nil {
 		logger.Warnf("当添加PurchaseLimit时, 错误: %v", err)
@@ -150,7 +150,7 @@ func UpdatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	logger.Infof("unmarshal request.body() success")
 
 	// 如果存在的话, 返回Purchase_limit这个对象
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = p.UpdatePurchaseLimit(tx)
 	if err != nil {
 		logger.Warnf("UpdatePurchaseLimit transaction error: %v", err)
@@ -207,7 +207,7 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	logger.Infof("DeletePurchaseLimit success")
 
 	// 如果存在的话, 返回Purchase_limit这个对象
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = p.DeletePurchaseLimit(tx)
 	if err != nil {
 		logger.Warnf("DeletePurchaseLimit transaction error: %v", err)

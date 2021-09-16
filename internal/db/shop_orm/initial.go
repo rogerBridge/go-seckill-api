@@ -1,8 +1,8 @@
 package shop_orm
 
 import (
+	"go-seckill/internal/db"
 	"go-seckill/internal/logconf"
-	"go-seckill/internal/mysql"
 	"log"
 
 	"github.com/sirupsen/logrus"
@@ -11,7 +11,7 @@ import (
 
 // 初始化数据库 seckill
 func InitialMysql() {
-	conn := mysql.Conn2
+	conn := db.Conn2
 
 	conn.Exec("CREATE DATABASE IF NOT EXISTS seckill")
 	log.Println("executed create database seckill command")
@@ -43,6 +43,6 @@ type SelfDefine struct {
 	Version string `gorm:"default:v0.0.0"`
 }
 
-var conn = mysql.Conn2
+var conn = db.Conn2
 
 var logger = logconf.BaseLogger.WithFields(logrus.Fields{"component": "shop_orm"})

@@ -5,9 +5,9 @@ package controllers2
 
 import (
 	"encoding/json"
+	"go-seckill/internal/db"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 
@@ -121,7 +121,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	// 	return
 	// }
 	// 手动开启事务
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = g.CreateGood(tx)
 	if err != nil {
 		tx.Rollback()
@@ -193,7 +193,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	// 	return
 	// }
 	// 如果存在, 开启mysql事务, 修改mysql和redis
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = g.UpdateGood(tx)
 	if err != nil {
 		logger.Warnf("UpdateGood: 添加mysql事务: UpdateGood时出现错误 %v", err)
@@ -268,7 +268,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	// 	return
 	// }
 	// 开启mysql transaction
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = g.DeleteGood(tx)
 	if err != nil {
 		logger.Warnf("DeleteGood: 添加mysql事务DeleteGood时出现错误 %v", err)

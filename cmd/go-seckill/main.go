@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/valyala/fasthttp"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/router"
 	"log"

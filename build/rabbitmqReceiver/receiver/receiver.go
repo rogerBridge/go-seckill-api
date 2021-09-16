@@ -2,8 +2,8 @@ package receiver
 
 import (
 	"encoding/json"
-	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db"
+	"go-seckill/internal/db/shop_orm"
 
 	"go-seckill/internal/rabbitmq/common"
 
@@ -39,7 +39,7 @@ func Receive(ch *amqp.Channel) {
 			logger.Infof("Received msg: %+v", order)
 			// 开始将redis来的订单信息同步到数据库中
 			// err = order.UpdateOrder(mysql.Conn2)
-			err = order.CreateOrder(mysql.Conn2)
+			err = order.CreateOrder(db.Conn2)
 			//err = orders.InsertOrders(order.OrderNum, order.UserId, order.ProductId, order.PurchaseNum, order.OrderDatetime, order.Status)
 			if err != nil {
 				logger.Warnf("将mqtt接收到的消息同步到order表格时出现错误: %s", err)

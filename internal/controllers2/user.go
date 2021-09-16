@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"go-seckill/internal/auth"
 	"go-seckill/internal/easyjsonprocess"
-	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -29,7 +29,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("unmarshal []byte to struct successful")
 
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = user.CreateUser(tx)
 	if err != nil {
 		logger.Warnf("Register transaction error: %s", err.Error())
@@ -178,7 +178,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 	logger.Infof("unmarshal password successful")
 	p.Username = username
 
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = p.UpdateUserPassword(tx)
 	if err != nil {
 		logger.Warnf("UpdateUserPassword transaction error: %v", err)
@@ -244,7 +244,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	// 	})
 	// }
 
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = p.UpdateUserInfo(tx)
 	if err != nil {
 		logger.Warnf("UpdateUserInfo transaction error: %v", err)
@@ -291,7 +291,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 	}
 	logger.Infof("unmarshal []byte to struct successful")
 
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	err = user.CreateAdmin(tx)
 	if err != nil {
 		logger.Warnf("Register transaction error: %s", err.Error())

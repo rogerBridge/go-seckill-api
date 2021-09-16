@@ -3,8 +3,8 @@ package redisconf
 import (
 	"encoding/json"
 	"fmt"
-	"go-seckill/internal/mysql"
-	"go-seckill/internal/mysql/shop_orm"
+	"go-seckill/internal/db"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/rabbitmq/sender"
 	"strconv"
 	"time"
@@ -262,7 +262,6 @@ func (o *Order) OrderGenerator() error {
 	// 加锁, single routine 再次验证单用户bought 是否合格? 如果不合格, 返回失败, 并返回相应库存
 	// sync.Mutex.Lock()
 
-
 	o.orderNumberGenerator()
 	now := time.Now()
 	o.Status = "process"
@@ -397,7 +396,7 @@ func (o *Order) CancelBuy() error {
 }
 
 func (o *Order) UpdateOrderStatus() error {
-	tx := mysql.Conn2.Begin()
+	tx := db.Conn2.Begin()
 	if err := tx.Model(&Order{}).Where("order_number = ?", o.OrderNumber).Update("status", o.Status).Error; err != nil {
 		tx.Rollback()
 		return err
