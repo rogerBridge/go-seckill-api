@@ -11,8 +11,11 @@ func Errlog(err error, msg string) {
 	}
 }
 
-// 作为客户端, 和rabbitmq server建立信道, 声明exchange, 声明queue, 绑定queue
-// channel, exchange, queue, exchange bind queue
+// As a rabbitmq client establish rabbitmq server 
+// 1. establish channel
+// 2. declare exchange 
+// 3. declare queue
+// 4. bind exchange + queue
 func GetChannel() *amqp.Channel {
 	rabbitmqServerConfig := RabbitmqServerConn()
 	// 注意, rabbitmqServer的初始化, rabbitmqServer是docker容器在network之中的名称
