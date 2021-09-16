@@ -6,7 +6,7 @@
   - [x] 生成订单后内容传输给rabbitmq, 写入Mysql数据库
   - [x] 用户ID(JWT)校验, 权限校验(URL匹配)
   - [x] 一键docker-compose部署
-  - [ ] vue应用
+  - [ ] React SPA
   - [ ] 单元测试 
 
 - 应用情景
