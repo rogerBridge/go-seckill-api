@@ -1,22 +1,24 @@
 package main
 
 import (
-	"github.com/valyala/fasthttp"
 	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/router"
 	"log"
+
+	"github.com/valyala/fasthttp"
 )
 
-// 执行一些测试性的操作
-func test() {
-
-}
-
 func main() {
-	test()
-	shop_orm.InitialMysql()
-	redisconf.InitialRedis()
+	err := shop_orm.InitialMysql()
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	err = redisconf.InitialRedis()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	r := router.ThisRouter()
 	log.Println("Listen on :4000")

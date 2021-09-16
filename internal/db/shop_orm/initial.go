@@ -10,7 +10,7 @@ import (
 )
 
 // 初始化数据库 seckill
-func InitialMysql() {
+func InitialMysql() error {
 	conn := db.Conn2
 
 	conn.Exec("CREATE DATABASE IF NOT EXISTS seckill")
@@ -18,24 +18,29 @@ func InitialMysql() {
 
 	err := conn.AutoMigrate(&Good{})
 	if err != nil {
-		log.Fatalln("While migrate goods table, error: ", err)
+		log.Println(err)
+		return err
 	}
 
 	err = conn.AutoMigrate(&PurchaseLimit{})
 	if err != nil {
-		log.Fatalln("While migrate purchaseLimits table, error: ", err)
+		log.Println(err)
+		return err
 	}
 
 	err = conn.AutoMigrate(&User{})
 	if err != nil {
-		log.Fatalln("While migrate users table, error: ", err)
+		log.Println(err)
+		return err
 	}
 
 	err = conn.AutoMigrate(&Order{})
 	if err != nil {
-		log.Fatalln("While migrate orders table, error: ", err)
+		log.Println(err)
+		return err
 	}
 
+	return nil
 }
 
 type SelfDefine struct {

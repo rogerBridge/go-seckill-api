@@ -6,20 +6,19 @@ import (
 	"fmt"
 	"log"
 	"regexp"
-	"time"
 
 	"gorm.io/gorm"
 )
 
 type User struct {
 	SelfDefine
-	Username string    `gorm:"index;index:user" json:"username"`
-	Password string    `gorm:"" json:"password"`
-	Group    string    `gorm:"default:user" json:"group"`
-	Sex      string    `gorm:"" json:"sex"`
-	Birthday time.Time `gorm:"" json:"birthday"`
-	Address  string    `gorm:"" json:"address"`
-	Email    string    `gorm:"index;index:user" json:"email"`
+	Username string `gorm:"index;index:user" json:"username"`
+	Password string `gorm:"" json:"password"`
+	Group    string `gorm:"default:user" json:"group"`
+	Sex      string `gorm:"" json:"sex"`
+	Birthday int64    `gorm:"" json:"birthday"`
+	Address  string `gorm:"" json:"address"`
+	Email    string `gorm:"index;index:user" json:"email"`
 }
 
 //type UserJson struct {
@@ -51,12 +50,12 @@ func (u *User) CreateUser(tx *gorm.DB) error {
 		return err
 	}
 	// 检测系统中是否存在此用户
-	if !u.CheckUsernameIsUnique() {
+	if u.CheckUsernameIsExist() {
 		return fmt.Errorf("用户已存在, 无法新建")
 	}
 	// 需要将密码切换为sha256sum+salt的形式
 	u.Password = passwordEncrypt(u.Password)
-	if err := tx.Select("Username", "Password", "Email", "Birthday").Create(u).Error; err != nil {
+	if err := tx.Select("Username", "Password", "Email", "Birthday", "Address").Create(u).Error; err != nil {
 		return err
 	}
 	//if err := tx.Create(u).Error; err != nil {
@@ -75,7 +74,7 @@ func (u *User) CreateAdmin(tx *gorm.DB) error {
 		return err
 	}
 	// 检测系统中是否存在此用户
-	if !u.CheckUsernameIsUnique() {
+	if u.CheckUsernameIsExist() {
 		return fmt.Errorf("用户已存在, 无法新建")
 	}
 	// important, specify this user into admin group
@@ -96,6 +95,13 @@ func (u *User) QueryUsers() []*User {
 	users := make([]*User, 128)
 	conn.Model(&User{}).Find(users)
 	return users
+}
+
+// queryUserByEmail
+func (u *User) QueryUserByEmail(email string) *User {
+	result := new(User)
+	conn.Model(&User{}).Where("email=?", u.Email).First(result)
+	return result
 }
 
 // 更新用户信息(除密码之外)
@@ -126,10 +132,10 @@ func (u *User) UpdateUserPassword(tx *gorm.DB) error {
 
 // 传入的指定User是否存在于users table, 检测username是否存在, 注册user的时候使用
 // username和email都必须唯一
-func (u *User) CheckUsernameIsUnique() bool {
+func (u *User) CheckUsernameIsExist() bool {
 	result := new(User)
 	conn.Model(&User{}).Where("username=?", u.Username).First(result)
-	return result.Username != u.Username
+	return result.Username == u.Username
 }
 
 // 检查用户名和密码是否符合
@@ -166,4 +172,11 @@ func (u *User) CheckEmailIsUnique() error {
 
 func (u *User) CheckPasswordValid() bool {
 	return len(u.Password) >= 8
+}
+
+func (u *User) DeleteUserByUserEmail(email string) error {
+	if err := conn.Model(&User{}).Delete(u).Error; err!=nil {
+		return err
+	}
+	return nil
 }

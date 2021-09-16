@@ -2,9 +2,9 @@ package controllers2
 
 import (
 	"encoding/json"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/db"
 	"go-seckill/internal/db/shop_orm"
+	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 
@@ -94,17 +94,16 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 	logger.Infof("unmarshal request.body() success")
 
 	// 如果存在的话, 返回Purchase_limit这个对象
-	var purchaseLimit *shop_orm.PurchaseLimit
-	purchaseLimit, err = p.QueryPurchaseLimit()
-	if err != nil {
-		logger.Warnf("purchaseLimit query error: %v", err)
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "query purchaseLimit error: " + err.Error(),
-			Data: nil,
-		})
-		return
-	}
+	purchaseLimit := p.QueryPurchaseLimitByProductID()
+	// if err != nil {
+	// 	logger.Warnf("purchaseLimit query error: %v", err)
+	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
+	// 		Code: 8404,
+	// 		Msg:  "query purchaseLimit error: " + err.Error(),
+	// 		Data: nil,
+	// 	})
+	// 	return
+	// }
 	logger.Infof("purchaseLimit query succuesful")
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8200,
@@ -117,16 +116,16 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 func QueryPurchaseLimits(ctx *fasthttp.RequestCtx) {
 	// 如果存在的话, 返回Purchase_limit这个对象
 	p := new(shop_orm.PurchaseLimit)
-	purchaseLimits, err := p.QueryPurchaseLimits()
-	if err != nil {
-		logger.Warnf("purchaseLimit query error: %v", err)
-		utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-			Code: 8404,
-			Msg:  "query purchaseLimit error: " + err.Error(),
-			Data: nil,
-		})
-		return
-	}
+	purchaseLimits := p.QueryPurchaseLimits()
+	// if err != nil {
+	// 	logger.Warnf("purchaseLimit query error: %v", err)
+	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
+	// 		Code: 8404,
+	// 		Msg:  "query purchaseLimit error: " + err.Error(),
+	// 		Data: nil,
+	// 	})
+	// 	return
+	// }
 	logger.Infof("purchaseLimit query succuesful")
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8200,

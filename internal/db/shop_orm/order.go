@@ -2,7 +2,6 @@ package shop_orm
 
 import (
 	"fmt"
-	"time"
 
 	"gorm.io/gorm"
 )
@@ -30,21 +29,23 @@ func (o *Order) CreateOrder(tx *gorm.DB) error {
 
 // find all orders
 // just for admin
-func (o *Order) QueryOrders() ([]*Order, error) {
+func (o *Order) QueryOrders() []*Order {
 	orders := make([]*Order, 128)
-	if err := conn.Model(&Order{}).Find(&orders).Error; err != nil {
-		return orders, err
-	}
-	return orders, nil
+	conn.Model(&Order{}).Find(&orders)
+	return orders
 }
 
 // find specific order, by username
-func (o *Order) QueryOrderByUsername(username string) ([]*Order, error) {
+func (o *Order) QueryOrderByUsername(username string) []*Order {
 	orders := make([]*Order, 128)
-	if err := conn.Model(&Order{}).Where("username = ?", username).Find(&orders).Error; err != nil {
-		return orders, err
-	}
-	return orders, nil
+	conn.Model(&Order{}).Where("username = ?", username).Find(&orders)
+	return orders
+}
+
+func (o *Order) QueryOrderByOrderNumber(orderNumber string) *Order {
+	order := new(Order)
+	conn.Model(&Order{}).Where("order_number=?", o.OrderNumber).First(&order)
+	return order
 }
 
 func (o *Order) UpdateOrderStatus(tx *gorm.DB) error {
@@ -56,7 +57,7 @@ func (o *Order) UpdateOrderStatus(tx *gorm.DB) error {
 
 func (o *Order) UpdateOrder(tx *gorm.DB) error {
 	if !o.CheckOrderParams() {
-		return fmt.Errorf("Order参数检查没有通过")
+		return fmt.Errorf("订单参数检查没有通过")
 	}
 	if err := tx.Model(&Order{}).Where("order_number=?", o.OrderNumber).Updates(Order{
 		OrderNumber: o.OrderNumber,
@@ -71,8 +72,8 @@ func (o *Order) UpdateOrder(tx *gorm.DB) error {
 	return nil
 }
 
-func (o *Order) DeleteOrder(tx *gorm.DB) error {
-	if err := tx.Model(&Order{}).Where("order_number = ?", o.OrderNumber).Update("deleted_at", time.Now()).Error; err != nil {
+func (o *Order) DeleteOrderByOrderNumber(tx *gorm.DB) error {
+	if err := tx.Model(&Order{}).Where("order_number = ?", o.OrderNumber).Delete(&Order{}).Error; err != nil {
 		return err
 	}
 	return nil

@@ -34,26 +34,20 @@ func (p *PurchaseLimit) CreatePurchaseLimit(tx *gorm.DB) error {
 }
 
 // Query PurchaseLimit, 获取全部的没有删掉的PurchaseLimit
-func (p *PurchaseLimit) QueryPurchaseLimits() ([]*PurchaseLimit, error) {
+func (p *PurchaseLimit) QueryPurchaseLimits() []*PurchaseLimit {
 	var results []*PurchaseLimit
-	if err := conn.Model(&PurchaseLimit{}).Find(&results).Error; err != nil {
-		log.Println("While query PurchaseLimits, error: ", err)
-		return results, err
-	}
-	return results, nil
+	conn.Model(&PurchaseLimit{}).Find(&results)
+	return results
 }
 
 // 获取PurchaseLimit由商品的product_id
-func (p *PurchaseLimit) QueryPurchaseLimit() (*PurchaseLimit, error) {
-	if !p.IfPurchaseLimitExist() {
-		return p, fmt.Errorf("查找的商品不存在")
-	}
+func (p *PurchaseLimit) QueryPurchaseLimitByProductID() *PurchaseLimit {
+	// if !p.IfPurchaseLimitExist() {
+	// 	return p, fmt.Errorf("查找的商品不存在")
+	// }
 	var result *PurchaseLimit
-	if err := conn.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Find(&result).Error; err != nil {
-		log.Println("While query PurchaseLimit, error: ", err)
-		return result, err
-	}
-	return result, nil
+	conn.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Find(&result)
+	return result
 }
 
 // update PurchaseLimit by product_id
@@ -79,7 +73,7 @@ func (p *PurchaseLimit) DeletePurchaseLimit(tx *gorm.DB) error {
 	if !p.IfPurchaseLimitExist() {
 		return fmt.Errorf("删除时发现商品不存在")
 	}
-	if err := tx.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Delete(p).Error; err != nil {
+	if err := tx.Model(&PurchaseLimit{}).Delete(p).Error; err != nil {
 		logger.Println("DeletePurchaseLimit error: ", err)
 		return err
 	}
