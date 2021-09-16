@@ -12,13 +12,13 @@ import (
 
 type User struct {
 	SelfDefine
-	Username string `gorm:"index;index:user" json:"username"`
-	Password string `gorm:"" json:"password"`
+	Username string `gorm:"index;index:login" json:"username"`
+	Password string `gorm:"index;index:login" json:"password"`
 	Group    string `gorm:"default:user" json:"group"`
 	Sex      string `gorm:"" json:"sex"`
-	Birthday int64    `gorm:"" json:"birthday"`
+	Birthday int64  `gorm:"" json:"birthday"`
 	Address  string `gorm:"" json:"address"`
-	Email    string `gorm:"index;index:user" json:"email"`
+	Email    string `gorm:"index" json:"email"`
 }
 
 //type UserJson struct {
@@ -175,7 +175,7 @@ func (u *User) CheckPasswordValid() bool {
 }
 
 func (u *User) DeleteUserByUserEmail(email string) error {
-	if err := conn.Model(&User{}).Delete(u).Error; err!=nil {
+	if err := conn.Model(&User{}).Delete(u).Error; err != nil {
 		return err
 	}
 	return nil
