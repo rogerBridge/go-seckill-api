@@ -138,6 +138,26 @@ func LoadGoods() error {
 		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodList)
 		return err
 	}
+	// 将存在redis却不存在mysql中的商品good找出来并删除
+	goodListMap := make(map[string]*shop_orm.Good)
+	for _, v := range goodList {
+		goodListMap["store:"+strconv.Itoa(int(v.ID))] = v
+	}
+	ss, err := redis.Strings(redis.Values(conn.Do("keys", "store:*")))
+	for _, s := range ss {
+		if _, ok := goodListMap[s]; !ok {
+			err := conn.Send("del", s)
+			if err != nil {
+				log.Println(err)
+			}
+		}
+	}
+	if err != nil {
+		logger.Warnf(err.Error())
+		return err
+	}
+
+	// 更新mysql中找出来的商品信息到redis中
 	for i := 0; i < len(goodList); i++ {
 		err = conn.Send("hmset", "store:"+strconv.Itoa(int(goodList[i].ID)), "productID", goodList[i].ID, "name", goodList[i].ProductName, "category", goodList[i].ProductCategory, "inventory", goodList[i].Inventory, "price", goodList[i].Price)
 		if err != nil {
