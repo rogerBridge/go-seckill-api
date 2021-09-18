@@ -66,6 +66,16 @@ func InitStore() error {
 // 全局变量, 存储purchase_limits
 // product_id 是每件商品的唯一标识符
 var purchaseLimitMap = make(map[int]*shop_orm.PurchaseLimit)
+
+// 如果在更改purchaseLimitMap期间, 进来购物请求, 一律拒绝
+type PurchaseLock struct {
+	CouldBuy bool
+}
+
+var PurchaseLockInstance = &PurchaseLock{
+	CouldBuy: true,
+}
+
 var goodMap = GoodMap()
 
 // 将mysql中的商品信息加载到runtime中
@@ -84,22 +94,25 @@ func GoodMap() map[int]*shop_orm.Good {
 	return goodListMap
 }
 
+// purchaseLimit 并不是并发安全的, 加一个锁
+// 或者使用sync.Map
+// LoadLimits
 func LoadLimits() error {
+	// 在更新purchaseLimit之前, 把purchaseLock更新为false, 此时, 进来的购物请求一律拒绝
+	PurchaseLockInstance.CouldBuy = false
+	p := new(shop_orm.PurchaseLimit)
+	r := p.QueryPurchaseLimits()
+
 	// 每次修改purchaseLimit变量之前, 先清空这个变量
 	for k := range purchaseLimitMap {
 		delete(purchaseLimitMap, k)
 	}
-	p := new(shop_orm.PurchaseLimit)
-	r := p.QueryPurchaseLimits()
-	// r, err := purchase_limits.QueryPurchaseLimits()
-	// if err != nil {
-	// 	logger.Warnf("While query purchaseLimit, error message: %v", err)
-	// 	return err
-	// }
 	for _, v := range r {
 		// make map本身就是一个指针型变量
 		purchaseLimitMap[v.ProductID] = v
 	}
+	PurchaseLockInstance.CouldBuy = true
+
 	fmt.Printf("加载后的指针型变量purchaseLimitMap: %+v\n", purchaseLimitMap)
 	for _, v := range purchaseLimitMap {
 		logger.Infof("商品id: %v, 购买限制: %v, 开始购买时间: %v, 结束购买时间: %v", v.ProductID, v.LimitNum, v.StartPurchaseTimeStamp, v.StopPurchaseTimeStamp)
@@ -147,6 +160,11 @@ type Order shop_orm.Order
 
 // 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (o *Order) CanBuyIt() (bool, error) {
+	// 因为我们使用的是map, 如果用户在购买和我们修改purchaseLimit两个事情同时发生, 因为在修改map的第一步是删除整个map, 可能会导致之前有购买限制的商品在用户访问的时候没有购买限制
+	// 这样会造成事故, 所以在修改purchaseLimit的时候, 使用一个全局变量, 如果在修改purchaseLimitMap, 则一律不能购买, 修改完毕之后, CouldBuy成为true, 这个时候才可以购买
+	if !PurchaseLockInstance.CouldBuy {
+		return false, fmt.Errorf("系统正在更新PurchaseLimit表单, 请稍后再试")
+	}
 	if _, ok := purchaseLimitMap[o.ProductID]; ok {
 		logger.Debugf("进入CanBuyIt > purchaseLimitMap")
 		logger.Debugf("%+v", purchaseLimitMap[o.ProductID])
