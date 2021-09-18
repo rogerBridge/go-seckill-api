@@ -10,6 +10,7 @@ import (
 	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
+	"strconv"
 
 	"github.com/valyala/fasthttp"
 )
@@ -208,7 +209,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 
 	redisConn := redisconf.Pool.Get()
 	defer redisConn.Close()
-	_, err = redisConn.Do("hmset", "store:"+g.ProductName, "name", g.ProductName, "category", g.ProductCategory, "inventory", g.Inventory, "price", g.Price)
+	_, err = redisConn.Do("hmset", "store:"+strconv.Itoa(int(g.ID)), "name", g.ProductName, "category", g.ProductCategory, "inventory", g.Inventory, "price", g.Price)
 	if err != nil {
 		logger.Warnf("UpdateGood: Redis hmset error %v", err)
 		// redis里面增加key时出现错误, 尝试回滚mysql
