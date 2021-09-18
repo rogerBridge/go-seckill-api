@@ -59,6 +59,21 @@ func (g *Good) UpdateGood(tx *gorm.DB) error {
 	return nil
 }
 
+// increase or decrease product number by productID and number
+func (g *Good) UpdateGoodByProductIDandPurchaseNum(tx *gorm.DB, productID int, purchaseNum int) error {
+	// if err := tx.Raw("UPDATE seckill.goods SET inventory = inventory - ? WHERE id = ?", purchaseNum, productID).Error; err != nil {
+	// 	return fmt.Errorf("更新商品信息时, 发生错误: %v", err)
+	// }
+	logger.Infoln("UPDATE goods SET inventory=inventory-? WHERE id=?", purchaseNum, productID)
+	if err := tx.Exec("UPDATE goods SET inventory=? WHERE id=?", gorm.Expr("inventory-?", purchaseNum), productID).Error; err != nil {
+		return fmt.Errorf("更新商品信息时, 发生错误: %v", err)
+	}
+	// if err := tx.Model(&Good{}).Where("id = ?", productID).Update("inventory", fmt.Sprintf("inventory-%d", purchaseNum)).Error; err!=nil {
+	// 	return fmt.Errorf("更新商品信息时, 发生错误: %v", err)
+	// }
+	return nil
+}
+
 // 根据product_id确定唯一的一个商品, 然后删除它
 func (g *Good) DeleteGood(tx *gorm.DB) error {
 	if !g.IfGoodValidByID() {
