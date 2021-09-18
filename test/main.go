@@ -12,7 +12,6 @@ func main() {
 	// pressuremaker.RegisterUsers()
 
 	// generate token and store in token.db
-
 	// logger.Println("Start generate Token")
 	// pressuremaker.InitSqlite()
 	// pressuremaker.CreateToken()
@@ -24,7 +23,7 @@ func main() {
 	// pressuremaker.AddProducts()
 
 	// log.Println("Start test")
-	test()
+	// test()
 }
 
 // concurrent run CreateOrder() method, then run statistics

@@ -10,22 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func CreateRandomGood() *shop_orm.Good {
-	rand.Seed(time.Now().UTC().Unix())
-	good := &shop_orm.Good{
-		ProductCategory: "test purpose",
-		ProductName:     ksuid.New().String(),
-		Inventory:       randInt(100, 200),
-		Price:           randInt(3000, 6000),
-	}
-	return good
-}
-
-// generate random int number, range: [min, max]
-func randInt(min int, max int) int {
-	return min + rand.Intn(max-min+1)
-}
-
 func TestGood(t *testing.T) {
 	// create good
 	good := CreateRandomGood()
@@ -43,3 +27,19 @@ func TestGood(t *testing.T) {
 	require.Equal(t, len(good.QueryGoodsByProductCategoryAndProductName(conn)), 0)
 }
 
+
+func CreateRandomGood() *shop_orm.Good {
+	rand.Seed(time.Now().UTC().Unix())
+	good := &shop_orm.Good{
+		ProductCategory: "test purpose",
+		ProductName:     ksuid.New().String(),
+		Inventory:       randInt(100, 200),
+		Price:           randInt(3000, 6000),
+	}
+	return good
+}
+
+// generate random int number, range: [min, max]
+func randInt(min int, max int) int {
+	return min + rand.Intn(max-min+1)
+}

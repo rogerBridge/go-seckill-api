@@ -32,7 +32,7 @@ type User struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Email    string `json:"email"`
-	Birthday string `json:"birthday"`
+	Birthday int    `json:"birthday"`
 }
 
 type UserLogin struct {
@@ -215,7 +215,7 @@ func RegisterUsers() {
 			Username: "test" + strconv.Itoa(i),
 			Password: "12345678",
 			Email:    "test" + strconv.Itoa(i) + "@gmail.com",
-			Birthday: "2006-01-02T15:04:05+08:00",
+			Birthday: 1631804966000,
 		}
 		err := users[i].Register()
 		if err != nil {
