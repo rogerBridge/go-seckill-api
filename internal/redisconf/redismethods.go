@@ -6,6 +6,7 @@ import (
 	"go-seckill/internal/db"
 	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/rabbitmq/sender"
+	"log"
 	"strconv"
 	"time"
 
@@ -76,22 +77,27 @@ var PurchaseLockInstance = &PurchaseLock{
 	CouldBuy: true,
 }
 
-var goodMap = GoodMap()
+// var goodMap = GoodMap()
+// 每次create good, update good的时候都应该加载一遍
+var goodMap = make(map[int]*shop_orm.Good)
 
 // 将mysql中的商品信息加载到runtime中
-func GoodMap() map[int]*shop_orm.Good {
+// 还是应该从redis中获取good信息啊
+func GoodMap() error {
 	g := new(shop_orm.Good)
 	goodList, err := g.QueryGoods()
-	goodListMap := make(map[int]*shop_orm.Good)
 
 	if err != nil {
 		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodList)
-		return goodListMap
+		return err
+	}
+	for k := range goodMap {
+		delete(goodMap, k)
 	}
 	for _, v := range goodList {
-		goodListMap[int(v.ID)] = v // convert uint to int
+		goodMap[int(v.ID)] = v // convert uint to int
 	}
-	return goodListMap
+	return nil
 }
 
 // purchaseLimit 并不是并发安全的, 加一个锁
@@ -141,6 +147,30 @@ func LoadGoods() error {
 	}
 	logger.Info("load data from mysql.shop.goods to goodRedis successful ")
 	return nil
+}
+
+type Good struct {
+	ProductID int    `redis:"productID"`
+	Name      string `redis:"name"`
+	Category  string `redis:"category"`
+	Inventory int    `redis:"inventory"`
+	Price     int    `redis:"price"`
+}
+
+func QueryGoodByID(id int) (*Good, error) {
+	conn := Pool.Get()
+	defer conn.Close()
+	// query good info from redis
+	g := new(Good)
+	raw, err := redis.Values(conn.Do("hgetall", "store:"+strconv.Itoa(id)))
+	if err != nil {
+		return nil, err
+	}
+	err = redis.ScanStruct(raw, g)
+	if err != nil {
+		return nil, err
+	}
+	return g, nil
 }
 
 // 检查是否通过时间段检测
@@ -280,10 +310,18 @@ func (o *Order) OrderGenerator() error {
 	// 加锁, single routine 再次验证单用户bought 是否合格? 如果不合格, 返回失败, 并返回相应库存
 	// sync.Mutex.Lock()
 
+	g, err := QueryGoodByID(o.ProductID)
+	if err != nil {
+		log.Println("get price from redis error: ", err)
+		return fmt.Errorf("when get price from redis cache, error:%s\n", err)
+	}
+
 	o.orderNumberGenerator()
 	now := time.Now()
 	o.Status = "process"
-	o.Price = goodMap[o.ProductID].Price * o.PurchaseNum
+	// o.Price 应该从redis中获取单个price
+	o.Price = g.Price * o.PurchaseNum
+	// o.Price = goodMap[o.ProductID].Price * o.PurchaseNum
 	ok, err := redis.String(conn1.Do("hmset", "user:"+o.Username+":order:"+o.OrderNumber, "orderNum", o.OrderNumber, "username", o.Username, "productID", o.ProductID, "purchaseNum", o.PurchaseNum, "orderDate", now.Format("2006-01-02 15:04:05"), "status", o.Status, "price", o.Price))
 	if err != nil {
 		logger.Warnf("OrderGenerator: 用户 %s 生成订单过程中出现了错误: %v\n", o.Username, err)

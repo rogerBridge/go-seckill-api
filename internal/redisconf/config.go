@@ -40,5 +40,11 @@ func InitialRedis() error {
 		log.Println(err)
 		return err
 	}
+	// 加载MySQL中的goods到全局变量goodMap中
+	err = GoodMap()
+	if err != nil {
+		log.Println(err)
+		return err
+	}
 	return nil
 }

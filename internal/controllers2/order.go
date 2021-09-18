@@ -38,6 +38,8 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	if ok {
+		// 根据productID从redis中获取商品价格
+		
 		// 生成订单信息
 		err := order.OrderGenerator()
 		if err != nil {
