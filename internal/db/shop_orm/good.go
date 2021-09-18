@@ -65,7 +65,7 @@ func (g *Good) UpdateGoodByProductIDandPurchaseNum(tx *gorm.DB, productID int, p
 	// 	return fmt.Errorf("更新商品信息时, 发生错误: %v", err)
 	// }
 	logger.Infoln("UPDATE goods SET inventory=inventory-? WHERE id=?", purchaseNum, productID)
-	if err := tx.Exec("UPDATE goods SET inventory=? WHERE id=?", gorm.Expr("inventory-?", purchaseNum), productID).Error; err != nil {
+	if err := tx.Exec("UPDATE goods SET inventory=? WHERE id=?", gorm.Expr("inventory+?", purchaseNum), productID).Error; err != nil {
 		return fmt.Errorf("更新商品信息时, 发生错误: %v", err)
 	}
 	// if err := tx.Model(&Good{}).Where("id = ?", productID).Update("inventory", fmt.Sprintf("inventory-%d", purchaseNum)).Error; err!=nil {

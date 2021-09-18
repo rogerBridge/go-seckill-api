@@ -229,7 +229,7 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 		})
 		return
 	}
-	// 更新runtime中的PurchaseLimitMap
+	// 更新runtime中的purchaseLimitMap
 	err = LoadGoodPurchaseLimit()
 	if err != nil {
 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
@@ -251,7 +251,7 @@ func DeletePurchaseLimit(ctx *fasthttp.RequestCtx) {
 // 更新商品限制计划
 // 例如, 在更新MySQL的限制购买条件后, 若要将商品购买限制同步到app中, 只需要调用goodsLimit这个接口就可以
 func LoadGoodPurchaseLimit() error {
-	
+
 	// 加载limit限制计划
 	err := redisconf.LoadLimits()
 	if err != nil {

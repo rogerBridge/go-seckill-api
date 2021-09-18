@@ -41,7 +41,7 @@ func Receive(ch *amqp.Channel) {
 			// 开始将redis来的订单信息同步到数据库中
 			// err = order.UpdateOrder(mysql.Conn2)
 			// 解析order信息, 将库存相关的从mysql对应数据库中减去
-			err = good.UpdateGoodByProductIDandPurchaseNum(db.Conn2, order.ProductID, order.PurchaseNum)
+			err = good.UpdateGoodByProductIDandPurchaseNum(db.Conn2, order.ProductID, -1*order.PurchaseNum)
 			if err != nil {
 				logger.Warnf("更新商品库存时出现错误: %v", err)
 			}
