@@ -8,3 +8,4 @@ build/go-seckill/go-seckill
 pressuretest/pressuremaker/token.db
 pressuretest/main
 logs.txt
+token.db
