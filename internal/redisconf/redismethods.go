@@ -77,28 +77,28 @@ var PurchaseLockInstance = &PurchaseLock{
 	CouldBuy: true,
 }
 
-// var goodMap = GoodMap()
-// 每次create good, update good的时候都应该加载一遍
-var goodMap = make(map[int]*shop_orm.Good)
+// // var goodMap = GoodMap()
+// // 每次create good, update good的时候都应该加载一遍
+// var goodMap = make(map[int]*shop_orm.Good)
 
-// 将mysql中的商品信息加载到runtime中
-// 还是应该从redis中获取good信息啊
-func GoodMap() error {
-	g := new(shop_orm.Good)
-	goodList, err := g.QueryGoods()
+// // 将mysql中的商品信息加载到runtime中
+// // 还是应该从redis中获取good信息啊
+// func GoodMap() error {
+// 	g := new(shop_orm.Good)
+// 	goodList, err := g.QueryGoods()
 
-	if err != nil {
-		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodList)
-		return err
-	}
-	for k := range goodMap {
-		delete(goodMap, k)
-	}
-	for _, v := range goodList {
-		goodMap[int(v.ID)] = v // convert uint to int
-	}
-	return nil
-}
+// 	if err != nil {
+// 		logger.Warnf("load goods data from mysql.shop.goods error message: %v", goodList)
+// 		return err
+// 	}
+// 	// for k := range goodMap {
+// 	// 	delete(goodMap, k)
+// 	// }
+// 	for _, v := range goodList {
+// 		goodMap[int(v.ID)] = v // convert uint to int
+// 	}
+// 	return nil
+// }
 
 // purchaseLimit 并不是并发安全的, 加一个锁
 // 或者使用sync.Map
@@ -210,8 +210,11 @@ type Order shop_orm.Order
 
 // 首先查找 productId && purchaseNum 是否还有足够的库存, 然后在看用户是否满足购买的条件
 func (o *Order) CanBuyIt() (bool, error) {
-	// 因为我们使用的是map, 如果用户在购买和我们修改purchaseLimit两个事情同时发生, 因为在修改map的第一步是删除整个map, 可能会导致之前有购买限制的商品在用户访问的时候没有购买限制
-	// 这样会造成事故, 所以在修改purchaseLimit的时候, 使用一个全局变量, 如果在修改purchaseLimitMap, 则一律不能购买, 修改完毕之后, CouldBuy成为true, 这个时候才可以购买
+	// * 因为我们使用的是map, 如果用户在购买和我们修改purchaseLimit两个事情同时发生, 因为在修改map的第一步是删除整个map, 可能会导致之前有购买限制的商品在用户访问的时候没有购买限制
+	// * 这样会造成事故, 所以在修改purchaseLimit的时候, 使用一个全局变量, 如果在修改purchaseLimitMap, 则一律不能购买, 修改完毕之后, CouldBuy成为true, 这个时候才可以购买
+	// ? 1. use map read with a function with params sync.RWmutex, and map write with sync.RWmutex
+	// ? 2. [concurrent-map](https://github.com/orcaman/concurrent-map)
+	// ? 3. global variable: PurchaseLockInstance
 	if !PurchaseLockInstance.CouldBuy {
 		return false, fmt.Errorf("系统正在更新PurchaseLimit表单, 请稍后再试")
 	}
@@ -362,7 +365,7 @@ func (o *Order) OrderGenerator() error {
 	}
 	// 将生成的订单信息发送给rabbitmq receiver
 	err = sender.Send(jsonBytes, ch)
-	logger.Infof("生成的订单信息发送给mqtt exchange: %v", jsonBytes)
+	logger.Debugf("生成的订单信息发送给mqtt exchange: %v", jsonBytes)
 	if err != nil {
 		logger.Warnf("User: %s send msg: %v error: %v", o.Username, jsonBytes, err)
 		return err
@@ -419,7 +422,7 @@ func (o *Order) CancelBuy() error {
 	}
 	if status == "process" {
 		// 根据订单号找出来商品的productId, purchaseNum
-		productID, err := redis.String(conn1.Do("hget", "user:"+o.Username+":order:"+o.OrderNumber, "productID"))
+		productID, err := redis.Int(conn1.Do("hget", "user:"+o.Username+":order:"+o.OrderNumber, "productID"))
 		if err != nil {
 			logger.Warnf("CancelBuy: hget user:%v:order:%v productID error", o, o.OrderNumber)
 			return err
@@ -447,7 +450,7 @@ func (o *Order) CancelBuy() error {
 		}
 		// 打status成功, 开始执行返还库存
 		incrString := strconv.Itoa(purchaseNum)
-		err = conn.Send("hincrby", "store:"+productID, "inventory", incrString)
+		err = conn.Send("hincrby", "store:"+strconv.Itoa(productID), "inventory", incrString)
 		if err != nil {
 			logger.Warnf("CancelBuy: %+v 返还库存 %v 时出错 %v", o, productID, err)
 			return fmt.Errorf("%+v 返还库存 %v 时出错 %v", o, productID, err)
@@ -457,6 +460,13 @@ func (o *Order) CancelBuy() error {
 		if err != nil {
 			logger.Warnf("CancelBuy: %+v 变更bought表: 'user:%s:bought'时出错%v", o, o.Username, err)
 			return fmt.Errorf("%+v 变更bought表: 'user:%s:bought'时出错%v", o, o.Username, err)
+		}
+		// 将商品信息同步到mysql goods表中
+		g := new(shop_orm.Good)
+		err = g.UpdateGoodByProductIDandPurchaseNum(db.Conn2, productID, purchaseNum)
+		if err != nil {
+			log.Println("添加库存进mysql的过程中出错", err)
+			return err
 		}
 		// 最后, 将订单信息同步到mysql中, if订单号不唯一, 那就惨了
 		// 之后再加一个订单号是否唯一的校验吧

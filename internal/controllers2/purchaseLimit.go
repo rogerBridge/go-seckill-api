@@ -78,7 +78,7 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 }
 
 // 根据product_id获取商品的purchase_limit
-func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
+func QueryPurchaseLimitByProductID(ctx *fasthttp.RequestCtx) {
 	// query purchaseLimit
 	p := new(shop_orm.PurchaseLimit)
 	err := json.Unmarshal(ctx.Request.Body(), p)
@@ -95,6 +95,12 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 
 	// 如果存在的话, 返回Purchase_limit这个对象
 	purchaseLimit := p.QueryPurchaseLimitByProductID()
+	logger.Infof("purchaseLimit query succuesful")
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		Code: 8200,
+		Msg:  "query PurchaseLimit successful",
+		Data: purchaseLimit,
+	})
 	// if err != nil {
 	// 	logger.Warnf("purchaseLimit query error: %v", err)
 	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
@@ -104,12 +110,6 @@ func QueryPurchaseLimit(ctx *fasthttp.RequestCtx) {
 	// 	})
 	// 	return
 	// }
-	logger.Infof("purchaseLimit query succuesful")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
-		Code: 8200,
-		Msg:  "query PurchaseLimit successful",
-		Data: purchaseLimit,
-	})
 }
 
 // 获取所有商品的purchase_limit

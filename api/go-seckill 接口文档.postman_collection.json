@@ -1,0 +1,698 @@
+{
+	"info": {
+		"_postman_id": "ad2c785c-5081-4d77-9e35-2f2423e38d70",
+		"name": "go-seckill 接口文档",
+		"description": "分类:\n- 用户\n- 管理员\n- 用户订单\n\nPOST参数均为application/json, 如无特殊说明, 均为必填",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "user",
+			"item": [
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"12345678\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://go-seckill:4000/api/v0/user/login",
+							"protocol": "http",
+							"host": [
+								"go-seckill"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"login"
+							]
+						},
+						"description": "用户登录\n\n参数:\n\nusername string 用户名\n\npassword string 密码"
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyMCIsImV4cCI6MTYyNTAxMjE3NH0.BaH_C-tNzR_e05oLuTDfBDvMs1qw_fY0f-XCvrKHQ1k",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/user/logout",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"logout"
+							]
+						},
+						"description": "通过request header 中的Authorization: token获取用户username, 然后退出"
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"roger4\",\n    \"password\": \"12345678\",\n    \"email\": \"roger3@gmail.com\",\n    \"birthday\": 1631804966\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/user/register",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"register"
+							]
+						},
+						"description": "用户注册\n\n参数:\n\nusername string \n\npassword string\n\nemail string\n\nbirthday int 时间戳(设计失误)"
+					},
+					"response": []
+				},
+				{
+					"name": "updateUserInfo",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyMCIsImV4cCI6MTYyNTAxMjE3NH0.BaH_C-tNzR_e05oLuTDfBDvMs1qw_fY0f-XCvrKHQ1k",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"roger0@gmail.com\",\n    \"sex\": \"male\",\n    \"address\": \"Mars\",\n    \"birthday\": 1631804966\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/user/updateInfo",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"user",
+								"updateInfo"
+							]
+						},
+						"description": "从token中解析username, 根据username来更新:\n\n参数:\n\nemail string\n\nsex string\n\naddress string\n\nbirthday int"
+					},
+					"response": []
+				},
+				{
+					"name": "updateUserPassword",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyMCIsImV4cCI6MTYyNTAxMjE3NH0.BaH_C-tNzR_e05oLuTDfBDvMs1qw_fY0f-XCvrKHQ1k",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"password\": \"1234567890\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/user/updatePassword",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"user",
+								"updatePassword"
+							]
+						},
+						"description": "更新密码\n\n参数:\n\npassword string"
+					},
+					"response": []
+				}
+			],
+			"description": "用户信息相关的接口"
+		},
+		{
+			"name": "admin",
+			"item": [
+				{
+					"name": "goodCreate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjM4MzQyN30.Hdi7M09FR9-6su0-OmIo-EKS23B4DIesJMB44mSvxwg",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productCategory\": \"phone\",\n    \"productName\": \"小米7\",\n    \"inventory\": 100,\n    \"price\": 666\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/goodCreate",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"goodCreate"
+							]
+						},
+						"description": "创建产品\n\n参数: \n\nproductCategory string 产品分类\n\nproductName string 产品名称 (分类可以相同, 产品名称可以相同, 但是两者不可以同时相同\n\ninventory int 库存数量\n\nprice int(单位:分)"
+					},
+					"response": []
+				},
+				{
+					"name": "goodUpdate",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjU5MDIwN30.KCmrOIFF9LvrSkjcH2EpTzXFsYIEEilKLqqt4Z9CH78",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 4,\n    \"productCategory\": \"Mobile Phone\",\n    \"productName\": \"Xiaomi-4\",\n    \"inventory\": 200,\n    \"price\": 200000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/goodUpdate",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"goodUpdate"
+							]
+						},
+						"description": "商品信息更新 (更新时需要注意指定产品id, id可以根据: /goodList接口获取)\n\n参数:\n\nid int 商品ID\n\nproductCategory string 产品分类\n\nproductName string 产品名称 (分类可以相同, 产品名称可以相同, 但是两者不可以同时相同\n\ninventory int 库存数量\n\nprice int(单位:分)"
+					},
+					"response": []
+				},
+				{
+					"name": "goodDelete",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjc0MzkwMH0.LrH5CVvmUnqjJsGEsNUR8UePD8kPgycEeXHDye8v5EA",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/goodDelete",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"goodDelete"
+							]
+						},
+						"description": "产品删除, 需要指定产品id\n\n参数:\n\nid int 产品id"
+					},
+					"response": []
+				},
+				{
+					"name": "createPurchaseLimit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjc0MzkwMH0.LrH5CVvmUnqjJsGEsNUR8UePD8kPgycEeXHDye8v5EA",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productID\": 3,\n    \"limitNum\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/createPurchaseLimit",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"createPurchaseLimit"
+							]
+						},
+						"description": "产品购买限制:\n\n参数:\n\nproductID int 产品id \n\nlimitNum int 限制单用户购买数量\n\nstartPurchaseTimestamp(可选) int 开始购买时间戳\n\nstopPurchaseTimestamp(可选) int 结束购买时间戳"
+					},
+					"response": []
+				},
+				{
+					"name": "queryPurchaseLimitByProductID",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjc0MzkwMH0.LrH5CVvmUnqjJsGEsNUR8UePD8kPgycEeXHDye8v5EA",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productID\": 8\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/queryPurchaseLimitByProductID",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"queryPurchaseLimitByProductID"
+							]
+						},
+						"description": "查询指定产品ID的购买限制\n\n参数: \n\nproductID int 产品id"
+					},
+					"response": []
+				},
+				{
+					"name": "queryPurchaseLimits",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjc0MzkwMH0.LrH5CVvmUnqjJsGEsNUR8UePD8kPgycEeXHDye8v5EA",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/queryPurchaseLimits",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"queryPurchaseLimits"
+							]
+						},
+						"description": "获取所有商品的购买限制\n\n参数: 无"
+					},
+					"response": []
+				},
+				{
+					"name": "updatePurchaseLimit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYyNTA5NjEyNH0.M7zcQaJYLeBQQwyzsCUS7ICtCm-3tn6oq01NKcvCBh8",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productID\": 3,\n    \"limitNum\": 3\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/admin/updatePurchaseLimit",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"admin",
+								"updatePurchaseLimit"
+							]
+						},
+						"description": "更新购买限制\n\n参数:\n\nproductID int 产品ID\n\nlimitNum int 限制购买数量"
+					},
+					"response": []
+				},
+				{
+					"name": "deletePurchaseLimit",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6ImFkbWluIiwidXNlcm5hbWUiOiJhZG1pbiIsImV4cCI6MTYzMjc0MzkwMH0.LrH5CVvmUnqjJsGEsNUR8UePD8kPgycEeXHDye8v5EA",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productID\": 10\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/admin/deletePurchaseLimit",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"deletePurchaseLimit"
+							]
+						},
+						"description": "删除产品购买限制\n\n参数:\n\nproductID int 商品id"
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"12345678\",\n    \"email\": \"admin@gmail.com\",\n    \"birthday\": 1632158200000\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://go-seckill:4000/api/v0/admin/register",
+							"protocol": "http",
+							"host": [
+								"go-seckill"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"admin",
+								"register"
+							]
+						},
+						"description": "管理员注册\n\n参数:\n\nusername: string\n\npassword: string\n\nemail: string\n\nbirthday: int"
+					},
+					"response": []
+				}
+			],
+			"description": "管理相关的接口"
+		},
+		{
+			"name": "order",
+			"item": [
+				{
+					"name": "cancelBuy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyIiwiZXhwIjoxNjMyMTEzMDU3fQ.bjYV3NDSMNNEPQz1MFe8GsqMI9VE4sheCFYnIgk0Ffc",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n\t\"orderNumber\": \"1yPgri3G7ydZlGO6cbnA6DRLV4b\"\n}\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://go-seckill:4000/api/v0/user/order/cancelBuy",
+							"protocol": "http",
+							"host": [
+								"go-seckill"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"order",
+								"cancelBuy"
+							]
+						},
+						"description": "取消订单\n\n参数:\n\norderNumber: string"
+					},
+					"response": []
+				},
+				{
+					"name": "buy",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyIiwiZXhwIjoxNjMyNzQzNzQ1fQ.Gyj7-kz7W8tHRTwTebCOnFn2KLOVtQwxnpl3SqiDLng",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"productID\": 2,\n    \"purchaseNum\": 1\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/user/order/buy",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"order",
+								"buy"
+							]
+						},
+						"description": "购买产品\n\n参数:\n\nproductID int 产品ID\npurchaseNum int 购买数量"
+					},
+					"response": []
+				},
+				{
+					"name": "goodList",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyIiwiZXhwIjoxNjMyNzQzNzQ1fQ.Gyj7-kz7W8tHRTwTebCOnFn2KLOVtQwxnpl3SqiDLng",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/goodList",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"goodList"
+							]
+						},
+						"description": "获取所有商品清单\n\n参数: 无"
+					},
+					"response": []
+				},
+				{
+					"name": "queryOrders",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJncm91cCI6InVzZXIiLCJ1c2VybmFtZSI6InJvZ2VyIiwiZXhwIjoxNjMyNzQzNzQ1fQ.Gyj7-kz7W8tHRTwTebCOnFn2KLOVtQwxnpl3SqiDLng",
+								"type": "text"
+							}
+						],
+						"url": {
+							"raw": "http://127.0.0.1:4000/api/v0/user/orders",
+							"protocol": "http",
+							"host": [
+								"127",
+								"0",
+								"0",
+								"1"
+							],
+							"port": "4000",
+							"path": [
+								"api",
+								"v0",
+								"user",
+								"orders"
+							]
+						},
+						"description": "用户获取自己产生的订单\n\n参数: 无"
+					},
+					"response": []
+				}
+			],
+			"description": "购买, 退货, 查看订单"
+		}
+	]
+}

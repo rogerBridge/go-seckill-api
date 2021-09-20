@@ -3,6 +3,7 @@ package controllers2
 import (
 	"encoding/json"
 	"fmt"
+	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
@@ -39,7 +40,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	}
 	if ok {
 		// 根据productID从redis中获取商品价格
-		
+
 		// 生成订单信息
 		err := order.OrderGenerator()
 		if err != nil {
@@ -105,5 +106,19 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 		Code: 8200,
 		Msg:  fmt.Sprintf("用户: %s 取消订单: %s 成功", order.Username, order.OrderNumber),
 		Data: nil,
+	})
+}
+
+func QueryOrders(ctx *fasthttp.RequestCtx) {
+	// get username from auth middleware
+	username := string(ctx.Request.Header.Peek("username"))
+	// get orders by username
+	order := new(shop_orm.Order)
+	orders := order.QueryOrderByUsername(username)
+	logger.Infof("用户: %s 查询订单", username)
+	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		Code: 8200,
+		Msg:  fmt.Sprintf("用户: %s 查询订单成功", username),
+		Data: orders,
 	})
 }

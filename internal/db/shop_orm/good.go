@@ -76,7 +76,7 @@ func (g *Good) UpdateGoodByProductIDandPurchaseNum(tx *gorm.DB, productID int, p
 
 // 根据product_id确定唯一的一个商品, 然后删除它
 func (g *Good) DeleteGood(tx *gorm.DB) error {
-	if !g.IfGoodValidByID() {
+	if !g.IfGoodExistByID() {
 		return fmt.Errorf("删除的商品不存在")
 	}
 	// if err := tx.Model(&Good{}).Where("id=?", g.ID).Update("deleted_at", time.Now()).Error; err != nil {
@@ -101,10 +101,10 @@ func (g *Good) IfGoodExistByProductCategoryAndProductName() bool {
 	return false
 }
 
-func (g *Good) IfGoodValidByID() bool {
+func (g *Good) IfGoodExistByID() bool {
 	var result Good
 	conn.Model(&Good{}).Where("id=?", g.ID).First(&result)
-	if result.ProductName == g.ProductName && result.ProductCategory == g.ProductCategory {
+	if result.ID == g.ID {
 		logger.Warning("商品信息已存在")
 		return true
 	}

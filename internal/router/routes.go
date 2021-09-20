@@ -33,8 +33,8 @@ func init() {
 
 	// purchase_limits table
 	register(fasthttp.MethodPost, ApiVersion+"/admin/createPurchaseLimit", controllers2.CreatePurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, ApiVersion+"/admin/queryPurchaseLimit", controllers2.QueryPurchaseLimit, auth.MiddleAuth)
-	register(fasthttp.MethodPost, ApiVersion+"/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
+	register(fasthttp.MethodPost, ApiVersion+"/admin/queryPurchaseLimitByProductID", controllers2.QueryPurchaseLimitByProductID, auth.MiddleAuth)
+	register(fasthttp.MethodGet, ApiVersion+"/admin/queryPurchaseLimits", controllers2.QueryPurchaseLimits, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/updatePurchaseLimit", controllers2.UpdatePurchaseLimit, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/deletePurchaseLimit", controllers2.DeletePurchaseLimit, auth.MiddleAuth)
 	//register(fasthttp.MethodPost, "/admin/loadGoodPurchaseLimit", controllers2.LoadGoodPurchaseLimit, auth.MiddleAuth)
@@ -46,7 +46,7 @@ func init() {
 
 	// goods table
 
-	register(fasthttp.MethodGet, ApiVersion+"/admin/goodList", controllers2.GoodList, auth.MiddleAuth)
+	register(fasthttp.MethodGet, ApiVersion+"/goodList", controllers2.GoodList, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodCreate", controllers2.CreateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodUpdate", controllers2.UpdateGood, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/admin/goodDelete", controllers2.DeleteGood, auth.MiddleAuth)
@@ -62,6 +62,7 @@ func init() {
 	// orders table
 	register(fasthttp.MethodPost, ApiVersion+"/user/order/buy", controllers2.Buy, auth.MiddleAuth)
 	register(fasthttp.MethodPost, ApiVersion+"/user/order/cancelBuy", controllers2.CancelBuy, auth.MiddleAuth)
+	register(fasthttp.MethodGet, ApiVersion+"/user/orders", controllers2.QueryOrders, auth.MiddleAuth)
 }
 
 // ThisRouter 通过遍历[]Route, 将需要中间件处理的和不需要中间件处理的分开处置 :)

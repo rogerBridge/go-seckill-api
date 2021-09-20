@@ -6,8 +6,8 @@ package auth
 import (
 	"errors"
 	"fmt"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/db/shop_orm"
+	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -172,18 +172,20 @@ var userURI = map[string]struct{}{
 	ApiVersion + "/user/updateInfo":      {},
 	ApiVersion + "/user/order/buy":       {},
 	ApiVersion + "/user/order/cancelBuy": {},
+	ApiVersion + "/goodList":             {},
+	ApiVersion + "/user/orders":          {},
 }
 
 var adminURI = map[string]struct{}{
-	ApiVersion + "/admin/createPurchaseLimit":   {},
-	ApiVersion + "/admin/queryPurchaseLimit":    {},
-	ApiVersion + "/admin/queryPurchaseLimits":   {},
-	ApiVersion + "/admin/updatePurchaseLimit":   {},
-	ApiVersion + "/admin/deletePurchaseLimit":   {},
-	ApiVersion + "/admin/loadGoodPurchaseLimit": {},
+	ApiVersion + "/admin/createPurchaseLimit":           {},
+	ApiVersion + "/admin/queryPurchaseLimitByProductID": {},
+	ApiVersion + "/admin/queryPurchaseLimits":           {},
+	ApiVersion + "/admin/updatePurchaseLimit":           {},
+	ApiVersion + "/admin/deletePurchaseLimit":           {},
+	ApiVersion + "/admin/loadGoodPurchaseLimit":         {},
 
-	ApiVersion + "/admin/goodList":   {},
 	ApiVersion + "/admin/goodCreate": {},
 	ApiVersion + "/admin/goodUpdate": {},
 	ApiVersion + "/admin/goodDelete": {},
+	ApiVersion + "/goodList":         {},
 }

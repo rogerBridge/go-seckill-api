@@ -22,10 +22,12 @@ func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interfac
 	if err != nil {
 		logger.Warnf("ResponseWithJson: struct to []byte error happen")
 		ctx.Response.Header.Set("Content-Type", "application/json")
+		// ctx.Response.Header.Set("access-control-allow-origin", "*")
 		ctx.Response.SetStatusCode(fasthttp.StatusInternalServerError)
 		return
 	}
 	ctx.Response.SetBody(response)
 	ctx.Response.Header.Set("Content-Type", "application/json")
+	// ctx.Response.Header.Set("access-control-allow-origin", "*")
 	ctx.Response.SetStatusCode(statusCode)
 }

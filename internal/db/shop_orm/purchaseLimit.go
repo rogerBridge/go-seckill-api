@@ -47,7 +47,11 @@ func (p *PurchaseLimit) QueryPurchaseLimitByProductID() *PurchaseLimit {
 	// }
 	var result *PurchaseLimit
 	conn.Model(&PurchaseLimit{}).Where("product_id=?", p.ProductID).Find(&result)
+	if p.ProductID != result.ProductID {
+		return nil
+	}
 	return result
+
 }
 
 // update PurchaseLimit by product_id
