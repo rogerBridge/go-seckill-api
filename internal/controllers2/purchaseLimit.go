@@ -7,6 +7,7 @@ import (
 	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
+	"strconv"
 
 	"github.com/valyala/fasthttp"
 )
@@ -77,55 +78,37 @@ func CreatePurchaseLimit(ctx *fasthttp.RequestCtx) {
 	})
 }
 
-// 根据product_id获取商品的purchase_limit
-func QueryPurchaseLimitByProductID(ctx *fasthttp.RequestCtx) {
-	// query purchaseLimit
-	p := new(shop_orm.PurchaseLimit)
-	err := json.Unmarshal(ctx.Request.Body(), p)
-	if err != nil {
-		logger.Warnf("传入的参数有误: %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
-			Code: 8400,
-			Msg:  "传入的参数有误: " + err.Error(),
-			Data: nil,
+// 获取所有商品的purchase_limit
+func QueryPurchaseLimits(ctx *fasthttp.RequestCtx) {
+	// 首先, 获取id
+	id := string(ctx.QueryArgs().Peek("id"))
+	// log.Println(ctx.QueryArgs().Peek("id"))
+	if id != "" {
+		idInt, err := strconv.Atoi(id)
+		if err != nil {
+			logger.Warnf("传入的数据类型非整数型: %T\n", idInt)
+			utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+				Code: 8200,
+				Msg:  "传入的数据类型非整数型",
+				Data: nil,
+			})
+			return
+		}
+		// 如果存在的话, 返回Purchase_limit这个对象
+		p := new(shop_orm.PurchaseLimit)
+		p.ProductID = idInt
+		purchaseLimit := p.QueryPurchaseLimitByProductID()
+		logger.Infof("purchaseLimit query succuesful")
+		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+			Code: 8200,
+			Msg:  "query PurchaseLimit successful",
+			Data: purchaseLimit,
 		})
 		return
 	}
-	logger.Infof("unmarshal request.body() success")
-
-	// 如果存在的话, 返回Purchase_limit这个对象
-	purchaseLimit := p.QueryPurchaseLimitByProductID()
-	logger.Infof("purchaseLimit query succuesful")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
-		Code: 8200,
-		Msg:  "query PurchaseLimit successful",
-		Data: purchaseLimit,
-	})
-	// if err != nil {
-	// 	logger.Warnf("purchaseLimit query error: %v", err)
-	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-	// 		Code: 8404,
-	// 		Msg:  "query purchaseLimit error: " + err.Error(),
-	// 		Data: nil,
-	// 	})
-	// 	return
-	// }
-}
-
-// 获取所有商品的purchase_limit
-func QueryPurchaseLimits(ctx *fasthttp.RequestCtx) {
 	// 如果存在的话, 返回Purchase_limit这个对象
 	p := new(shop_orm.PurchaseLimit)
 	purchaseLimits := p.QueryPurchaseLimits()
-	// if err != nil {
-	// 	logger.Warnf("purchaseLimit query error: %v", err)
-	// 	utils.ResponseWithJson(ctx, 404, easyjsonprocess.CommonResponse{
-	// 		Code: 8404,
-	// 		Msg:  "query purchaseLimit error: " + err.Error(),
-	// 		Data: nil,
-	// 	})
-	// 	return
-	// }
 	logger.Infof("purchaseLimit query succuesful")
 	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
 		Code: 8200,
