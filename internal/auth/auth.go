@@ -60,7 +60,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 	return func(ctx *fasthttp.RequestCtx) {
 		// 首先, 验证header中key: authorization的值是否符合要求?
 		// 这里可以根据path判断用户是否有访问这个API的权利
-		thisURI := string(ctx.URI().RequestURI())
+		thisURI := string(ctx.URI().Path())
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
 		if err != nil {
@@ -177,12 +177,10 @@ var userURI = map[string]struct{}{
 }
 
 var adminURI = map[string]struct{}{
-	ApiVersion + "/admin/createPurchaseLimit":           {},
-	ApiVersion + "/admin/queryPurchaseLimitByProductID": {},
-	ApiVersion + "/admin/queryPurchaseLimits":           {},
-	ApiVersion + "/admin/updatePurchaseLimit":           {},
-	ApiVersion + "/admin/deletePurchaseLimit":           {},
-	ApiVersion + "/admin/loadGoodPurchaseLimit":         {},
+	ApiVersion + "/admin/createPurchaseLimit": {},
+	ApiVersion + "/admin/queryPurchaseLimits": {},
+	ApiVersion + "/admin/updatePurchaseLimit": {},
+	ApiVersion + "/admin/deletePurchaseLimit": {},
 
 	ApiVersion + "/admin/goodCreate": {},
 	ApiVersion + "/admin/goodUpdate": {},
