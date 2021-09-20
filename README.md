@@ -9,6 +9,7 @@
   - [x] 一键 docker-compose 部署
   - [ ] React SPA
   - [ ] [单元测试](./test/unitTestReport.md)
+  - [x] [接口文档](https://documenter.getpostman.com/view/2753268/UUxtGBMW) 
 
 - 应用情景
 
