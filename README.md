@@ -26,7 +26,7 @@
   - docker-compose 部署:
     ```bash
     # 测试过的docker-compose版本为: 1.29.2
-    cd deploy && docker-compose up -d
+    cd go-seckill/build && bash rebuild.sh
     ```
 
 - 性能测试
