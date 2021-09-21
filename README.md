@@ -15,6 +15,20 @@
 
   卖出商品 a n 件, 限制单个用户购买 m 件, 限制购买时间段为: t1~t2
 
+- 测试地址
+
+  示例:
+
+  获取所有商品信息: https://demo.fenr.men/api/v0/goodList
+
+  > 具体接口文档请查看: [接口文档](https://documenter.getpostman.com/view/2753268/UUxtGBMW)
+
+  测试用户:
+
+  普通用户: user:12345678
+
+  管理员: manager:12345678
+
 - 结构图
 
   - Docker 容器结构
@@ -26,7 +40,10 @@
   - docker-compose 部署:
     ```bash
     # 测试过的docker-compose版本为: 1.29.2
+    # 如果服务器安装了golang sdk, 那么执行下面:
     cd go-seckill/build && bash rebuild.sh
+    # 如果服务器没有安装golang sdk
+    cd go-seckill/deploy && docker-compose -f docker-compose.yml up -d
     ```
 
 - 性能测试
