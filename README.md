@@ -5,11 +5,11 @@
   - [x] 限制商品单个用户可购买数量, 可购买时间段
   - [x] 支持订单取消
   - [x] 生成订单后内容传输给 rabbitmq, 写入 Mysql 数据库
-  - [x] 用户 ID(JWT)校验, 权限校验(URL 匹配)
+  - [x] 用户 ID(JWT)校验, 权限校验(URL 匹配), 单点登录
   - [x] 一键 docker-compose 部署
   - [ ] React SPA
   - [ ] [单元测试](./test/unitTestReport.md)
-  - [x] [接口文档](https://documenter.getpostman.com/view/2753268/UUxtGBMW) 
+  - [x] [接口文档](https://documenter.getpostman.com/view/2753268/UUxtGBMW)
 
 - 应用情景
 
