@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"go-seckill/internal/db/shop_orm"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"time"
@@ -64,7 +63,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		tokenStr := string(ctx.Request.Header.Peek("Authorization"))
 		tokeninfo, err := ParseToken(tokenStr)
 		if err != nil {
-			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 				Code: 8400,
 				Msg:  fmt.Sprintf("While parse token, error happen, error message is: %v", err),
 				Data: nil,
@@ -74,7 +73,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		group := tokeninfo.Group
 		if !URIauthorityManage(group, thisURI) {
 			logger.Warnf("MiddleAuth: 您没有访问此uri的权限")
-			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 				Code: 8401,
 				Msg:  "您没有访问此uri的权限",
 				Data: nil,
@@ -90,7 +89,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		tokenFromRedis, err := redis.String(redisconn.Do("get", "token:"+username))
 		if err != nil {
 			logger.Warnf("MiddleAuth: While user: %v getting token from tokenRedis, error message: %v", tokeninfo.Username, err)
-			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 				Code: 8500,
 				Msg:  "While getting token from tokenRedis, error",
 				Data: nil,
@@ -99,7 +98,7 @@ func MiddleAuth(handler fasthttp.RequestHandler) fasthttp.RequestHandler {
 		}
 		if tokenFromRedis != tokeninfo.TokenString {
 			logger.Warnf("MiddleAuth: user: %v request token not equal to tokenRedis's token", tokeninfo.Username)
-			utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 				Code: 8400,
 				Msg:  "提交的token与服务器缓存的token不符",
 				Data: nil,

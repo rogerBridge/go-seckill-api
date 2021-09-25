@@ -31,3 +31,9 @@ func ResponseWithJson(ctx *fasthttp.RequestCtx, statusCode int, payload interfac
 	// ctx.Response.Header.Set("access-control-allow-origin", "*")
 	ctx.Response.SetStatusCode(statusCode)
 }
+
+type CommonResponse struct {
+	Code int         `json:"code"`
+	Msg  string      `json:"msg"`
+	Data interface{} `json:"data"`
+}

@@ -8,7 +8,6 @@ import (
 
 	"encoding/json"
 	"fmt"
-	"go-seckill/test/jsonStruct"
 	"net/http"
 	"sync"
 	"time"
@@ -38,7 +37,7 @@ func (o *Order) CreateOrder(w *sync.WaitGroup, timeStatistics chan float64, errC
 	req.Header.SetContentType("application/json")
 	req.SetRequestURI(URL)
 	// 构造request body里面的值
-	r := jsonStruct.ReqBuy{
+	r := ReqBuy{
 		ProductId:   o.ProductID,
 		PurchaseNum: o.PurchaseNum,
 	}

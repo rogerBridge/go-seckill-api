@@ -15,3 +15,8 @@ var FastHttpClient = &fasthttp.Client{
 		return fasthttp.DialTimeout(addr, 30*time.Second) // tcp 层
 	},
 }
+
+type ReqBuy struct {
+	ProductId   int `json:"productID"`
+	PurchaseNum int `json:"purchaseNum"`
+}

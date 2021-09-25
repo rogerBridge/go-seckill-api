@@ -3,7 +3,6 @@ package pressuremaker
 import (
 	"bytes"
 	"encoding/json"
-	"go-seckill/test/jsonStruct"
 	"net/http"
 	"sync"
 	"time"
@@ -18,7 +17,7 @@ func SingleRequest(token string, productID int, w *sync.WaitGroup, timeStatistic
 	client := clientHttp
 	var URL = "http://127.0.0.1:4000/user/buy"
 	// 构造request body里面的值
-	r := jsonStruct.ReqBuy{
+	r := ReqBuy{
 		ProductId:   productID,
 		PurchaseNum: 1,
 	}

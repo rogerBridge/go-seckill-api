@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"go-seckill/internal/db"
 	"go-seckill/internal/db/shop_orm"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 	"strconv"
@@ -24,7 +23,7 @@ import (
 // 	reply, err := redis.Strings(redisconn.Do("keys", "store:*"))
 // 	if err != nil {
 // 		logger.Warnf("GoodsList: 获取redis store:* 时错先错误 %v", err)
-// 		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+// 		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 // 			Code: 8500,
 // 			Msg:  "从redis中获取商品信息失败",
 // 			Data: nil,
@@ -42,7 +41,7 @@ import (
 // 		goodsMap, err := redis.Values(redisconn.Do("hgetall", v))
 // 		if err != nil {
 // 			logger.Warnf("GoodsList: 获取商品key: value时出现错误 %v", err)
-// 			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, easyjsonprocess.CommonResponse{
+// 			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, utils.CommonResponse{
 // 				Code: 8500,
 // 				Msg:  "获取商品key: value时出现错误",
 // 				Data: nil,
@@ -56,7 +55,7 @@ import (
 // 		err = redis.ScanStruct(goodsMap, g)
 // 		if err != nil {
 // 			logger.Warnf("GoodsList: Redis scanStruct error %v", err)
-// 			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, easyjsonprocess.CommonResponse{
+// 			utils.ResponseWithJson(ctx, fasthttp.StatusInternalServerError, utils.CommonResponse{
 // 				Code: 8500,
 // 				Msg:  "redis scanStruct error",
 // 				Data: nil,
@@ -67,18 +66,19 @@ import (
 // 		goodsList = append(goodsList, g)
 // 	}
 // 	logger.Infof("GoodsList: 获取商品清单成功 %v", goodsList)
-// 	utils.ResponseWithJson(ctx, fasthttp.StatusOK, easyjsonprocess.CommonResponse{
+// 	utils.ResponseWithJson(ctx, fasthttp.StatusOK, utils.CommonResponse{
 // 		Code: 8001,
 // 		Msg:  "获取商品清单成功",
 // 		Data: goodsList,
 // 	})
 // }
+
 func GoodList(ctx *fasthttp.RequestCtx) {
 	g := new(shop_orm.Good)
 	goodsList, err := g.QueryGoods()
 	if err != nil {
 		logger.Warnf("GoodList: while get good list, error happen")
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "获取商品列表时出错",
 			Data: nil,
@@ -86,7 +86,7 @@ func GoodList(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("GoodList: get good list successful")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "获取商品清单成功",
 		Data: goodsList,
@@ -102,7 +102,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.PostBody(), g)
 	if err != nil {
 		logger.Warnf("AddGood: Unmarshal request body error message %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "请求的body解析错误",
 			Data: nil,
@@ -114,7 +114,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	// // 查看待添加的商品是否存在
 	// if g.IfGoodExist() {
 	// 	logger.Warnf("CreateGood: 要添加的商品已存在, 不得重复添加")
-	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 	utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 	// 		Code: 8400,
 	// 		Msg:  "要添加的商品已存在, 不得重复添加",
 	// 		Data: nil,
@@ -127,7 +127,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		tx.Rollback()
 		logger.Warnf("CreateGood: 当添加商品时, 错误发生")
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "添加商品时, 错误: " + err.Error(),
 			Data: nil,
@@ -142,7 +142,7 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 		// 把之前写入到mysql中的good信息也回滚了
 		tx.Rollback()
 		logger.Warnf("CreateGood: mysql事务回滚成功 %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "写入good数据到redis的过程中出现错误",
 			Data: nil,
@@ -154,14 +154,14 @@ func CreateGood(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		// tx.Rollback()
 		logger.Warnf("CreateGood: commit mysql事务失败 %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "mysql transaction commit error",
 			Data: nil,
 		})
 	}
 	logger.Infof("CreateGood: commit mysql事务成功")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8001,
 		Msg:  "添加商品成功",
 		Data: nil,
@@ -175,7 +175,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), g)
 	if err != nil {
 		logger.Warnf("UpdateGood: Unmarshal req body error message %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "request body unmarshal 错误",
 			Data: nil,
@@ -186,7 +186,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	// isExist := g.IfGoodExist()
 	// if !isExist {
 	// 	logger.Warnf("ModifyGood: 更新的商品%v不存在", g.ProductCategory)
-	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 	utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 	// 		Code: 8400,
 	// 		Msg:  "更新的商品不存在",
 	// 		Data: nil,
@@ -199,7 +199,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("UpdateGood: 添加mysql事务: UpdateGood时出现错误 %v", err)
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "mysql事务添加失败" + err.Error(),
 			Data: nil,
@@ -215,7 +215,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 		// redis里面增加key时出现错误, 尝试回滚mysql
 		tx.Rollback()
 		logger.Warnf("ModifyGood: mysql tx rollback success")
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "redis hmset error and mysql rollback success",
 			Data: nil,
@@ -228,7 +228,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 	err = tx.Commit().Error
 	if err != nil {
 		logger.Warnf("UpdateGood: mysql transaction commit error: %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "mysql tx commit error",
 			Data: nil,
@@ -236,7 +236,7 @@ func UpdateGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("UpdateGood: Update good inventory success")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8001,
 		Msg:  "update good success",
 		Data: nil,
@@ -250,7 +250,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), g)
 	if err != nil {
 		logger.Warnf("DeleteGood: Unmarshal req body error %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "解析参数错误",
 			Data: nil,
@@ -261,7 +261,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	// isExist := g.IfGoodExist()
 	// if !isExist {
 	// 	logger.Warnf("DeleteGood: 商品: %v不存在", g.ProductCategory)
-	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 	utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 	// 		Code: 8400,
 	// 		Msg:  "删除的商品不存在",
 	// 		Data: nil,
@@ -274,7 +274,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("DeleteGood: 添加mysql事务DeleteGood时出现错误 %v", err)
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "DeleteGoods时出现错误: " + err.Error(),
 			Data: nil,
@@ -291,7 +291,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		logger.Warnf("DeleteGood: Redis delete store:%v error message %v", g.ProductName, err)
 		tx.Rollback()
 		logger.Warnf("DeleteGood: mysql事务回滚成功 %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "redis delete store:product error",
 			Data: nil,
@@ -303,7 +303,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		// tx.Rollback()
 		logger.Warnf("DeleteGood: mysql tx commit error %v", err)
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "mysql tx commit error",
 			Data: nil,
@@ -311,7 +311,7 @@ func DeleteGood(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("DeleteGood: commit mysql deleteGoods tx success")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8001,
 		Msg:  "删除商品成功",
 		Data: nil,

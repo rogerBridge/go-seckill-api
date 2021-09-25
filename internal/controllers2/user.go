@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-seckill/internal/auth"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/db"
 	"go-seckill/internal/db/shop_orm"
 	"go-seckill/internal/redisconf"
@@ -20,7 +19,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), user)
 	if err != nil {
 		logger.Warnf("Register: user: %+v register json unmarshal error message: %v", user, err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "bad params",
 			Data: nil,
@@ -34,7 +33,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("Register transaction error: %s", err.Error())
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "注册失败: " + err.Error(),
 			Data: nil,
@@ -45,7 +44,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("Register: CreateUser: %v error: %v", user, err)
 		// tx.Rollback()
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 			Code: 8200,
 			Msg:  fmt.Sprintf("CreateUser: %v error: %v", user, err),
 			Data: nil,
@@ -53,7 +52,7 @@ func UserRegister(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("CreateUser: %+v register success", user)
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "register success",
 		Data: nil,
@@ -66,7 +65,7 @@ func UserLogin(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), &user)
 	if err != nil {
 		logger.Warnf("Login: Unmarshal []byte to struct error message %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "bad params",
 			Data: nil,
@@ -89,7 +88,7 @@ func UserLogin(ctx *fasthttp.RequestCtx) {
 		token, err := auth.GenerateToken(&userInMysql)
 		if err != nil {
 			logger.Warnf("Login: While verify user: %v error message: %v", user, err)
-			utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 				Code: 8500,
 				Msg:  fmt.Sprintf("While verify user: %v error message: %v", user, err),
 				Data: nil,
@@ -97,7 +96,7 @@ func UserLogin(ctx *fasthttp.RequestCtx) {
 			return
 		}
 		logger.Infof("Login: User: %+v login success", user)
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 			Code: 8001,
 			Msg:  "login success",
 			Data: JWT{
@@ -109,7 +108,7 @@ func UserLogin(ctx *fasthttp.RequestCtx) {
 		})
 	} else {
 		logger.Warnf("Login: username or password error")
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "用户名或密码错误",
 			Data: nil,
@@ -124,7 +123,7 @@ func UserLogout(ctx *fasthttp.RequestCtx) {
 	tokenInfo, err := auth.ParseToken(tokenStr)
 	if err != nil {
 		logger.Warnf("Logout: user: %s logout error message: %v", tokenInfo.Username, err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  fmt.Sprintf("user: %v logout error message: %v", tokenInfo, err),
 			Data: nil,
@@ -139,7 +138,7 @@ func UserLogout(ctx *fasthttp.RequestCtx) {
 	_, err = redisconn.Do("del", "token:"+username)
 	if err != nil {
 		logger.Warnf("Logout: user: %s delete self token error message: %v", username, err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  fmt.Sprintf("user: %s delete self token error message: %v", username, err),
 			Data: nil,
@@ -147,7 +146,7 @@ func UserLogout(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("Logout: user %s logout success", username)
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "logout successful",
 		Data: nil,
@@ -168,7 +167,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), p)
 	if err != nil {
 		logger.Warnf("unmarshal password error: %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "params unmarshal error",
 			Data: nil,
@@ -183,7 +182,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("UpdateUserPassword transaction error: %v", err)
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "UpdateUserPassword error",
 			Data: nil,
@@ -194,7 +193,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		// tx.Rollback()
 		logger.Warnf("UpdateUserPassword transaction commit error: %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "UpdateUserPassword error",
 			Data: nil,
@@ -202,7 +201,7 @@ func UserUpdatePassword(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("%+v UpdateUserPassword successful", p)
-	utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "UpdateUserPassword successful",
 		Data: nil,
@@ -215,7 +214,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), p)
 	if err != nil {
 		logger.Warnf("unmarshal userInfo error: %v", err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "params unmarshal error",
 			Data: nil,
@@ -226,7 +225,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	// check userinfo
 	// if !p.IfUserExist() {
 	// 	logger.Warnf(err.Error())
-	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 	utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 	// 		Code: 8400,
 	// 		Msg:  "用户不存在",
 	// 		Data: nil,
@@ -237,7 +236,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 
 	// if err := p.CheckEmail(); err != nil {
 	// 	logger.Warnf(err.Error())
-	// 	utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+	// 	utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 	// 		Code: 8400,
 	// 		Msg:  err.Error(),
 	// 		Data: nil,
@@ -249,7 +248,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("UpdateUserInfo transaction error: %v", err)
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  err.Error(),
 			Data: nil,
@@ -260,7 +259,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		// tx.Rollback()
 		logger.Warnf("UpdateUserInfo transaction commit error: %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "UpdateUserInfo commit error",
 			Data: nil,
@@ -268,7 +267,7 @@ func UserUpdateInfo(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("UpdateUserInfo transaction commit successful")
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "UpdateUserInfo successful",
 		Data: nil,
@@ -282,7 +281,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), user)
 	if err != nil {
 		logger.Warnf("Register: user: %+v register json unmarshal error message: %v", user, err)
-		utils.ResponseWithJson(ctx, 400, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 400, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "bad params",
 			Data: nil,
@@ -296,7 +295,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("Register transaction error: %s", err.Error())
 		tx.Rollback()
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "注册失败: " + err.Error(),
 			Data: nil,
@@ -307,7 +306,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 	if err != nil {
 		logger.Warnf("Register: CreateUser: %v error: %v", user, err)
 		// tx.Rollback()
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 			Code: 8200,
 			Msg:  fmt.Sprintf("CreateUser: %v error: %v", user, err),
 			Data: nil,
@@ -315,7 +314,7 @@ func AdminRegister(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("CreateUser: %+v register success", user)
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  "register success",
 		Data: nil,

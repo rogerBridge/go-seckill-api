@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"go-seckill/internal/db/shop_orm"
-	"go-seckill/internal/easyjsonprocess"
 	"go-seckill/internal/redisconf"
 	"go-seckill/internal/utils"
 
@@ -17,7 +16,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.PostBody(), order)
 	if err != nil {
 		logger.Warnf("Buy: Decode buy request error: %v", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  "解析用户的订单请求时参数出现错误",
 			Data: nil,
@@ -31,7 +30,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 	ok, err := order.CanBuyIt()
 	if err != nil {
 		logger.Warnf("Buy: user: %+v CanBuyIt error: %v 您不满足购买商品条件", order.Username, err)
-		utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 			Code: 8005,
 			Msg:  "你不能购买: " + err.Error(),
 			Data: nil,
@@ -45,7 +44,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		err := order.OrderGenerator()
 		if err != nil {
 			logger.Warnf("用户: %s 生成订单时出现错误: %s", order.Username, err)
-			utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 				Code: 8200,
 				Msg:  "生成订单过程中出现错误:" + err.Error(),
 				Data: nil,
@@ -57,7 +56,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 		err = order.Bought()
 		if err != nil {
 			logger.Warnf("用户:%s 添加bought时出现错误: %v", order.Username, err)
-			utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+			utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 				Code: 8200,
 				Msg:  "添加bought键值对时出现错误" + err.Error(),
 				Data: nil,
@@ -67,7 +66,7 @@ func Buy(ctx *fasthttp.RequestCtx) {
 
 		//w.Header().Set("application/json", "json")
 		logger.Infof("用户 %s 购买 %v 操作成功", order.Username, order.ProductID)
-		utils.ResponseWithJson(ctx, fasthttp.StatusOK, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, fasthttp.StatusOK, utils.CommonResponse{
 			Code: 8001,
 			Msg:  "操作成功",
 			Data: order,
@@ -83,7 +82,7 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 	err := json.Unmarshal(ctx.Request.Body(), order)
 	if err != nil {
 		logger.Warnf("CancelBuy: 解析用户传来的订单号时出现错误: %s", err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8400,
 			Msg:  "当解析用户传来的订单号时出现错误: " + err.Error(),
 			Data: nil,
@@ -94,7 +93,7 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 	err = order.CancelBuy()
 	if err != nil {
 		logger.Warnf("用户: %s 取消订单: %s 时出现错误: %s", order.Username, order.OrderNumber, err)
-		utils.ResponseWithJson(ctx, 500, easyjsonprocess.CommonResponse{
+		utils.ResponseWithJson(ctx, 500, utils.CommonResponse{
 			Code: 8500,
 			Msg:  fmt.Sprintf("用户: %s 取消订单: %s 时出现错误: %s", order.Username, order.OrderNumber, err),
 			Data: nil,
@@ -102,7 +101,7 @@ func CancelBuy(ctx *fasthttp.RequestCtx) {
 		return
 	}
 	logger.Infof("用户: %s 取消订单: %s 成功", order.Username, order.OrderNumber)
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  fmt.Sprintf("用户: %s 取消订单: %s 成功", order.Username, order.OrderNumber),
 		Data: nil,
@@ -116,7 +115,7 @@ func QueryOrders(ctx *fasthttp.RequestCtx) {
 	order := new(shop_orm.Order)
 	orders := order.QueryOrderByUsername(username)
 	logger.Infof("用户: %s 查询订单", username)
-	utils.ResponseWithJson(ctx, 200, easyjsonprocess.CommonResponse{
+	utils.ResponseWithJson(ctx, 200, utils.CommonResponse{
 		Code: 8200,
 		Msg:  fmt.Sprintf("用户: %s 查询订单成功", username),
 		Data: orders,
