@@ -78,16 +78,16 @@ go-seckill/
 
 ![docker-structure](https://i.ibb.co/g9CYFKf/docker-structure.png)
 
-| 容器名称           | 作用                                                                                       |
-| ------------------ | ------------------------------------------------------------------------------------------ |
-| go-seckill         | 主应用, 监听特定端口, 处理请求                                                             |
-| rabbitmq-server    | mqtt 服务, 用于接收应用发送的 mq 消息, 并由 rabbitmq-receiver 处理                         |
-| rabbitmq-receiver  | mqtt 接收端, 处理服务端发送过来的 mq 消息, 这里处理 app 发送过来的订单请求, 并存储在 mysql |
-| tokenRedis         | 用户登录之后的 token 存储, 如果没有单点登录的需求,可以不用                                 |
-| goodRedis          | 存储商品信息, 名称, 价格, 库存数量等　                                                     |
-| orderRedis         | 存储用户产生的订单, 商品购买数量                                                           |
-| mysql              | 数据存储                                                                                   |
-| config-file server | 存储 mysql, redis, rabbitmq 的配置文件                                                     |
+| 容器名称           | 作用                                                                                              |
+| ------------------ | ------------------------------------------------------------------------------------------------- |
+| go-seckill         | 主应用, 监听特定端口, 处理请求                                                                    |
+| rabbitmq-server    | amqp 服务, 用于接收应用发送的消息, 并由 rabbitmq-receiver 处理                                    |
+| rabbitmq-receiver  | amqp 接收端, 处理 rabbitmq-server 发送过来的消息, 这里处理 app 发送过来的订单请求, 并存储在 mysql |
+| tokenRedis         | 用户登录之后的 token 存储, 如果没有单点登录的需求,可以不用                                        |
+| goodRedis          | 存储商品信息, 名称, 价格, 库存数量等　                                                            |
+| orderRedis         | 存储用户产生的订单, 商品购买数量                                                                  |
+| mysql              | 数据存储                                                                                          |
+| config-file server | 存储 mysql, redis, rabbitmq 的配置文件                                                            |
 
 ## 部署方法
 
