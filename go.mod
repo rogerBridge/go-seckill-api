@@ -6,7 +6,7 @@ require (
 	github.com/andybalholm/brotli v1.0.3 // indirect
 	github.com/fasthttp/router v1.4.2
 	github.com/go-sql-driver/mysql v1.6.0
-	github.com/golang-jwt/jwt/v4 v4.0.0
+	github.com/golang-jwt/jwt/v4 v4.5.1
 	github.com/gomodule/redigo v1.8.5
 	github.com/klauspost/compress v1.13.5 // indirect
 	github.com/segmentio/ksuid v1.0.4
